@@ -1,0 +1,424 @@
+#include <JEngine/Input/Input.h>
+#include <iostream>
+#include <WinUser.h>
+
+namespace JEngine {
+    bool Input::HAS_FOCUS(false);
+    float Input::_deadZones[MAX_CONTROLLERS + 1]{};
+
+    Input::InputState Input::_inputs[KEYBOARD_INPUTS + CONTROLLER_INPUTS * MAX_CONTROLLERS]{};
+    Input::Gamepad Input::_gamePads[MAX_CONTROLLERS]{};
+    uint64_t Input::_frame(0);
+    Input::MouseData Input::_mData{};
+    Input::MouseData Input::_mDelta{};
+    Action<const Input::DeviceIndex, const bool> Input::_onDeviceConnectionChange{};
+
+    static void updateControllerState(Input::Gamepad& pad, Input::InputState* states, const float deadZone, const uint64_t tick) {
+        auto ogStates = states;
+        bool state;
+        uint8_t* padB = reinterpret_cast<uint8_t*>(&pad);
+
+        //Buttons
+        for (size_t i = 0, j = 1; i < 16; i++, states++, j <<= 1) {
+            state = bool(pad.getButtons() & j);
+            states->update(state, false, state ? 1.0f : 0.0f, tick, true);
+        }
+
+        float* padF = reinterpret_cast<float*>(padB + 2);
+
+        //Triggers
+        for (size_t i = 0; i < 2; i++, states++) {
+            const float val = *padF++;
+            state = val > deadZone;
+
+            states->update(state, false, val, tick, true);
+            (states + 6)->update(state, false, state ? 1.0f : 0.0f, tick, true);
+        }
+
+        //Sticks
+        const JVector2f* padV2f = reinterpret_cast<JVector2f*>(padB + 10);
+
+        int32_t stateA;
+        int32_t stateB;
+        auto stickBtn = states + 6;
+        for (size_t i = 0, j = 0; i < 2; i++, states += 2, stickBtn += 4, j += 4) {
+            const auto val = *padV2f++;
+
+            stateA = Math::sign<float, int32_t>(val.x, deadZone);
+            stateB = Math::sign<float, int32_t>(val.y, deadZone);
+
+            //Stick XY
+            states->update(stateA, false, stateA ? val.x : 0, tick, true);
+            (states + 1)->update(stateB, false, stateB ? val.y : 0, tick, true);
+
+            //Axis Buttons U->L->D->R
+
+            state = stateB == 1;
+            stickBtn->update(state, false, state ? val.y : 0, tick, true);
+
+            state = stateA == -1;
+            (stickBtn + 1)->update(state, false, state ? -val.x : 0, tick, true);
+
+            state = stateB == -1;
+            (stickBtn + 2)->update(state, false, state ? -val.y : 0, tick, true);
+
+            state = stateA == 1;
+            (stickBtn + 3)->update(state, false, state ? val.x : 0, tick, true);
+        }
+    }
+
+    void Input::init() {
+        memset(_inputs, 0, sizeof(_inputs));
+        std::fill_n(_deadZones, MAX_CONTROLLERS + 1, Input::DEFAULT_DEAD_ZONE);
+    }
+
+    void Input::clear() {
+        _mData = {};
+        _mDelta = {};
+
+        for (int32_t i = 0; i < KEYBOARD_INPUTS + CONTROLLER_INPUTS * MAX_CONTROLLERS; i++) {
+            _inputs[i].reset();
+        }
+    }
+
+    const JVector2f& Input::getMousePosition() {
+        return _mData.position;
+    }
+
+    const JVector2f& Input::getMouseWheel() {
+        return _mData.scroll;
+    }
+
+    const JVector2f& Input::getMousePositionDelta() {
+        return _mDelta.position;
+    }
+
+    const JVector2f& Input::getMouseWheelDelta() {
+        return _mDelta.scroll;
+    }
+
+    const uint64_t Input::addDeviceConnectionCB(const Action<DeviceIndex, bool>::Func& func) {
+        return _onDeviceConnectionChange.add(func);
+    }
+    void Input::removeDeviceConnectionCB(const uint64_t id) {
+        _onDeviceConnectionChange.remove(id);
+    }
+
+    void Input::update(const bool hasFocus) {
+        MouseData mDat;
+        update(mDat, hasFocus);
+    }
+
+    void Input::update(const MouseData& mouseData, const bool hasFocus) {
+        HAS_FOCUS = hasFocus;
+        if (!hasFocus) { return; }
+
+        auto prevM = _mData;
+        _mData = mouseData;
+        _mDelta = _mData - prevM;
+
+        uint8_t keyStates[256]{ 0 };
+
+        isKeyDown(InputCode::INP_A);
+        GetKeyboardState(keyStates);
+
+        bool state;
+        for (int i = 0; i < 256; i++)
+        {
+            const auto b = keyStates[i];
+            state = (b & 0x80) != 0;
+            _inputs[i].update(state, bool(b & 0x1), state ? 1.0f : 0.0f, _frame);
+        }
+
+        updateMouseData(mouseData);
+
+        XINPUT_STATE xPad;
+        for (DWORD i = 0, j = KEYBOARD_INPUTS; i < MAX_CONTROLLERS; i++, j += CONTROLLER_INPUTS) {
+            auto ret = XInputGetState(i, &xPad);
+            const bool isConnected = ret == ERROR_SUCCESS;
+            const bool curConnected = _gamePads[i].isConnected();
+
+            _gamePads[i].update(isConnected, xPad.Gamepad);
+
+            if (isConnected != curConnected) {
+                _onDeviceConnectionChange(DeviceIndex((i + 1) << 1), isConnected);
+            }
+        }
+        _frame++;
+    }
+
+    const bool Input::isDown(const DeviceIndex index, const InputCode code) {
+        if (!HAS_FOCUS) { return false; }
+
+        InputState buffer[MAX_CONTROLLERS + 1];
+        const auto states = getInputStates(code, index, buffer);
+
+        for (size_t i = 0; i < states; i++) {
+            if (buffer[i].isDown()) { return true; }
+        }
+        return false;
+    }
+    const bool Input::isHeld(const DeviceIndex index, const InputCode code) {
+        if (!HAS_FOCUS) { return false; }
+
+        InputState buffer[MAX_CONTROLLERS + 1];
+        const auto states = getInputStates(code, index, buffer);
+
+        for (size_t i = 0; i < states; i++) {
+            if (buffer[i].isHeld()) { return true; }
+        }
+        return false;
+    }
+    void Input::setDeadZones(const DeviceIndex devices, const float* deadZones) {
+        for (size_t i = 0, j = 1, k = 0; i < MAX_CONTROLLERS; i++, j <<= 1) {
+            if (j & devices) {
+                _deadZones[i] = deadZones[k++];
+            }
+        }
+    }
+
+    void Input::setDeadZone(const DeviceIndex devices, const float deadZone) {
+        for (size_t i = 0, j = 1; i < MAX_CONTROLLERS; i++, j <<= 1) {
+            if (j & devices) {
+                _deadZones[i] = deadZone;
+            }
+        }
+    }
+
+    const float Input::getDeadZone(const DeviceIndex device) {
+        auto ind = Math::potToIndex(device);
+        if (ind > -1) {
+            return _deadZones[ind];
+        }
+        return 0;
+    }
+
+    void Input::getDeadZones(const DeviceIndex devices, float* deadZones) {
+        for (size_t i = 0, k = 0, j = 1; i < MAX_CONTROLLERS; i++, j <<= 1) {
+            if (j & devices) {
+                deadZones[k++] = _deadZones[i];
+            }
+        }
+    }
+
+    const bool Input::isUp(const DeviceIndex index, const InputCode code) {
+        if (!HAS_FOCUS) { return false; }
+
+        InputState buffer[MAX_CONTROLLERS + 1];
+        const auto states = getInputStates(code, index, buffer);
+
+        for (size_t i = 0; i < states; i++) {
+            if (buffer[i].isUp()) { return true; }
+        }
+        return false;
+    }
+    const bool Input::isToggled(const DeviceIndex index, const InputCode code) {
+        InputState buffer[MAX_CONTROLLERS + 1];
+        const auto states = getInputStates(code, index, buffer);
+
+        for (size_t i = 0; i < states; i++) {
+            if (buffer[i].isToggled()) { return true; }
+        }
+        return false;
+    }
+
+    const Input::Gamepad Input::getGamepad(const DeviceIndex device) {
+        const int32_t ind = Math::potToIndex(device);
+        return getGamepad(ind - 1);
+    }
+    const Input::Gamepad Input::getGamepad(const int32_t device) {
+        if (device > -1) { return _gamePads[device]; }
+        return {};
+    }
+    void Input::getGamepads(const DeviceIndex devices, Gamepad* pads) {
+        for (size_t i = 0, j = 2, k = 0; i < MAX_CONTROLLERS; i++, j <<= 1) {
+            if (j & devices) {
+                pads[k++] = _gamePads[i];
+            }
+        }
+    }
+
+    void Input::vibrateDevices(const DeviceIndex devices, const double left, const double right) {
+        vibrateDevices(devices, Math::deNormalize<uint16_t>(left), Math::deNormalize<uint16_t>(right));
+    }
+
+    void Input::vibrateDevices(const DeviceIndex devices, const uint16_t left, const uint16_t right) {
+        for (int32_t i = 0, j = 2; i < MAX_CONTROLLERS; i++, j <<= 1)
+        {
+            if (j & devices) {
+                vibrateDevice(i, left, right);
+            }
+        }
+    }
+
+    const bool Input::anyDown(const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+        return any(0, devices, result, ignored, ignoredLength);
+    }
+    const bool Input::anyHeld(const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+        return any(1, devices, result, ignored, ignoredLength);
+    }
+    const bool Input::anyUp(const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+        return any(2, devices, result, ignored, ignoredLength);
+    }
+    const bool Input::anyToggled(const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+        return any(3, devices, result, ignored, ignoredLength);
+    }
+
+    const float Input::getAxis(const DeviceIndex devices, const InputCode neg, const InputCode pos) {
+        float axis = 0;
+
+        if (isHeld(devices, neg)) { axis--; }
+        if (isHeld(devices, pos)) { axis++; }
+
+        return axis;
+    }
+
+    const JVector2f Input::getVector(const DeviceIndex devices, const InputCode negX, const InputCode posX, const InputCode negY, const InputCode posY) {
+        return JVector2f(getAxis(devices, negX, posX), getAxis(devices, negY, posY));
+    }
+
+    const Input::InputState Input::getInputState(const DeviceIndex device, const InputCode code) {
+        const int32_t devInd = Math::potToIndex(device);
+        if (devInd < 0) { return {}; }
+        if (devInd == 0) { return _inputs[code]; }
+        return _inputs[KEYBOARD_INPUTS + (devInd - 1) * CONTROLLER_INPUTS + code];
+    }
+
+    const bool Input::isKeyDown(const InputCode code) {
+        return (GetAsyncKeyState(code) & 0x8000) >> 15U;
+    }
+
+    const int32_t Input::getInputStates(const InputCode code, const DeviceIndex devices, InputState* states) {
+
+        int32_t kCode = code;
+
+        int32_t sInd = 0;
+        int32_t curSize = KEYBOARD_INPUTS;
+
+        for (uint32_t i = 0, j = 1, k = 0; i < MAX_CONTROLLERS + 1; i++, j <<= 1) {
+            if ((j & devices) && kCode < curSize) {
+                states[sInd++] = _inputs[k + kCode];
+            }
+
+            if (i == 0) {
+                kCode -= KEYBOARD_INPUTS;
+                curSize = CONTROLLER_INPUTS;
+                if (kCode < 0) { break; }
+
+                k += KEYBOARD_INPUTS;
+                continue;
+            }
+            k += CONTROLLER_INPUTS;
+        }
+        return sInd;
+    }
+
+    void Input::updateMouseData(const MouseData& mData) {
+        InputState* states = _inputs + 256;
+
+        const float* mDataF = reinterpret_cast<const float*>(&mData);
+        const float dead = _deadZones[0];
+        for (size_t i = 0, j = 0; i < 2; i++, j += 2, states += 2) {
+
+            const float x = mDataF[j];
+            const float y = mDataF[j + 1];
+
+            const int32_t stateX = x > dead ? 1 : x < -dead ? -1 : 0;
+            const int32_t stateY = y > dead ? 1 : y < -dead ? -1 : 0;
+
+            states->update(stateX != 0, false, x, _frame, true);
+            states->update(stateY != 0, false, y, _frame, true);
+
+            states->update(stateY == 1, false, y, _frame, true);
+            states->update(stateX == -1, false, -x, _frame, true);
+
+            states->update(stateY == -1, false, -y, _frame, true);
+            states->update(stateX == 1, false, x, _frame, true);
+        }
+    }
+
+
+    const bool Input::any(const int32_t mode, const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+        result = { InputCode::INP_None, DeviceIndex::DEV_None, 0 };
+
+        bool resultB;
+        uint64_t tick = 0;
+        int32_t offset = 0;
+        size_t curSize = KEYBOARD_INPUTS;
+
+        for (size_t i = 0, j = 1, k = 0; i < MAX_CONTROLLERS + 1; i++, j <<= 1)
+        {
+            if (j & devices)
+            {
+                for (size_t l = 0; l < curSize; l++)
+                {
+                    if (i == 0) {
+                        switch (l)
+                        {
+                            case InputCode::INP_Shift:
+                            case InputCode::INP_Ctrl:
+                            case InputCode::INP_Alt:
+                                continue;
+                        }
+                    }
+
+                    const auto& state = _inputs[k + l];
+                    tick = state.getTickDown();
+
+                    switch (mode)
+                    {
+                        default:
+                            resultB = state.isDown();
+                            break;
+                        case 1:
+                            resultB = state.isHeld();
+                            break;
+                        case 2:
+                            resultB = state.isUp();
+                            break;
+                        case 3:
+                            resultB = state.isToggled();
+                            break;
+                    }
+
+                    if (resultB && result.tick < tick) {
+                        if (ignored && ignoredLength > 0) {
+                            auto iCode = InputCode(offset + l);
+                            auto find = std::find(ignored, ignored + ignoredLength, iCode);
+
+                            if (find != ignored + ignoredLength) {
+                                result.device = DeviceIndex(j);
+                                result.code = iCode;
+                                result.tick = tick;
+                            }
+                        }
+                    }
+                }
+            }
+
+            k += offset;
+            if (i == 0) {
+                offset = KEYBOARD_INPUTS;
+                curSize = CONTROLLER_INPUTS;
+            }
+        }
+        return int32_t(result.device) != 0;
+    }
+
+    void Input::vibrateDevice(const int32_t device, const double left, const double right) {
+        vibrateDevice(device, Math::deNormalize<uint16_t>(left), Math::deNormalize<uint16_t>(right));
+    }
+
+    void Input::vibrateDevice(const int32_t index, const uint16_t left, const uint16_t right) {
+        if (index < 0 || index >= MAX_CONTROLLERS) { return; }
+        if (_gamePads[index].isConnected()) {
+            XINPUT_VIBRATION vibration;
+            ZeroMemory(&vibration, sizeof(XINPUT_VIBRATION));
+
+            vibration.wLeftMotorSpeed = left;
+            vibration.wRightMotorSpeed = right;
+
+            XInputSetState(index, &vibration);
+        }
+    }
+}

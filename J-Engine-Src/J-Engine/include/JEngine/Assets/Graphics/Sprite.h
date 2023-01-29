@@ -1,0 +1,86 @@
+#pragma once
+#include <JEngine/Assets/Graphics/Texture/Texture2D.h>
+#include <string>
+#include <JEngine/Math/Units/JRect.h>
+#include <JEngine/Utility/Flags.h>
+#include <JEngine/Collections/ObjectRef.h>
+#include <JEngine/Assets/IAsset.h>
+#include <JEngine/Math/Graphics/JColor32.h>
+#include <JEngine/Math/Graphics/JVertex.h>
+#include <JEngine/Math/Units/JMatrix.h>
+#include <JEngine/Rendering/IRenderable.h>
+
+namespace JEngine {
+    class SpriteBatch;
+    class Sprite : public IAsset, public IRenderable<JVector2f>
+    {
+    public:
+        Sprite();
+        Sprite(const Sprite& copy);
+        Sprite(const std::string& name, const ObjectRef<Texture2D>& texture, const float ppu, const JVector2f pivot, const JRecti& rectangle);
+
+        Sprite& operator=(const Sprite& copy);
+
+        void setTexture(const ObjectRef<Texture2D>& texture, bool resetRect = false);
+        void setTextureRect(const JRecti& rectangle);
+        void setColor(const JColor32 color);
+
+        const int32_t writeToBuffer(const JMatrix& matrix, uint8_t flip, JVertex2f* verts);
+
+        float setPPU(const float ppu);
+        const float getPPU() const;
+
+        void setPivot(const JVector2f& pivot);
+        const JVector2f& getPivot() const;
+
+        const Texture2D* getTexture() const;
+        const JRecti& getTextureRect() const;
+
+        const JColor32& getColor() const;
+
+        const JRectf& getLocalBounds() const;
+        const JRectf& getGlobalBounds() const;
+        const JRectf& getGlobalBounds(const uint8_t flip) const;
+
+        const int32_t getVertexCount() const override;
+        const JVertex2f* getVertices(const uint8_t flip = 0) const override;
+
+        const int32_t getIndexCount() const override;
+        const uint32_t* getIndices() const override;
+     
+        //void setSourceAtlas(ObjectRef<Atlas>& atlas);
+        //ObjectRef<Atlas>& getSourceAtlas();
+
+        const bool serializeJson(json& jsonF) const override;
+        const bool deserializeJson(json& jsonF) override;
+
+        const bool serializeBinary(std::ostream& stream) const override;
+        const bool deserializeBinary(std::istream& stream, const size_t size) override;
+
+        static const bool jsonToBinary(json& jsonF, std::ostream& stream);
+
+    private:
+        static uint32_t         DEFAULT_INDICES[6];
+
+        JRectf                  _boundsLocal;
+        JRectf                  _boundsWorld[4];
+
+        JVertex2f               _vertices[16]; 
+
+        JRecti                  _textureRect;
+        float                   _ppu;
+        JVector2f               _pivot;
+
+        ObjectRef<Texture2D>    _texture;
+        //ObjectRef<Atlas>   _atlas;
+
+       // const void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+
+        void updatePositions();
+        void updateTexCoords();
+
+        void updateLocalBounds();
+       // const void updateWorldVerts(const sf::Transform& matrix, uint8_t flip, sf::Vertex* verts) const;
+    };
+    //REGISTER_ASSET(JEngine::Sprite, JEngine::AssetType::Sprite)
+}
