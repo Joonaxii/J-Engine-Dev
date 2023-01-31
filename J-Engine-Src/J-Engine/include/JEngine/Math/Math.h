@@ -1,13 +1,13 @@
 #pragma once
 #include <JEngine/Math/Units/JVector.h>
 
-constexpr double PI = 3.14159265359;
-constexpr double DEG_2_RAD = PI / 180.0;
-constexpr double RAD_2_DEG = 180.0 / PI;
-constexpr double UINT8_TO_FLOAT = 1.0 / double(UINT8_MAX);
-constexpr double UINT16_TO_FLOAT = 1.0 / double(UINT16_MAX);
-constexpr double UINT32_TO_FLOAT = 1.0 / double(UINT32_MAX);
-constexpr double UINT64_TO_FLOAT = 1.0 / double(UINT64_MAX);
+constexpr float PI = 3.14159265359f;
+constexpr float DEG_2_RAD = PI / 180.0f;
+constexpr float RAD_2_DEG = 180.0f / PI;
+constexpr float UINT8_TO_FLOAT  = 1.0f / float(UINT8_MAX);
+constexpr float UINT16_TO_FLOAT = 1.0f / float(UINT16_MAX);
+constexpr float UINT32_TO_FLOAT = 1.0f / float(UINT32_MAX);
+constexpr float UINT64_TO_FLOAT = 1.0f / float(UINT64_MAX);
 
 namespace JEngine::Math {
     namespace priv {

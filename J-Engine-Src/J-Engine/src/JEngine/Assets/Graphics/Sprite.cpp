@@ -33,7 +33,7 @@ namespace JEngine {
         setTextureRect(copy._textureRect);
     }
 
-    Sprite::Sprite(const std::string& name, const ObjectRef<Texture2D>& texture, const float ppu, const JVector2f pivot, const JRecti& rectangle) :
+    Sprite::Sprite(const std::string& name, const ObjectRef<Texture>& texture, const float ppu, const JVector2f pivot, const JRecti& rectangle) :
         IAsset(name),
         _vertices { },
         _texture(-1),
@@ -49,7 +49,7 @@ namespace JEngine {
 
     Sprite& Sprite::operator=(const Sprite& copy) {
         _name = copy._name;
-        _texture = ObjectRef<Texture2D>(nullptr);
+        _texture = ObjectRef<Texture>(nullptr);
         _textureRect = JRecti(0, 0, 0, 0);
         _ppu = copy._ppu;
         _pivot = copy._pivot;
@@ -61,8 +61,8 @@ namespace JEngine {
         return *this;
     }
 
-    void Sprite::setTexture(const ObjectRef<Texture2D>& texture, bool resetRect) {
-        const Texture2D* texRef = texture.getPtr();
+    void Sprite::setTexture(const ObjectRef<Texture>& texture, bool resetRect) {
+        const Texture* texRef = texture.getPtr();
 
         if (resetRect || (!texRef && (_textureRect == JRecti()))) {
             setTextureRect(JRecti(0, 0, texRef->getSize().x, texRef->getSize().y));
@@ -71,7 +71,7 @@ namespace JEngine {
         //_texure = Game::getAssetManager().getAtlasByTexture(texture);
 
         // Assign the new texture
-        _texture = ObjectRef<Texture2D>(texture);
+        _texture = ObjectRef<Texture>(texture);
         updateLocalBounds();
     }
 
@@ -102,7 +102,7 @@ namespace JEngine {
         return _ppu;
     }
 
-    const int32_t Sprite::writeToBuffer(const JMatrix& matrix, uint8_t flip, JVertex2f* verts) {
+    const int32_t Sprite::writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex2f* verts) {
         flip *= 4;
         for (size_t i = 0; i < 4; i++) {
             auto vert = _vertices[flip + i];
@@ -120,7 +120,7 @@ namespace JEngine {
         return _pivot;
     }
 
-    const Texture2D* Sprite::getTexture() const {
+    const Texture* Sprite::getTexture() const {
         return _texture.getPtr();
     }
 
@@ -296,10 +296,6 @@ namespace JEngine {
         return false;
     }
     const bool Sprite::deserializeBinary(std::istream& stream, const size_t size)
-    {
-        return false;
-    }
-    const bool Sprite::jsonToBinary(json& jsonF, std::ostream& stream)
     {
         return false;
     }

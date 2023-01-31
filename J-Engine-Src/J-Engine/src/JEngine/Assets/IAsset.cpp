@@ -1,5 +1,4 @@
 #include <JEngine/Assets/IAsset.h>
-#include <JEngine/IO/Serialization/Serialization.h>
 #include <JEngine/Assets/AssetMetaData.h>
 #include <JEngine/IO/VFS/FileEntry.h>
 
@@ -9,9 +8,9 @@ namespace JEngine {
     }
 
    const bool IAsset::serializeMetaJson(json& jsonF) const {
-       jsonF["name"] = _name;
-       _flags.serializeJson(jsonF["flags"]);
-       _meta.serializeJson(jsonF);
+       Serialization::serialize(_name, jsonF["name"]);
+       Serialization::serialize(_flags, jsonF["assetFlags"]);
+       Serialization::serialize(_meta, jsonF["meta"]);
        return true;
    }
 
@@ -28,11 +27,6 @@ namespace JEngine {
    const bool IAsset::deserializeMetaBinary(std::istream& stream, const size_t size) {
 
        return true;
-   }
-
-   const bool IAsset::jsonToBinary(json& jsonF, std::ostream& stream) {
-
-       return false;
    }
 
     FileEntry* IAsset::getFileEntry() {

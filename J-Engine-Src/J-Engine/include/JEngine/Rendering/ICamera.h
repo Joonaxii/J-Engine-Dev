@@ -17,7 +17,7 @@
 
 namespace JEngine {
     class Renderer;
-    class ICamera : public ISerializable<ICamera, sizeof(UI8Flags) + sizeof(float) + sizeof(uint32_t) + sizeof(JColor32) + sizeof(LayerMask) + sizeof(JRectf) + sizeof(JRectf) + sizeof(UUID)> {
+    class ICamera : public ISerializable<ICamera> {
     public:
         static const JColor32 DEFAULT_CLEAR_COLOR;
 
@@ -81,15 +81,15 @@ namespace JEngine {
 
         const bool render();
 
-        virtual void setTransformMatrix(const JMatrix&) = 0;
-        virtual const JMatrix& getTransformMatrix() const = 0;
-        virtual void transformProjection(JMatrix& projection) const;
+        virtual void setTransformMatrix(const JMatrix4f&) = 0;
+        virtual const JMatrix4f& getTransformMatrix() const = 0;
+        virtual void transformProjection(JMatrix4f& projection) const;
 
-        virtual const bool serializeJson(json& jsonF) const;
-        virtual const bool deserializeJson(json& jsonF);
+        virtual const bool serializeJson(json& jsonF) const override;
+        virtual const bool deserializeJson(json& jsonF) override;
 
-        virtual const bool serializeBinary(std::ostream& stream) const;
-        virtual const bool deserializeBinary(std::istream& stream);
+        virtual const bool serializeBinary(std::ostream& stream) const override;
+        virtual const bool deserializeBinary(std::istream& stream) override;
 
         static void setRegistrationMethods(RegistrationEvent reg, RegistrationEvent unreg) {
             REGISTER_CAMERA = reg;
@@ -117,7 +117,7 @@ namespace JEngine {
         static inline RenderObjects RENDER_OBJECTS = nullptr;
         static inline WriteToBuffer WRITE_TO_BUFFER = nullptr;
 
-        UI8Flags _flags;
+        UI8Flags _cameraFlags;
         float _depth;
         ClearFlags _clearFlags;
         JColor32 _clearColor;
@@ -138,5 +138,17 @@ namespace JEngine {
             }
         }
     };
+
+    template<>
+    inline const bool Serializable<ICamera::ClearFlags>::deserializeJson(ICamera::ClearFlags& itemRef, json& jsonF, const ICamera::ClearFlags& defaultValue) {
+        itemRef = jsonF.is_number_integer() ? ICamera::ClearFlags(jsonF.get<uint32_t>()) : defaultValue;
+        return true;
+    }
+
+    template<>
+    inline const bool Serializable<ICamera::ClearFlags>::serializeJson(const ICamera::ClearFlags& itemRef, json& jsonF) {
+        jsonF.update(uint32_t(itemRef));
+        return true;
+    }
 }
 CREATE_ENUM_OPERATORS_SELF(JEngine::ICamera::ClearFlags);

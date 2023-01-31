@@ -121,26 +121,4 @@ namespace JEngine {
         a = Math::multiplyBytes(a, other.a);
         return *this;
     }
-
-    const bool JColor32::deserializeJson(json& jsonF) {
-        r = Math::clamp(jsonF.value("r", 0x00), 0x00, 0xFF);
-        g = Math::clamp(jsonF.value("g", 0x00), 0x00, 0xFF);
-        b = Math::clamp(jsonF.value("b", 0x00), 0x00, 0xFF);
-        a = Math::clamp(jsonF.value("a", 0x00), 0x00, 0xFF);
-        return true;
-    }
-
-    const bool JColor32::serializeJson(json& jsonF) const {
-        jsonF["r"] = r;
-        jsonF["g"] = g;
-        jsonF["b"] = b;
-        jsonF["a"] = a;
-        return true;
-    }
-
-    const bool JColor32::jsonToBinary(json& jsonF, std::ostream& stream) {
-        JColor32 temp;
-        temp.deserializeJson(jsonF);
-        return temp.serializeBinary(stream);
-    }
 }

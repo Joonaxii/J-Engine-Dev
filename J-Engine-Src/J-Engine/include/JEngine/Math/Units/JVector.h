@@ -1,11 +1,11 @@
 #pragma once
-#include <JEngine/IO/Serialization/ISerializable.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 
 namespace JEngine {
     template<typename T, typename P> struct JVector3;
     template<typename T, typename P> struct JVector4;
     template<typename T, typename P = float>
-    struct JVector2 : public ISerializable<JVector2<T>, sizeof(T) * 2> {
+    struct JVector2 {
         T x;
         T y;
 
@@ -79,10 +79,6 @@ namespace JEngine {
         JVector2<T, P> getNormalized() const;
         JVector2<T, P>& normalize();
 
-        const bool deserializeJson(json& jsonF);
-        const bool serializeJson(json& jsonF) const;
-        static const bool jsonToBinary(json& jsonF, std::ostream& stream);
-
         static const P invLerp(const JVector2<T, P>& a, const JVector2<T, P>& b, const JVector2<T, P>& v);
     };
 
@@ -94,7 +90,7 @@ namespace JEngine {
     template<typename T, typename P> struct JVector2;
     template<typename T, typename P> struct JVector4;
     template<typename T, typename P = float>
-    struct JVector3 : public ISerializable<JVector3<T>, sizeof(T) * 3> {
+    struct JVector3 {
         T x;
         T y;
         T z;
@@ -170,10 +166,6 @@ namespace JEngine {
         const JVector3<T, P> getNormalized() const;
         JVector3<T, P>& normalize();
 
-        const bool deserializeJson(json& jsonF);
-        const bool serializeJson(json& jsonF) const;
-        static const bool jsonToBinary(json& jsonF, std::ostream& stream);
-
         static const P invLerp(const JVector3<T, P>& a, const JVector3<T, P>& b, const JVector3<T, P>& v);
     };
 
@@ -185,7 +177,7 @@ namespace JEngine {
     template<typename T, typename P> struct JVector2;
     template<typename T, typename P> struct JVector3;
     template<typename T, typename P = float>
-    struct JVector4 : public ISerializable<JVector4<T>, sizeof(T) * 4> {
+    struct JVector4 {
         T x;
         T y;
         T z;
@@ -258,10 +250,6 @@ namespace JEngine {
 
         const JVector4<T, P> getNormalized() const;
         JVector4<T, P>& normalize();
-
-        const bool deserializeJson(json& jsonF);
-        const bool serializeJson(json& jsonF) const;
-        static const bool jsonToBinary(json& jsonF, std::ostream& stream);
 
         static const P invLerp(const JVector4<T, P>& a, const JVector4<T, P>& b, const JVector4<T, P>& v);
     };
@@ -465,22 +453,6 @@ namespace JEngine {
         return P(angle(other) * Math::sign(cross(other)));
     }
 
-    template<typename T, typename P> inline  const bool JVector2<T, P>::deserializeJson(json& jsonF) {
-        x = jsonF.value("x", T());
-        y = jsonF.value("y", T());
-        return true;
-    }
-    template<typename T, typename P> inline const bool JVector2<T, P>::serializeJson(json& jsonF) const {
-        jsonF["x"] = x;
-        jsonF["y"] = y;
-        return true;
-    }
-    template<typename T, typename P> inline const bool JEngine::JVector2<T, P>::jsonToBinary(json& jsonF, std::ostream& stream) {
-        JVector2<T, P> temp;
-        temp.deserializeJson(jsonF);
-        return temp.serializeBinary(jsonF);
-    }
-
     template<typename T, typename P> inline const P JEngine::JVector2<T, P>::invLerp(const JVector2<T, P>& a, const JVector2<T, P>& b, const JVector2<T, P>& v) {
         const JVector2<T, P> aB = b - a;
         const JVector2<T, P> aV = v - a;
@@ -643,8 +615,8 @@ namespace JEngine {
     }
     template<typename T, typename P> inline const JVector3<T, P> JVector3<T, P>::cross(const JVector3<T, P>& other) const {
         return JVector3<T, P>(y * other.z - z * other.y,
-                              z * other.x - x * other.z,
-                              x * other.y - y * other.x);
+            z * other.x - x * other.z,
+            x * other.y - y * other.x);
     }
 
     template<typename T, typename P> inline const JVector3<T, P> JVector3<T, P>::getNormalized() const {
@@ -698,28 +670,10 @@ namespace JEngine {
         return P(angle(other) * Math::sign(cross(other)));
     }
 
-    template<typename T, typename P> inline const bool JVector3<T, P>::deserializeJson(json& jsonF) {
-        x = jsonF.value("x", T());
-        y = jsonF.value("y", T());
-        z = jsonF.value("z", T());
-        return true;
-    }
-    template<typename T, typename P> inline const bool JVector3<T, P>::serializeJson(json& jsonF) const {
-        jsonF["x"] = x;
-        jsonF["y"] = y;
-        jsonF["z"] = z;
-        return true;
-    }
-    template<typename T, typename P> inline const bool JEngine::JVector3<T, P>::jsonToBinary(json& jsonF, std::ostream& stream) {
-        JVector3<T, P> temp;
-        temp.deserializeJson(jsonF);
-        return temp.serializeBinary(jsonF);
-    }
-
     template<typename T, typename P> inline const P JEngine::JVector3<T, P>::invLerp(const JVector3<T, P>& a, const JVector3<T, P>& b, const JVector3<T, P>& v) {
         const JVector3<T, P> aB = b - a;
         const JVector3<T, P> aV = v - a;
-                     
+
         const P dotB = aB.sqrMagnitude();
         return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
     }
@@ -925,26 +879,6 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline  const bool JVector4<T, P>::deserializeJson(json& jsonF) {
-        x = jsonF.value("x", T());
-        y = jsonF.value("y", T());
-        z = jsonF.value("z", T());
-        w = jsonF.value("w", T());
-        return true;
-    }
-    template<typename T, typename P> inline const bool JVector4<T, P>::serializeJson(json& jsonF) const {
-        jsonF["x"] = x;
-        jsonF["y"] = y;
-        jsonF["z"] = z;
-        jsonF["w"] = w;
-        return true;
-    }
-    template<typename T, typename P> inline const bool JEngine::JVector4<T, P>::jsonToBinary(json& jsonF, std::ostream& stream) {
-        JVector4<T, P> temp;
-        temp.deserializeJson(jsonF);
-        return temp.serializeBinary(jsonF);
-    }
-
     template<typename T, typename P> inline const P JEngine::JVector4<T, P>::invLerp(const JVector4<T, P>& a, const JVector4<T, P>& b, const JVector4<T, P>& v) {
         const JVector4<T, P> aB = b - a;
         const JVector4<T, P> aV = v - a;
@@ -953,6 +887,134 @@ namespace JEngine {
         return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
     }
 #pragma endregion
+
+#pragma region JVector2 Serialization
+    template<typename T, typename P>
+    struct Serializable<JVector2<T, P>> {
+        static const bool deserializeJson(JVector2<T, P>& itemRef, json& jsonF, const JVector2<T, P>& defaultVal);
+        static const bool serializeJson(const JVector2<T, P>& itemRef, json& jsonF);
+
+        static const bool deserializeBinary(JVector2<T, P>& itemRef, std::istream& stream);
+        static const bool serializeBinary(const JVector2<T, P>& itemRef, std::ostream& stream);
+    };
+
+    template<typename T, typename P>
+    inline const bool Serializable<JVector2<T, P>>::deserializeJson(JVector2<T, P>& itemRef, json& jsonF, const JVector2<T, P>& defaultVal) {
+        Serialization::deserialize(itemRef.x, jsonF["x"], defaultVal.x);
+        Serialization::deserialize(itemRef.y, jsonF["y"], defaultVal.y);
+        return true;
+    }
+
+    template<typename T, typename P>
+    inline const bool Serializable<JVector2<T, P>>::serializeJson(const JVector2<T, P>& itemRef, json& jsonF) {
+        Serialization::serialize(itemRef.x, jsonF["x"]);
+        Serialization::serialize(itemRef.y, jsonF["y"]);
+        return true;
+    }
+
+    template<typename T, typename P>
+    inline const bool Serializable<JVector2<T, P>>::deserializeBinary(JVector2<T, P>& itemRef, std::istream& stream) {
+        Serialization::deserialize(itemRef.x, stream);
+        Serialization::deserialize(itemRef.y, stream);
+        return true;
+    }
+    template<typename T, typename P>
+    inline const bool Serializable<JVector2<T, P>>::serializeBinary(const JVector2<T, P>& itemRef, std::ostream& stream) {
+        Serialization::serialize(itemRef.x, stream);
+        Serialization::serialize(itemRef.y, stream);
+        return true;
+    }
+#pragma endregion
+
+
+#pragma region JVector3 Serialization
+    template<typename T, typename P>
+    struct Serializable<JVector3<T, P>> {
+        static const bool deserializeJson(JVector3<T, P>& itemRef, json& jsonF, const JVector3<T, P>& defaultVal);
+        static const bool serializeJson(const JVector3<T, P>& itemRef, json& jsonF);
+
+        static const bool deserializeBinary(JVector3<T, P>& itemRef, std::istream& stream);
+        static const bool serializeBinary(const JVector3<T, P>& itemRef, std::ostream& stream);
+    };
+
+    template<typename T, typename P>
+    inline const bool Serializable<JVector3<T, P>>::deserializeJson(JVector3<T, P>& itemRef, json& jsonF, const JVector3<T, P>& defaultVal) {
+        Serialization::deserialize(itemRef.x, jsonF["x"], defaultVal.x);
+        Serialization::deserialize(itemRef.y, jsonF["y"], defaultVal.y);
+        Serialization::deserialize(itemRef.z, jsonF["z"], defaultVal.z);
+        return true;
+    }
+
+    template<typename T, typename P>
+    inline const bool Serializable<JVector3<T, P>>::serializeJson(const JVector3<T, P>& itemRef, json& jsonF) {
+        Serialization::serialize(itemRef.x, jsonF["x"]);
+        Serialization::serialize(itemRef.y, jsonF["y"]);
+        Serialization::serialize(itemRef.z, jsonF["z"]);
+        return true;
+    }
+
+    template<typename T, typename P>
+    inline const bool Serializable<JVector3<T, P>>::deserializeBinary(JVector3<T, P>& itemRef, std::istream& stream) {
+        Serialization::deserialize(itemRef.x, stream);
+        Serialization::deserialize(itemRef.y, stream);
+        Serialization::deserialize(itemRef.z, stream);
+        return true;
+    }
+    template<typename T, typename P>
+    inline const bool Serializable<JVector3<T, P>>::serializeBinary(const JVector3<T, P>& itemRef, std::ostream& stream) {
+        Serialization::serialize(itemRef.x, stream);
+        Serialization::serialize(itemRef.y, stream);
+        Serialization::serialize(itemRef.z, stream);
+        return true;
+    }
+#pragma endregion
+
+#pragma region JVector4 Serialization
+    template<typename T, typename P>
+    struct Serializable<JVector4<T, P>> {
+        static const bool deserializeJson(JVector4<T, P>& itemRef, json& jsonF, const JVector4<T, P>& defaultVal);
+        static const bool serializeJson(const JVector4<T, P>& itemRef, json& jsonF);
+
+        static const bool deserializeBinary(JVector4<T, P>& itemRef, std::istream& stream);
+        static const bool serializeBinary(const JVector4<T, P>& itemRef, std::ostream& stream);
+    };
+
+    template<typename T, typename P>
+    inline const bool Serializable<JVector4<T, P>>::deserializeJson(JVector4<T, P>& itemRef, json& jsonF, const JVector4<T, P>& defaultVal) {
+        Serialization::deserialize(itemRef.x, jsonF["x"], defaultVal.x);
+        Serialization::deserialize(itemRef.y, jsonF["y"], defaultVal.y);
+        Serialization::deserialize(itemRef.z, jsonF["z"], defaultVal.z);
+        Serialization::deserialize(itemRef.w, jsonF["w"], defaultVal.w);
+        return true;
+    }
+
+    template<typename T, typename P>
+    inline const bool Serializable<JVector4<T, P>>::serializeJson(const JVector4<T, P>& itemRef, json& jsonF) {
+        Serialization::serialize(itemRef.x, jsonF["x"]);
+        Serialization::serialize(itemRef.y, jsonF["y"]);
+        Serialization::serialize(itemRef.z, jsonF["z"]);
+        Serialization::serialize(itemRef.w, jsonF["w"]);
+        return true;
+    }
+
+    template<typename T, typename P>
+    inline const bool Serializable<JVector4<T, P>>::deserializeBinary(JVector4<T, P>& itemRef, std::istream& stream) {
+        Serialization::deserialize(itemRef.x, stream);
+        Serialization::deserialize(itemRef.y, stream);
+        Serialization::deserialize(itemRef.z, stream);
+        Serialization::deserialize(itemRef.w, stream);
+        return true;
+    }
+    template<typename T, typename P>
+    inline const bool Serializable<JVector4<T, P>>::serializeBinary(const JVector4<T, P>& itemRef, std::ostream& stream) {
+        Serialization::serialize(itemRef.x, stream);
+        Serialization::serialize(itemRef.y, stream);
+        Serialization::serialize(itemRef.z, stream);
+        Serialization::serialize(itemRef.w, stream);
+        return true;
+    }
+#pragma endregion
+
 }
 
 typedef JEngine::JVector2<int32_t> JVector2i;

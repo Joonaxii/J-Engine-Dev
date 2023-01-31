@@ -36,8 +36,8 @@ list(APPEND JENGINE_SOURCES ${OPENGL_RENDERING_SRC})
 
 # OpenGL files
 set(JENGINE_DEBUG_SRC
-	"include/JEngine/Debugging/FPS.h"
-	"src/JEngine/Debugging/FPS.cpp"
+	"include/JEngine/Debug/FPS.h"
+	"src/JEngine/Debug/FPS.cpp"
 )
 source_group("JEngine/Debug" FILES ${JENGINE_DEBUG_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_DEBUG_SRC})
@@ -175,6 +175,8 @@ list(APPEND JENGINE_SOURCES ${JENGINE_MATERIAL_ASSETS_SRC})
 set(JENGINE_SHADER_ASSETS_SRC 
 	 "include/JEngine/Assets/Graphics/Shader/Shader.h"
      "src/JEngine/Assets/Graphics/Shader/Shader.cpp"
+	 "include/JEngine/Assets/Graphics/Shader/ShaderLib.h"
+     "src/JEngine/Assets/Graphics/Shader/ShaderLib.cpp"
 )
 source_group("JEngine/Assets/Graphics/Shader" FILES ${JENGINE_SHADER_ASSETS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_SHADER_ASSETS_SRC})
@@ -230,7 +232,7 @@ list(APPEND JENGINE_SOURCES ${JENGINE_IO_HELPERS_SRC})
 
 # JEngine Serialization files
 set(JENGINE_SERIALZIATION_SRC
-	 "include/JEngine/IO/Serialization/ISerializable.h"
+	 "include/JEngine/IO/Serialization/Serializable.h"
 	 "include/JEngine/IO/Serialization/Serialization.h"
      "src/JEngine/IO/Serialization/Serialization.cpp"
 )

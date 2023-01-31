@@ -9,32 +9,21 @@ namespace JEngine::RNG {
 
     struct RNGData {
         static bool initialized;
-        static int64_t seed;
-        static int64_t offset;
+        static uint32_t seed;
+        static uint32_t offset;
     };
 
     bool RNGData::initialized = false;
-    int64_t RNGData::seed = 0;
-    int64_t RNGData::offset = 0;
+    uint32_t RNGData::seed = 0;
+    uint32_t RNGData::offset = 0;
 
-    const int64_t setSeed(const int64_t seed, const bool reset = true);
+    const uint32_t getSeed(const bool reset = true);
+    const uint32_t setSeed(const uint32_t seed, const bool reset = true);
 
     const uint32_t randNum();
 
     template<typename T>
-    const T randN() {
-        return static_cast<T>(randNum() / (double)std::mt19937::_Max);
-    }
-
-    template<>
-    inline const double randN<double>() {
-        return randNum() / (double)std::mt19937::_Max;
-    }
-
-    template<>
-    inline const float randN<float>() {
-        return randNum() / (float)std::mt19937::_Max;
-    }
+    const T randN() { return static_cast<T>(randNum() / T(UINT32_MAX)); }
 
     template<typename T>
     const T randRange(const T min, const T max) {

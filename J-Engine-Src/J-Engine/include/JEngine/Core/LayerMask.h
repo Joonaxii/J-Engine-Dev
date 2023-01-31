@@ -1,8 +1,8 @@
 #pragma once
-#include <JEngine/IO/Serialization/ISerializable.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 
 namespace JEngine {
-    struct LayerMask : public ISerializable<LayerMask, sizeof(uint32_t)> {
+    struct LayerMask {
     public:
         LayerMask();
         LayerMask(const uint32_t value);
@@ -145,14 +145,22 @@ namespace JEngine {
         }
 
 #pragma endregion
-
-        const bool serializeJson(json& jsonF) const;
-        const bool deserializeJson(json& jsonF);
-
-        const bool serializeBinary(std::ostream& stream) const;
-        const bool deserializeBinary(std::istream& stream);
-
     private:
+        friend struct Serializable<LayerMask>;
         uint32_t _value;
     };
+
+#pragma region Serialization
+    template<>
+    inline const bool Serializable<LayerMask>::deserializeJson(LayerMask& itemRef, json& jsonF, const LayerMask& defaultValue) {
+        itemRef._value = jsonF.is_number_integer() ? jsonF.get<uint32_t>() : defaultValue;
+        return true;
+    }
+
+    template<>
+    inline const bool Serializable<LayerMask>::serializeJson(const LayerMask& itemRef, json& jsonF) {
+        jsonF.update(itemRef._value);
+        return true;
+    }
+#pragma endregion
 }

@@ -6,7 +6,7 @@ namespace JEngine {
 
     ICamera::ICamera() : 
         _screenRect(0, 0, 1, 1), _viewRect(0, 0, 1, 1), 
-        _layerMask(0xFF), _flags(AUTO_RENDER_CAMERA), _tintColor(JColor32::White),
+        _layerMask(0xFF), _cameraFlags(AUTO_RENDER_CAMERA), _tintColor(JColor32::White),
         _clearColor(DEFAULT_CLEAR_COLOR), _depth(0.0f), _clearFlags(ClearFlags(Clear_Depth | Clear_Color)) 
     { registerCamera(this); }
 
@@ -27,8 +27,8 @@ namespace JEngine {
     void ICamera::setCameraDepth(const float depth) { _depth = depth; }
     const float ICamera::getCameraDepth() const { return _depth; }
 
-    void ICamera::setCameraDisabled(const bool state) { _flags.setBit(DISABLE_CAMERA, state); }
-    const bool ICamera::isCameraDisabled() const { return bool(_flags & DISABLE_CAMERA); }
+    void ICamera::setCameraDisabled(const bool state) { _cameraFlags.setBit(DISABLE_CAMERA, state); }
+    const bool ICamera::isCameraDisabled() const { return bool(_cameraFlags & DISABLE_CAMERA); }
 
     void ICamera::setClearFlags(const ClearFlags flags) { _clearFlags = flags; }
     const ICamera::ClearFlags ICamera::getClearFlags() const { return _clearFlags; }
@@ -36,8 +36,8 @@ namespace JEngine {
     void ICamera::setClearColor(const JColor32& color) { _clearColor = color; }
     const JColor32& ICamera::getClearColor() const { return _clearColor; }
 
-    void ICamera::setManualRenderMode(const bool state) { _flags.setBit(AUTO_RENDER_CAMERA, !state); }
-    const bool ICamera::getManualRenderModeState() const { return !bool(_flags & AUTO_RENDER_CAMERA); }
+    void ICamera::setManualRenderMode(const bool state) { _cameraFlags.setBit(AUTO_RENDER_CAMERA, !state); }
+    const bool ICamera::getManualRenderModeState() const { return !bool(_cameraFlags & AUTO_RENDER_CAMERA); }
 
     void ICamera::setCameraTint(const JColor32& color) { _tintColor = color; }
     const JColor32& ICamera::getCameraTint() const { return _tintColor; }
@@ -45,71 +45,76 @@ namespace JEngine {
     void ICamera::setLayerMask(const LayerMask mask) { _layerMask = mask; }
     const LayerMask ICamera::getLayerMask() const { return _layerMask; }
 
-    const bool ICamera::shouldRender() const { return !bool(_flags & DISABLE_CAMERA); }
+    const bool ICamera::shouldRender() const { return !bool(_cameraFlags & DISABLE_CAMERA); }
 
-    void ICamera::transformProjection(JMatrix& projection) const { projection *= getTransformMatrix().getInverse(); }
+    void ICamera::transformProjection(JMatrix4f& projection) const { projection *= getTransformMatrix().getInverse(); }
 
-    const bool ICamera::serializeJson(json& jsonF) const  {
-        jsonF["depth"] = _depth;
-        _flags.serializeJson(jsonF["flags"]);
-        jsonF["clearFlags"] = uint32_t(_clearFlags);
-        _clearColor.serializeJson(jsonF["clearColor"]);
-        _tintColor.serializeJson(jsonF["cameraTint"]);
-        _layerMask.serializeJson(jsonF["layerMask"]);
-        _viewRect.serializeJson(jsonF["viewRect"]);
-        _screenRect.serializeJson(jsonF["screenRect"]);
+    const bool ICamera::serializeJson(json& jsonF) const {
+        Serialization::serialize(_cameraFlags, jsonF["cameraFlags"]);
+        Serialization::serialize(_depth, jsonF["depth"]);
 
-        const UUID uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUIDFactory::UUID_EMPTY;
-        jsonF["blendMaterial"] = UUIDFactory::getUUIDStr(uuid);
+        Serialization::serialize(_clearFlags, jsonF["clearFlags"]);
+        Serialization::serialize(_clearColor, jsonF["clearColor"]);
 
+        Serialization::serialize(_tintColor, jsonF["cameraTint"]);
+        Serialization::serialize(_layerMask, jsonF["layerMask"]);
+        Serialization::serialize(_viewRect, jsonF["viewRect"]);
+        Serialization::serialize(_screenRect, jsonF["screenRect"]);
+
+        UUID uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUIDFactory::Empty;
+        Serialization::serialize(uuid, jsonF["blendMaterial"]);
         return true;
     }
 
     const bool ICamera::deserializeJson(json& jsonF) {
-        _depth = jsonF.value("depth", 0.0f);
-        _flags.deserializeJson(jsonF["flags"]);
-        _clearFlags = ClearFlags(jsonF.value("clearFlags", uint32_t(ClearFlags::Clear_Color | Clear_Depth)));
-        _clearColor.deserializeJson(jsonF["clearColor"]);
-        _tintColor.deserializeJson(jsonF["cameraTint"]);
-        _layerMask.deserializeJson(jsonF["layerMask"]);
-        _viewRect.deserializeJson(jsonF["viewRect"]);
-        _screenRect.deserializeJson(jsonF["screenRect"]);
+        Serialization::deserialize(_cameraFlags, jsonF["cameraFlags"]);
+        Serialization::deserialize(_depth, jsonF["depth"]);
 
-        UUID uuid = UUIDFactory::UUID_EMPTY;
-        UUIDFactory::parseUUID(jsonF["blendMaterial"].get<std::string>(), uuid);
-        //TODO: Find material by UUID
-  
+        Serialization::deserialize(_clearFlags, jsonF["clearFlags"]);
+        Serialization::deserialize(_clearColor, jsonF["clearColor"]);
+
+        Serialization::deserialize(_tintColor, jsonF["cameraTint"]);
+        Serialization::deserialize(_layerMask, jsonF["layerMask"]);
+        Serialization::deserialize(_viewRect, jsonF["viewRect"]);
+        Serialization::deserialize(_screenRect, jsonF["screenRect"]);
+
+        UUID uuid{};
+        Serialization::deserialize(uuid, jsonF["blendMaterial"]);
+        //TODO: Add fetching of material by UUID
         return true;
     }
 
     const bool ICamera::serializeBinary(std::ostream& stream) const {
-        Serialization::serializeBinary(stream, _depth);
-        _flags.serializeBinary(stream);
-        Serialization::serializeBinary(stream, _clearFlags);
-        _clearColor.serializeBinary(stream);
-        _tintColor.serializeBinary(stream);
-        _layerMask.serializeBinary(stream);
-        _viewRect.serializeBinary(stream);
-        _screenRect.serializeBinary(stream);
+        Serialization::serialize(_cameraFlags, stream);
+        Serialization::serialize(_depth, stream);
 
-        const UUID uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUIDFactory::UUID_EMPTY;
-        Serialization::serializeBinary(stream, uuid);
+        Serialization::serialize(reinterpret_cast<const uint32_t&>(_clearFlags), stream);
+        Serialization::serialize(_clearColor, stream);
 
+        Serialization::serialize(_tintColor, stream);
+        Serialization::serialize(_layerMask, stream);
+        Serialization::serialize(_viewRect, stream);
+        Serialization::serialize(_screenRect, stream);
+
+        const UUID uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUIDFactory::Empty;
+        Serialization::serialize(uuid, stream);
         return true;
     }
 
     const bool ICamera::deserializeBinary(std::istream& stream)  {
-        Serialization::deserializeBinary(stream, _depth);
-        _flags.deserializeBinary(stream);
-        Serialization::deserializeBinary(stream, _clearFlags);
-        _clearColor.deserializeBinary(stream);
-        _tintColor.deserializeBinary(stream);
-        _layerMask.deserializeBinary(stream);
-        _viewRect.deserializeBinary(stream);
-        _screenRect.deserializeBinary(stream);
+        Serialization::deserialize(_cameraFlags, stream);
+        Serialization::deserialize(_depth, stream);
 
-        UUID uuid =  UUIDFactory::UUID_EMPTY;
-        Serialization::deserializeBinary(stream, uuid);
+        Serialization::deserialize(reinterpret_cast<uint32_t&>(_clearFlags), stream);
+        Serialization::deserialize(_clearColor, stream);
+
+        Serialization::deserialize(_tintColor, stream);
+        Serialization::deserialize(_layerMask, stream);
+        Serialization::deserialize(_viewRect, stream);
+        Serialization::deserialize(_screenRect, stream);
+
+        UUID uuid{};
+        Serialization::deserialize(uuid, stream);
         //TODO: Find material by UUID
 
         return true;
@@ -121,7 +126,7 @@ namespace JEngine {
             return false;
         }
 
-        if (!shouldRender() || (!isAuto && !(_flags & AUTO_RENDER_CAMERA))) { return false; }
+        if (!shouldRender() || (!isAuto && !(_cameraFlags & AUTO_RENDER_CAMERA))) { return false; }
         auto& trMatrix = getTransformMatrix();
         CameraRenderData renderData;
 

@@ -1,6 +1,5 @@
 #pragma once 
 #include <JEngine/Assets/IAsset.h>
-#include <JEngine/IO/Serialization/ISerializable.h>
 #include <JEngine/Assets/Graphics/Texture/TextureFormat.h>
 #include <JEngine/Assets/Graphics/Texture/FilterMode.h>
 #include <JEngine/Math/Graphics/JColor32.h>
@@ -8,7 +7,7 @@
 #include <JEngine/Utility/Flags.h>
 
 namespace JEngine {
-    class Texture : public IAsset, public ISerializable<Texture> {
+    class Texture : public IAsset {
     public:
 
         Texture();

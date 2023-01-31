@@ -1,6 +1,6 @@
 #pragma once 
 #include <JEngine/Assets/IAsset.h>
-#include <JEngine/IO/Serialization/ISerializable.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Collections/ObjectRef.h>
 #include <JEngine/Assets/Graphics/Material/MaterialProperty.h>
 #include <JEngine/Assets/Graphics/Texture/Texture2D.h>
@@ -8,7 +8,7 @@
 #include <JEngine/Rendering/FrameBuffer.h>
 
 namespace JEngine {
-    class Material : public IAsset, public ISerializable<Material> {
+    class Material : public IAsset {
     public:
 
         Material();
@@ -47,10 +47,13 @@ namespace JEngine {
         const bool bind();
         void unbind() const;
 
+    protected:
+        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override;
+
     private:
-        ObjectRef<FrameBuffer> _frameBuffer;
-        ObjectRef<Texture2D> _mainTex;
         ObjectRef<Shader> _shader;
+        ObjectRef<Texture2D> _mainTex;
+        ObjectRef<FrameBuffer> _frameBuffer;
 
         std::vector<MaterialProperty> _properties;
 
@@ -58,3 +61,4 @@ namespace JEngine {
         void applyProperties(Shader& shader) const;
     };
 }
+REGISTER_ASSET(JEngine::Material);

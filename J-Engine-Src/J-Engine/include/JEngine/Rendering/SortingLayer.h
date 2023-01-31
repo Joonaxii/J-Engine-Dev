@@ -1,11 +1,11 @@
 #pragma once
-#include <JEngine/IO/Serialization/ISerializable.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 #include <cstdint>
 #include <string>
 #include <vector>
 
 namespace JEngine {
-    struct SortingLayer : public ISerializable<SortingLayer, sizeof(uint32_t)> {
+    struct SortingLayer {
     public:
         SortingLayer();
         SortingLayer(const int16_t order, const uint16_t layer);
@@ -20,7 +20,7 @@ namespace JEngine {
         const int32_t compareTo(const SortingLayer& other) const;
 
         static const std::string& layerToName(const uint16_t layer);
-        static const uint16_t nameToLayer(const std::string& name, const bool ignoreCase);
+        static const uint16_t nameToLayer(const std::string& name, const bool ignoreCase = false);
 
         const uint32_t getUnion() const;
         const int16_t getOrder() const;
@@ -29,12 +29,6 @@ namespace JEngine {
         void setOrder(const int16_t layer);
         void setLayerByIndex(const uint16_t layer);
         void setLayerByName(const std::string& layer);
-
-        const bool deserializeJson(json& jsonFile);
-        const bool serializeJson(json& jsonFile) const;
-
-        const bool deserializeBinary(std::istream& stream);
-        const bool serializeBinary(std::ostream& stream) const;
 
         static const uint16_t getLayerCount();
         static const std::vector<std::string>& getLayers();
@@ -46,7 +40,26 @@ namespace JEngine {
     private:
         static std::vector<std::string> LAYERS;
 
+        friend struct Serializable<SortingLayer>;
         uint16_t _order;
         uint16_t _layer;
     };
+
+
+#pragma region Serialization
+    template<>
+    inline const bool Serializable<SortingLayer>::deserializeJson(SortingLayer& itemRef, json& jsonF, const SortingLayer& defaultValue) {
+        Serialization::deserialize(itemRef._order, jsonF["order"], defaultValue._order);
+        auto& layer = jsonF["layer"];
+        itemRef._layer = layer.is_string() ? SortingLayer::nameToLayer(layer.get<std::string>()) : layer.is_number_integer() ? layer.get<uint16_t>() : defaultValue._layer;
+        return true;
+    }
+
+    template<>
+    inline const bool Serializable<SortingLayer>::serializeJson(const SortingLayer& itemRef, json& jsonF) {
+        jsonF["order"] = itemRef._order;
+        jsonF["layer"] = itemRef._layer;
+        return true;
+    }
+#pragma endregion
 }

@@ -142,6 +142,11 @@ namespace JEngine {
         GLCall(glUniform1i(getUniformLocation(name), value));
     }
 
+    void Shader::setUniform1ui(const std::string& name, const uint32_t value) {
+        if (!_shaderID) { return; }
+        GLCall(glUniform1ui(getUniformLocation(name), value));
+    }
+
     void Shader::setUniform1f(const std::string& name, const float value) {
         if (!_shaderID) { return; }
         GLCall(glUniform1f(getUniformLocation(name), value));
@@ -163,6 +168,13 @@ namespace JEngine {
         GLCall(glUniform2i(getUniformLocation(name), v0, v1));
     }
 
+    void Shader::setUniformV2ui(const std::string& name, const JVector2u& vector) {
+        setUniformV2ui(name, vector.x, vector.y);
+    }
+    void Shader::setUniformV2ui(const std::string& name, const uint32_t v0, const uint32_t v1) {
+        if (!_shaderID) { return; }
+        GLCall(glUniform2ui(getUniformLocation(name), v0, v1));
+    }
 
     void Shader::setUniformV3f(const std::string& name, const JVector3f& vector) {
         setUniformV3f(name, vector.x, vector.y, vector.z);
@@ -180,7 +192,20 @@ namespace JEngine {
         GLCall(glUniform3i(getUniformLocation(name), v0, v1, v2));
     }
 
+    void Shader::setUniformColor24(const std::string& name, const JColor24& color) {
+        setUniformV3ui(name, color.r, color.g, color.b);
+    }
+    void Shader::setUniformV3ui(const std::string& name, const JVector3u& vector) {
+        setUniformV3ui(name, vector.x, vector.y, vector.z);
+    }
+    void Shader::setUniformV3ui(const std::string& name, const uint32_t v0, const uint32_t v1, const uint32_t v2) {
+        if (!_shaderID) { return; }
+        GLCall(glUniform3ui(getUniformLocation(name), v0, v1, v2));
+    }
 
+    void Shader::setUniformColor(const std::string& name, const JColor& color) {
+        setUniformV4f(name, color.r, color.g, color.b, color.a);
+    }
     void Shader::setUniformV4f(const std::string& name, const JVector4f& vector) {
         setUniformV4f(name, vector.x, vector.y, vector.z, vector.w);
     }
@@ -197,7 +222,19 @@ namespace JEngine {
         GLCall(glUniform4i(getUniformLocation(name), v0, v1, v2, v3));
     }
 
-    void Shader::setUniformMat4f(const std::string& name, const JMatrix& mat) {
+    void Shader::setUniformColor32(const std::string& name, const JColor32& color) {
+        setUniformV4ui(name, color.r, color.g, color.b, color.a);
+    }
+    void Shader::setUniformV4ui(const std::string& name, const JVector4u& vector) {
+        setUniformV4ui(name, vector.x, vector.y, vector.z, vector.w);
+    }
+    void Shader::setUniformV4ui(const std::string& name, const uint32_t v0, const uint32_t v1, const uint32_t v2, const uint32_t v3) {
+        if (!_shaderID) { return; }
+        GLCall(glUniform4ui(getUniformLocation(name), v0, v1, v2, v3));
+    }
+
+
+    void Shader::setUniformMat4f(const std::string& name, const JMatrix4f& mat) {
         if (!_shaderID) { return; }
         GLCall(glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &mat[0]));
     }

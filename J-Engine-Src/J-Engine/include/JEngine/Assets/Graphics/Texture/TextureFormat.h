@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <JEngine/IO/Serialization/Serializable.h>
 
 namespace JEngine  
 {
@@ -37,4 +38,18 @@ namespace JEngine
 			case TextureFormat::RGBA32:		return "RGBA32";
 		}
 	}
+
+#pragma region Serialization
+	 template<>
+	 inline const bool Serializable<TextureFormat>::deserializeJson(TextureFormat& itemRef, json& jsonF, const TextureFormat& defaultVal) {
+		 itemRef = jsonF.is_number() ? TextureFormat(jsonF.get<uint8_t>()) : defaultVal;
+		 return true;
+	 }
+
+	 template<>
+	 inline const bool Serializable<TextureFormat>::serializeJson(const TextureFormat& itemRef, json& jsonF) {
+		 jsonF.update(uint8_t(itemRef));
+		 return true;
+	 }
+#pragma endregion
 }

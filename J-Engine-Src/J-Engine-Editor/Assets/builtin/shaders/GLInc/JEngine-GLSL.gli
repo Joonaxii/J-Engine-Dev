@@ -1,0 +1,42 @@
+#Clamp
+float clamp01(float v) {
+    return v > 1.0 ? 1.0 : v < 0.0 ? 0.0 : v;
+}
+
+vec2 clamp01(vec2 v) {
+    v.x = clamp01(v.x);
+    v.y = clamp01(v.y);
+    return v;
+}
+
+vec3 clamp01(vec3 v) {
+    v.x = clamp01(v.x);
+    v.y = clamp01(v.y);
+    v.z = clamp01(v.z);
+    return v;
+}
+
+vec4 clamp01(vec4 v) {
+    v.x = clamp01(v.x);
+    v.y = clamp01(v.y);
+    v.z = clamp01(v.z);
+    v.w = clamp01(v.w);
+    return v;
+}
+
+#InvLerp
+float invlerp(float a, float b, float y) {
+    return (v - a) / (b - a);
+}
+
+vec2 invlerp(vec2 a, vec2 b, vec2 y) {
+    return (v - a) / (b - a);
+}
+
+vec3 invlerp(vec3 a, vec3 b, vec3 y) {
+    return (v - a) / (b - a);
+}
+
+vec4 invlerp(vec4 a, vec4 b, vec4 y) {
+    return (v - a) / (b - a);
+}

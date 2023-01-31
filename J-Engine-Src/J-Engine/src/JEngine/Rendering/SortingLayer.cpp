@@ -1,6 +1,5 @@
 #include <JEngine/Rendering/SortingLayer.h>
 #include <JEngine/Helpers/Helpers.h>
-#include <JEngine/IO/Serialization/Serialization.h>
 
 namespace JEngine {
     std::vector<std::string> SortingLayer::LAYERS = { "Default" };
@@ -33,7 +32,7 @@ namespace JEngine {
     }
 
     const std::string& SortingLayer::layerToName(const uint16_t layer) {
-        return layer >= getLayerCount() ? "" : LAYERS[layer];
+        return layer >= getLayerCount() ? LAYERS[0] : LAYERS[layer];
     }
 
     const uint16_t SortingLayer::nameToLayer(const std::string& name, const bool ignoreCase) {
@@ -75,41 +74,6 @@ namespace JEngine {
         const auto layerInd = nameToLayer(layer, false);
         if (layerInd >= getLayerCount()) { return; }
         _layer = layerInd;
-    }
-
-    const bool SortingLayer::deserializeJson(json& jsonFile) {
-        setOrder(jsonFile.value("order", 0));
-
-        auto& lr = jsonFile.find("layer");
-        if (lr != jsonFile.end()) {
-            auto& name = *lr;
-            
-            if (name.is_string()) {
-                _layer = nameToLayer(name.get<std::string>(), true);
-            }
-            else {
-                _layer = name.get<uint16_t>();
-            }
-        }
-        return true;
-    }
-
-    const bool SortingLayer::serializeJson(json& jsonFile) const {
-        jsonFile["order"] = (_order + INT16_MIN);
-        jsonFile["layer"] = layerToName(_layer);
-        return true;
-    }
-
-    const bool SortingLayer::serializeBinary(std::ostream& stream)  const {
-        Serialization::serializeBinary(stream, _order);
-        Serialization::serializeBinary(stream, _layer);
-        return true;
-    }
-
-    const bool SortingLayer::deserializeBinary(std::istream& stream)  {
-        Serialization::deserializeBinary(stream, _order);
-        Serialization::deserializeBinary(stream, _layer);
-        return true;
     }
 
     const uint16_t SortingLayer::getLayerCount() {

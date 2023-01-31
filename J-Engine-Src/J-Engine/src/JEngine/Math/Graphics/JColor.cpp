@@ -120,26 +120,4 @@ namespace JEngine {
 
         return *this;
     }
-
-    const bool JColor::deserializeJson(json& jsonF) {
-        r = jsonF.value("r", 0.0f);
-        g = jsonF.value("g", 0.0f);
-        b = jsonF.value("b", 0.0f);
-        a = jsonF.value("a", 0.0f);
-        return true;
-    }
-
-    const bool JColor::serializeJson(json& jsonF) const {
-        jsonF["r"] = r;
-        jsonF["g"] = g;
-        jsonF["b"] = b;
-        jsonF["a"] = a;
-        return true;
-    }
-
-    const bool JColor::jsonToBinary(json& jsonF, std::ostream& stream) {
-        JColor temp;
-        temp.deserializeJson(jsonF);
-        return temp.serializeBinary(stream);
-    }
 }

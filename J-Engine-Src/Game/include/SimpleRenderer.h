@@ -32,12 +32,13 @@ public:
     const JVertex2f* getVertices() const override;
     const uint32_t* getIndices() const override;
 
-    const JMatrix4f& getWorldMatrix() const override;
+    const JEngine::JMatrix4f& getWorldMatrix() const override;
 
     void updateRenderer() override; 
 
 protected:
     const JRectf& getLocalBounds() const override;
+    virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
 
 private:
     static constexpr uint8_t FLIP_X = 0x1;
@@ -45,6 +46,6 @@ private:
 
     UI8Flags _flip;
     JEngine::Sprite* _sprite;
-    JMatrix4f _matrix;
+    JEngine::JMatrix4f _matrix;
     uint32_t _layer;
 };

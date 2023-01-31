@@ -1,12 +1,12 @@
 #pragma once
 #include <iostream>
 #include <cstdint>
-#include <JEngine/IO/Serialization/ISerializable.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Utility/Span.h>
 #include <JEngine/Utility/ConstSpan.h>
 
 namespace JEngine {
-    struct FAH16 : public ISerializable<FAH16, 16> {
+    struct FAH16 {
     public:
 
         FAH16();
@@ -21,9 +21,9 @@ namespace JEngine {
 
         std::string toString() const;
 
-        FAH16& parse(const std::string& str);
-        FAH16& parse(const char* str, const size_t count);
-        FAH16& parse(ConstSpan<char>& str);
+        FAH16& parse(const std::string& str, const FAH16& defaultValue = {});
+        FAH16& parse(const char* str, const size_t count, const FAH16& defaultValue = {});
+        FAH16& parse(ConstSpan<char>& str, const FAH16& defaultValue = {});
 
         FAH16& computeHash(std::istream& stream, const size_t blockSize = BLOCK_SIZE);
         FAH16& computeHash(std::istream& stream, Span<char>& buffer);
@@ -32,17 +32,29 @@ namespace JEngine {
         FAH16& computeHash(Span<uint8_t> data, const size_t blockSize = BLOCK_SIZE);
         FAH16& computeHash(ConstSpan<uint8_t> data, const size_t blockSize = BLOCK_SIZE);
 
-        const bool deserializeJson(json& jsonF);
-        const bool serializeJson(json& jsonF);
-
     private:
         static constexpr uint32_t INIT_VAL = 0xFFFFFFFFU;
         static constexpr uint32_t POLYNOMIAL = 0x82F63B78U;
         static constexpr size_t BLOCK_SIZE = 8192 << 3;
 
+        friend struct Serializable<FAH16>;
         uint32_t _hash[2];
         int64_t _len;
        
         static const uint32_t compute(ConstSpan<uint8_t>& span, uint32_t crc);
     };
+
+#pragma region Serialization
+    template<>
+    inline const bool Serializable<FAH16>::deserializeJson(FAH16& itemRef, json& jsonF, const FAH16& defaultValue) {
+        itemRef = jsonF.is_string() ? itemRef.parse(jsonF.get<std::string>(), defaultValue) : defaultValue;
+        return true;
+    }
+
+    template<>
+    inline const bool Serializable<FAH16>::serializeJson(const FAH16& itemRef, json& jsonF) {
+        jsonF.update(itemRef.toString());
+        return true;
+    }
+#pragma endregion
 }

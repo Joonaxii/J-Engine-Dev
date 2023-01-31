@@ -80,7 +80,26 @@ namespace JEngine {
         applyChanges();
     }
 
-    MaterialProperty::MaterialProperty(const std::string& name, const JMatrix& value) :
+    MaterialProperty::MaterialProperty(const std::string& name, const JColor32& value) :
+        _crc(0), _name(name), _type(Color32), _propData() {
+        asColor32() = value;
+        applyChanges();
+    }
+
+
+    MaterialProperty::MaterialProperty(const std::string& name, const JColor24& value) :
+        _crc(0), _name(name), _type(Color24), _propData() {
+        asColor24() = value;
+        applyChanges();
+    }
+
+    MaterialProperty::MaterialProperty(const std::string& name, const JColor& value) :
+        _crc(0), _name(name), _type(Color), _propData() {
+        asColor() = value;
+        applyChanges();
+    }
+
+    MaterialProperty::MaterialProperty(const std::string& name, const JMatrix4f& value) :
         _crc(0), _name(name), _type(Matrix4f), _propData() {
         asMatrix4f() = value;
         applyChanges();
@@ -119,7 +138,11 @@ namespace JEngine {
     JVector4f& MaterialProperty::asVector4f() { return reinterpret_cast<JVector4f&>(_propData); }
     JVector4i& MaterialProperty::asVector4i() { return reinterpret_cast<JVector4i&>(_propData); }
 
-    JMatrix& MaterialProperty::asMatrix4f() { return reinterpret_cast<JMatrix&>(_propData); }
+    JColor32& MaterialProperty::asColor32() { return reinterpret_cast<JColor32&>(_propData); }
+    JColor24& MaterialProperty::asColor24() { return reinterpret_cast<JColor24&>(_propData); }
+    JColor& MaterialProperty::asColor() { return reinterpret_cast<JColor&>(_propData); }
+
+    JMatrix4f& MaterialProperty::asMatrix4f() { return reinterpret_cast<JMatrix4f&>(_propData); }
 
     const ObjectRef<Texture2D>& MaterialProperty::asTexture2D() const { return reinterpret_cast<const ObjectRef<Texture2D>&>(_propData); }
     const uint32_t& MaterialProperty::asUInt() const { return reinterpret_cast<const uint32_t&>(_propData); }
@@ -134,139 +157,14 @@ namespace JEngine {
     const JVector4f& MaterialProperty::asVector4f() const { return reinterpret_cast<const JVector4f&>(_propData); }
     const JVector4i& MaterialProperty::asVector4i() const { return reinterpret_cast<const JVector4i&>(_propData); }
 
-    const JMatrix& MaterialProperty::asMatrix4f() const { return reinterpret_cast<const JMatrix&>(_propData); }
+    const JColor32& MaterialProperty::asColor32() const { return reinterpret_cast<const JColor32&>(_propData); }
+    const JColor24& MaterialProperty::asColor24() const { return reinterpret_cast<const JColor24&>(_propData); }
+    const JColor& MaterialProperty::asColor()     const { return reinterpret_cast<const JColor&>(_propData); }
+
+    const JMatrix4f& MaterialProperty::asMatrix4f() const { return reinterpret_cast<const JMatrix4f&>(_propData); }
 
     void MaterialProperty::applyChanges() {
         _crc = CRC32::compute(_name.c_str(), _name.size());
         _crc = CRC32::update(_crc, &_type, sizeof(_propData) + sizeof(_type));
-    }
-
-    const bool MaterialProperty::deserializeJson(json& jsonF) {
-        _name = jsonF.value("name", "");
-        _type = MaterialProperty::PropertyType(jsonF.value("type", 0));
-        switch (_type)
-        {
-            case JEngine::MaterialProperty::UInt:
-                asUInt() = jsonF.value("value", 0);
-                break;
-            case JEngine::MaterialProperty::Float:
-                asFloat() = jsonF.value("value", 0.0f);
-                break;
-            case JEngine::MaterialProperty::Texture: {
-                UUID uuid;
-                UUIDFactory::parseUUID(jsonF.value("value", ""), uuid);
-                //TODO: Add texture finding by UUID
-                asTexture2D() = ObjectRef<Texture2D>(nullptr);
-                break;
-            }
-            case JEngine::MaterialProperty::Vector2f:
-                asVector2f().deserializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector2i:
-                asVector2i().deserializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector3f:
-                asVector3f().deserializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector3i:
-                asVector3i().deserializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector4f:
-                asVector4f().deserializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector4i:
-                asVector4i().deserializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Matrix4f:
-                asMatrix4f().deserializeJson(jsonF["value"]);
-                break;
-            default: break;
-        }
-        applyChanges();
-        return true;
-    }
-
-    const bool MaterialProperty::serializeJson(json& jsonF) const {
-        jsonF["name"] = _name;
-        jsonF["type"] = uint16_t(_type);
-        
-        switch (_type)
-        {
-            case JEngine::MaterialProperty::UInt:
-                jsonF["value"] = asUInt();
-                break;
-            case JEngine::MaterialProperty::Float:
-                jsonF["value"] = asFloat();
-                break;
-            case JEngine::MaterialProperty::Texture: {
-                auto ptr = asTexture2D().getPtr();
-                const UUID uuid = ptr ? ptr->getUUID() : UUIDFactory::UUID_EMPTY;
-                jsonF["value"] = UUIDFactory::getUUIDStr(uuid);
-                break;
-            }
-            case JEngine::MaterialProperty::Vector2f:
-                asVector2f().serializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector2i:
-                asVector2i().serializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector3f:
-                asVector3f().serializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector3i:
-                asVector3i().serializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector4f:
-                asVector4f().serializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Vector4i:
-                asVector4i().serializeJson(jsonF["value"]);
-                break;
-            case JEngine::MaterialProperty::Matrix4f:
-                asMatrix4f().serializeJson(jsonF["value"]);
-                break;
-            default: break;
-        }
-        return true;
-    }
-
-    const bool MaterialProperty::deserializeBinary(std::istream& stream) {
-        _name = Serialization::deserializeStringBinary(stream);
-        Serialization::deserializeBinary(stream, _type);
-
-        switch (_type)
-        {
-            case JEngine::MaterialProperty::Texture: {
-                UUID uuid;
-                Serialization::deserializeBinary(stream, uuid);
-
-                //TODO: Search texture by UUID
-                break;
-            }
-            default:
-                stream.read(reinterpret_cast<char*>(_propData), getPropertySize(_type));
-                break;
-        }
-        applyChanges();
-        return true;
-    }
-
-    const bool MaterialProperty::serializeBinary(std::ostream& stream) const {
-        Serialization::serializeStringBinary(stream, _name);
-        Serialization::serializeBinary(stream, _type);
-
-        switch (_type)
-        {
-            case JEngine::MaterialProperty::Texture: {
-                auto ptr = asTexture2D().getPtr();
-                const UUID uuid = ptr ? ptr->getUUID() : UUIDFactory::UUID_EMPTY;
-                Serialization::serializeBinary(stream, uuid);
-                break;
-            }
-            default:
-                stream.write(reinterpret_cast<const char*>(_propData), getPropertySize(_type));
-                break;
-        }
-        return true;
     }
 }

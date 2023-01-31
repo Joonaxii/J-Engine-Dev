@@ -14,7 +14,7 @@ namespace JEngine {
         void bind() const;
         void unbind() const;
 
-        void updateBuffer(const uint32_t* data, const size_t count);
+        void updateBuffer(const uint32_t* data, const uint32_t count);
 
         inline const uint32_t getCount() const {
             return _count;

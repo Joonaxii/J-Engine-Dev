@@ -1,11 +1,10 @@
 #pragma once
 #include <JEngine/Assets/IAsset.h>
-#include <JEngine/IO/Serialization/ISerializable.h>
 #include <JEngine/Assets/Graphics/Texture/Texture.h>
 #include <JEngine/Rendering/RenderTarget.h>
 
 namespace JEngine {
-    class RenderTexture : public Texture, public ISerializable<RenderTexture>, public RenderTarget {
+    class RenderTexture : public Texture, public RenderTarget {
     public:
         static constexpr char* JRTX_HEADER = "JRTX";
 
@@ -28,6 +27,8 @@ namespace JEngine {
         void applyPixels(const uint8_t* pixels, const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter) override;
         void applyPalette(const uint8_t* palette) override;
 
+        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
+
     private:
         static constexpr uint16_t FLAG_KEEP_DEPTH_DATA = 0x0008U;
 
@@ -39,4 +40,4 @@ namespace JEngine {
     };
 }
 
-REGISTER_ASSET(JEngine::RenderTexture, RenderTexture);
+REGISTER_ASSET(JEngine::RenderTexture);

@@ -1,5 +1,5 @@
 #pragma once
-#include <JEngine/IO/Serialization/ISerializable.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 
 #include <JEngine/Rendering/SortingLayer.h>
 #include <JEngine/Assets/Graphics/Material/Material.h>
@@ -14,7 +14,7 @@
 
 namespace JEngine {
     template<typename TVert>
-    class IRenderer : public ISerializable<IRenderer<TVert>, sizeof(SortingLayer) + sizeof(JColor32) + sizeof(UUID)> {
+    class IRenderer : public ISerializable<IRenderer<TVert>> {
     public:
         typedef void (*RegistrationEvent)(IRenderer* renderer);
 
@@ -57,7 +57,7 @@ namespace JEngine {
             _flags.setBit(REND_IS_VISIBLE)
         }
 
-        const bool isVisible() const { return (_flags & (REND_IS_VISIBLE | REND_IN_VIEW)) == (REND_IS_VISIBLE & REND_IN_VIEW); }
+        const bool isVisible() const { return (_flags & uint8_t(REND_IS_VISIBLE | REND_IS_IN_VIEW)) == (REND_IS_VISIBLE | REND_IS_IN_VIEW); }
         
         void markOutOfView() {
             _flags &= ~REND_IS_IN_VIEW;
@@ -87,39 +87,39 @@ namespace JEngine {
             return _bounds;
         }
 
-        virtual const bool deserializeJson(json& jsonFile) {
-            const UUID matUUID = _material.getPtr() ? _material.getPtr()->getUUID() : UUIDFactory::UUID_EMPTY;
-            jsonFile["material"] = UUIDFactory::getUUIDStr(matUUID);
-
-            _color.serializeJson(jsonFile["color"]);
-            _layer.serializeJson(jsonFile["layer"]);
+        virtual const bool deserializeJson(json& jsonFile) override {
+            const UUID uuid = _material.getPtr() ? _material.getPtr()->getUUID() : UUIDFactory::Empty;
+            Serialization::deserialize(uuid, jsonFile["material"]);
+            Serialization::deserialize(_color, jsonFile["color"], JColor32::White);
+            Serialization::deserialize(_layer, jsonFile["layer"]);
             return true;
         }
-        virtual const bool serializeJson(json& jsonFile) const {
+
+        virtual const bool serializeJson(json& jsonFile) const override {
             UUID uuid;
-            UUIDFactory::parseUUID(jsonFile.value("material", ""), uuid);
 
-            _color.serializeJson(jsonFile["color"]);
-            _layer.serializeJson(jsonFile["layer"]);
+            Serialization::serialize(uuid, jsonFile["material"]);
+            Serialization::serialize(_color, jsonFile["color"]);
+            Serialization::serialize(_layer, jsonFile["layer"]);
             return true;
         }
 
-        virtual const bool deserializeBinary(std::istream& stream) {
-            UUID uuid;
-            Serialization::deserializeBinary(stream, uuid);
+        virtual const bool deserializeBinary(std::istream& stream) override {
+            UUID uuid{};
 
-            _color.deserializeBinary(stream);
-            _layer.deserializeBinary(stream);
+            Serialization::deserialize(uuid, stream);
+            Serialization::deserialize(_color, stream);
+            Serialization::deserialize(_layer, stream);
             return true;
         }
 
-        virtual const bool serializeBinary(std::ostream& stream) const {
+        virtual const bool serializeBinary(std::ostream& stream) const override {
             const Material* mat = _material.getPtr();
-            const UUID uuid = mat ? mat->getUUID() : UUIDFactory::UUID_EMPTY;
-            Serialization::serializeBinary(stream, uuid);
-
-            _color.serializeBinary(stream);
-            _layer.serializeBinary(stream);
+            const UUID uuid = mat ? mat->getUUID() : UUIDFactory::Empty;
+     
+            Serialization::serialize(uuid, stream);
+            Serialization::serialize(_color, stream);
+            Serialization::serialize(_layer, stream);
             return true;
         }
 
@@ -144,6 +144,10 @@ namespace JEngine {
         JRectf _bounds;
 
         virtual const JRectf& getLocalBounds() const = 0;
+
+        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override {        
+            return true;
+        }
 
         static void registerRenderer(IRenderer<TVert>* rend) {
             if (REGISTER_RENDERER) {

@@ -260,6 +260,16 @@ namespace JEngine {
 
         renderNull(_renderStats.renderInfo, _renderStats.uiRenderInfo);
 
+        _renderStats.renderInfo.activeRenderers = 0;
+        for (size_t i = 0; i < 33; i++)
+        {
+            for (auto& rend : _activeRenderers[i]) {
+                if (rend->isVisible()) {
+                    _renderStats.renderInfo.activeRenderers++;
+                }
+            }
+        }
+
         //Process GuiElements
         _activeImGuiDrawables.clear();
         for (auto& draw : _imGuiDrawables) {
@@ -288,7 +298,7 @@ namespace JEngine {
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
         _window.finalizeFrame();
-
+  
         _tick++;
         _window.pollEvents();
         return true;
@@ -299,7 +309,7 @@ namespace JEngine {
     }
 
     void Renderer::renderNull(RenderInfo& renderInfo, RenderInfo& uiRenderInfo) {
-        JMatrix projection = _window.getWorldProjectionMatrix();
+        JMatrix4f projection = _window.getWorldProjectionMatrix();
         JRectf worldRect = _window.getWorldRect();
         JRectf viewRect = JRectf(0, 0, 1, 1);
         JRectf screenRect = JRectf(0, 0, 1, 1);
@@ -327,7 +337,6 @@ namespace JEngine {
             }
         }
 
-        renderInfo.activeRenderers += uint32_t(workingSet.size());
         generateMaterialGroups(workingSet, _activeRenderers, groups);
 
         uint32_t pos = 0;
@@ -473,7 +482,7 @@ namespace JEngine {
 
         auto& camRenderInfo = _camerasToDraw[camera];
         for (uint64_t i = 1, j = 1; i < 33; i++, j <<= 1) {
-            if ((mask & j)) {
+            if (mask & j) {
                 auto& rendPool = _activeRenderers[i];
                 for (uint64_t k = 0; k < rendPool.size(); k++) {
                     auto rend = rendPool[k];
@@ -490,7 +499,6 @@ namespace JEngine {
                 }
             }
         }
-        camRenderInfo.renderInfo.activeRenderers += uint32_t(workingSet.size());
         generateMaterialGroups(workingSet, _activeRenderers, groups);
 
         uint32_t pos[33];

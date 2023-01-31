@@ -1,10 +1,10 @@
 #pragma once
-#include <JEngine/IO/Serialization/ISerializable.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Math/Units/JVector.h>
 
 namespace JEngine {
     template<typename T>
-    struct JRect : public ISerializable<JRect<T>, sizeof(T) << 1> {
+    struct JRect {
     public:
         static const JRect Zero;
 
@@ -29,13 +29,8 @@ namespace JEngine {
         const bool contains(const JVector2<T>& point) const;
         const bool intersects(const JRect& rect) const;
 
-        const bool serializeBinary(std::ostream& stream) const;
-        const bool deserializeBinary(std::istream& stream);
-
-        const bool serializeJson(json& jsonF) const;
-        const bool deserializeJson(json& jsonF);
-
     private:
+        friend struct Serializable<JRect<T>>;
         JVector2<T> _min;
         JVector2<T> _max;
     };
@@ -44,30 +39,6 @@ namespace JEngine {
     template<typename T> inline JEngine::JRect<T>::JRect() : _min(0, 0), _max(0, 0) { }
     template<typename T> inline JEngine::JRect<T>::JRect(const T x, const T y, const T w, const T h) : _min(x, y), _max(x + w, y + h) {  }
     template<typename T> inline JEngine::JRect<T>::JRect(const JVector2<T>& min, const JVector2<T>& max) : _min(min), _max(max) { }
-
-    template<typename T> inline const bool JRect<T>::serializeJson(json& jsonF) const {
-        _min.serializeJson(jsonF["min"]);
-        _max.serializeJson(jsonF["max"]);
-        return true;
-    }  
-    
-    template<typename T> inline const bool JRect<T>::deserializeJson(json& jsonF) {
-        _min.deserializeJson(jsonF["min"]);
-        _max.deserializeJson(jsonF["max"]);
-        return true;
-    }
-
-    template<typename T> inline const bool JRect<T>::serializeBinary(std::ostream& stream) const {
-        _min.serializeBinary(stream);
-        _max.serializeBinary(stream);
-        return true;
-    }
-
-    template<typename T> inline const bool JRect<T>::deserializeBinary(std::istream& stream) {
-        _min.deserializeBinary(stream);
-        _max.deserializeBinary(stream);
-        return true;
-    }
 
     template<typename T>
     inline const bool JRect<T>::operator==(const JRect<T>& other) const {
@@ -104,6 +75,45 @@ namespace JEngine {
     inline const bool JEngine::JRect<T>::intersects(const JRect<T>& rect) const {
         return !(_min.x > rect._max.x || _min.y > rect._max.y || _max.x < rect._min.x || _max.y < rect._min.y);
     }
+
+#pragma region Serialization
+    template<typename T>
+    struct Serializable<JRect<T>> {
+        static const bool deserializeJson(JRect<T>& itemRef, json& jsonF, const JRect<T>& defaultValue);
+        static const bool serializeJson(const JRect<T>& itemRef, json& jsonF);
+
+        static const bool deserializeBinary(JRect<T>& itemRef, std::istream& stream);
+        static const bool serializeBinary(const JRect<T>& itemRef, std::ostream& stream);
+    };
+
+    template<typename T>
+    inline const bool Serializable<JRect<T>>::deserializeJson(JRect<T>& itemRef, json& jsonF, const JRect<T>& defaultValue) {
+        Serialization::deserialize(itemRef._min, jsonF["min"], defaultValue._min);
+        Serialization::deserialize(itemRef._max, jsonF["max"], defaultValue._max);
+        return true;
+    }
+
+    template<typename T>
+    inline const bool Serializable<JRect<T>>::serializeJson(const JRect<T>& itemRef, json& jsonF) {
+        Serialization::serialize(itemRef._min, jsonF["min"]);
+        Serialization::serialize(itemRef._max, jsonF["max"]);
+        return true;
+    }
+
+    template<typename T>
+    inline const bool Serializable<JRect<T>>::deserializeBinary(JRect<T>& itemRef, std::istream& stream) {
+        Serialization::deserialize(itemRef._min, stream);
+        Serialization::deserialize(itemRef._max, stream);
+        return true;
+    }
+
+    template<typename T>
+    inline const bool Serializable<JRect<T>>::serializeBinary(const JRect<T>& itemRef, std::ostream& stream) {
+        Serialization::serialize(itemRef._min, stream);
+        Serialization::serialize(itemRef._max, stream);
+        return true;
+    }
+#pragma endregion
 }
 
 

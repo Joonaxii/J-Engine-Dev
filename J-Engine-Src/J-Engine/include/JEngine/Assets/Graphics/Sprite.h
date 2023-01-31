@@ -17,15 +17,15 @@ namespace JEngine {
     public:
         Sprite();
         Sprite(const Sprite& copy);
-        Sprite(const std::string& name, const ObjectRef<Texture2D>& texture, const float ppu, const JVector2f pivot, const JRecti& rectangle);
+        Sprite(const std::string& name, const ObjectRef<Texture>& texture, const float ppu, const JVector2f pivot, const JRecti& rectangle);
 
         Sprite& operator=(const Sprite& copy);
 
-        void setTexture(const ObjectRef<Texture2D>& texture, bool resetRect = false);
+        void setTexture(const ObjectRef<Texture>& texture, bool resetRect = false);
         void setTextureRect(const JRecti& rectangle);
         void setColor(const JColor32 color);
 
-        const int32_t writeToBuffer(const JMatrix& matrix, uint8_t flip, JVertex2f* verts);
+        const int32_t writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex2f* verts);
 
         float setPPU(const float ppu);
         const float getPPU() const;
@@ -33,7 +33,7 @@ namespace JEngine {
         void setPivot(const JVector2f& pivot);
         const JVector2f& getPivot() const;
 
-        const Texture2D* getTexture() const;
+        const Texture* getTexture() const;
         const JRecti& getTextureRect() const;
 
         const JColor32& getColor() const;
@@ -57,7 +57,8 @@ namespace JEngine {
         const bool serializeBinary(std::ostream& stream) const override;
         const bool deserializeBinary(std::istream& stream, const size_t size) override;
 
-        static const bool jsonToBinary(json& jsonF, std::ostream& stream);
+    protected:
+        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
 
     private:
         static uint32_t         DEFAULT_INDICES[6];
@@ -71,16 +72,13 @@ namespace JEngine {
         float                   _ppu;
         JVector2f               _pivot;
 
-        ObjectRef<Texture2D>    _texture;
+        ObjectRef<Texture>      _texture;
         //ObjectRef<Atlas>   _atlas;
-
-       // const void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
         void updatePositions();
         void updateTexCoords();
 
         void updateLocalBounds();
-       // const void updateWorldVerts(const sf::Transform& matrix, uint8_t flip, sf::Vertex* verts) const;
     };
-    //REGISTER_ASSET(JEngine::Sprite, JEngine::AssetType::Sprite)
 }
+REGISTER_ASSET(JEngine::Sprite);

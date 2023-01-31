@@ -14,6 +14,8 @@
 #include <JEngine/Rendering/ICamera.h>
 #include <JEngine/Rendering/ImGui/IImGuiDrawable.h>
 #include <JEngine/Math/Graphics/JColor.h>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 static const std::string SHADER_PATH = "../../../J-Engine-Editor/Assets/builtin/shaders/";
 static const std::string TEXTURE_PATH = "../../../Game/Assets/textures/";
@@ -21,20 +23,23 @@ static const std::string TEXTURE_PATH = "../../../Game/Assets/textures/";
 using namespace JEngine;
 
 struct DebugCamera : public ICamera {
-
+public:
     JMatrix4f matrix;
 
     DebugCamera() : matrix({ 0, 0 }, 0, {1, 1}) {
         _clearColor = JColor32::Black;
     }
 
-    void setTransformMatrix(const JMatrix& mat) override {
+    void setTransformMatrix(const JMatrix4f& mat) override {
         matrix = mat;
     }
 
-    const JMatrix& getTransformMatrix() const override {
+    const JMatrix4f& getTransformMatrix() const override {
         return matrix;
     }
+
+protected:
+    virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
 };
 
 struct DebugWindow : public IImGuiDrawable {
@@ -367,8 +372,8 @@ int main() {
 
         cam[2].setClearColor({26, 48, 26, 0});
 
-        cam[1].setTransformMatrix(JMatrix({ 0, 0 }, 0, { 20, 20 }));
-        cam[2].setTransformMatrix(JMatrix({ 0, 0 }, 0, { 20, 20 }));
+        cam[1].setTransformMatrix(JMatrix4f({ 0, 0 }, 0, { 20, 20 }));
+        cam[2].setTransformMatrix(JMatrix4f({ 0, 0 }, 0, { 20, 20 }));
 
         ICamera* camPtrs[3]{
         &cam[0],
@@ -400,7 +405,7 @@ int main() {
         static constexpr float CENTER_X = 4.0f;
 
         static constexpr float SPEED = 0.5f;
-        static constexpr float FREQUENCY = 3.0f;
+        static constexpr float FREQUENCY = 6.0f;
         static constexpr float FREQUENCY_ROT = 1.5f;
 
 

@@ -131,22 +131,73 @@ namespace JEngine {
     }
 
     const bool Material::serializeJson(json& jsonF) const {
+        const UUID shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUIDFactory::Empty;
+        const UUID mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUIDFactory::Empty;
 
+        Serialization::serialize(shaderUUID, jsonF["shader"]);
+        Serialization::serialize(mainTexUUID, jsonF["mainTexture"]);
+
+        json::array_t props{};
+        for (const MaterialProperty& prop : _properties) {
+            json propJS{};
+            Serialization::serialize(prop, propJS);
+            props.push_back(propJS);
+        }
+        jsonF["properties"] = props;
         return true;
     }
 
     const bool Material::deserializeJson(json& jsonF) {
+        _properties.clear();
 
+        UUID shaderUUID = UUIDFactory::Empty;
+        UUID mainTexUUID = UUIDFactory::Empty;
+
+        Serialization::deserialize(shaderUUID, jsonF["shader"]);
+        Serialization::deserialize(mainTexUUID, jsonF["mainTexture"]);
+
+        auto& props = jsonF["properties"];
+        if (props.is_array()) {
+            for (auto& prop : props) {
+                MaterialProperty propMat;
+                Serialization::deserialize(propMat, prop);
+                _properties.push_back(propMat);
+            }
+        }
         return true;
     }
 
     const bool Material::serializeBinary(std::ostream& stream) const {
+        const UUID shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUIDFactory::Empty;
+        const UUID mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUIDFactory::Empty;
+
+        Serialization::serialize(shaderUUID, stream);
+        Serialization::serialize(mainTexUUID, stream);
+
+        const int32_t props = int32_t(_properties.size());
+        Serialization::serialize(props, stream);
+
+        for (const auto& prop : _properties) {
+            Serialization::serialize(prop, stream);
+        }
         return true;
     }
 
     const bool Material::deserializeBinary(std::istream& stream, const size_t size) {
-        //IAsset::deserializeBinary(stream, size);
+        UUID shaderUUID = UUIDFactory::Empty;
+        UUID mainTexUUID = UUIDFactory::Empty;
 
+        Serialization::deserialize(shaderUUID, stream);
+        Serialization::deserialize(mainTexUUID, stream);
+
+        _properties.clear();
+        int32_t props;
+        Serialization::deserialize(props, stream);
+        _properties.resize(props);
+
+        for (size_t i = 0; i < props; i++) {
+            Serialization::deserialize(_properties[i], stream);
+        }
         return true;
     }
 
@@ -217,6 +268,11 @@ namespace JEngine {
         }
     }
 
+    const bool Material::jsonToBinaryImpl(json& jsonF, std::ostream& stream) const {
+
+        return false;
+    }
+
     const int32_t Material::indexOfProperty(const std::string& name) const {
         for (size_t i = 0; i < _properties.size(); i++) {
             const auto& prop = _properties[i];
@@ -258,6 +314,15 @@ namespace JEngine {
                     
                 case MaterialProperty::Matrix4f:
                     shader.setUniformMat4f(prop.getName(), prop.asMatrix4f()); break;
+
+                case MaterialProperty::Color32:
+                    shader.setUniformColor32(prop.getName(), prop.asColor32()); break;
+
+                case MaterialProperty::Color24:
+                    shader.setUniformColor24(prop.getName(), prop.asColor24()); break;
+
+                case MaterialProperty::Color:
+                    shader.setUniformColor(prop.getName(), prop.asColor()); break;
 
                 case MaterialProperty::Texture:
                     pos += shader.setTextures(prop.getName(), prop.asTexture2D().getPtr(), pos);

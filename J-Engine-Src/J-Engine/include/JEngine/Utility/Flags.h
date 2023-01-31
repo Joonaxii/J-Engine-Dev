@@ -1,12 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Math/Math.h>
 #include <JEngine/Helpers/Helpers.h>
 
 namespace JEngine {
     template<typename T>
-    class Flags : public ISerializable<Flags<T>, sizeof(T)> {
+    class Flags {
     public:
         Flags() : _value(0) {}
         Flags(T value) : _value(value) {}
@@ -96,48 +97,42 @@ namespace JEngine {
             _value = 0;
         }
 
-        const bool deserializeJson(json& jsonF) {
-            _value = jsonF.value("flags", 0);
-            return true;
-        }
-
-        const bool serializeJson(json& jsonF) const {
-            jsonF["flags"] = _value;
-            return true;
-        }
-
-        const bool deserializeJson(json& jsonF, std::string* names, const int count) {
-            if (!names || count < 1) {
-                *&jsonF = _value;
-                return true;
-            }
-
-            _value = jsonF.value("flags", 0);
-            return true;
-        }
-
-        const bool serializeJson(json& jsonF, std::string* names, const int count) const {
-            if (!names || count < 1) {
-                _value = jsonF.get<T>();
-                return true;
-            }
-            return true;
-        }
-
-        const bool deserializeBinary(std::istream& stream) {
-            stream.read(reinterpret_cast<char*>(&_value), sizeof(T));
-            return true;
-        }
-
-        const bool serializeBinary(std::ostream& stream) const {
-            stream.write(reinterpret_cast<const char*>(&_value), sizeof(T));
-            return true;
-        }
-
     private:
+        friend struct Serializable<Flags<T>>;
         T _value;
 
     };
+
+#pragma region Serialization
+    template<typename T>
+    struct Serializable<Flags<T>> {
+        static const bool deserializeJson(Flags<T>& itemRef, json& jsonF, const Flags<T>& defaultValue);
+        static const bool serializeJson(const Flags<T>& itemRef, json& jsonF);
+
+        static const bool deserializeBinary(Flags<T>& itemRef, std::istream& stream);
+        static const bool serializeBinary(const Flags<T>& itemRef, std::ostream& stream);
+    };
+
+    template<typename T>
+    inline const bool Serializable<Flags<T>>::deserializeJson(Flags<T>& itemRef, json& jsonF, const Flags<T>& defaultValue) {
+        return Serialization::deserialize(itemRef._value, jsonF, defaultValue._value);
+    }
+
+    template<typename T>
+    inline const bool Serializable<Flags<T>>::serializeJson(const Flags<T>& itemRef, json& jsonF) {
+        return Serialization::serialize(itemRef._value, jsonF);
+    }
+
+    template<typename T>
+    inline const bool Serializable<Flags<T>>::deserializeBinary(Flags<T>& itemRef, std::istream& stream) {
+        return Serialization::deserialize(itemRef._value, stream);
+    }
+
+    template<typename T>
+    inline const bool Serializable<Flags<T>>::serializeBinary(const Flags<T>& itemRef, std::ostream& stream)  {
+        return Serialization::serialize(itemRef._value, stream);
+    }
+#pragma endregion
 }
 
 typedef JEngine::Flags<uint8_t> UI8Flags;

@@ -1,10 +1,10 @@
 #pragma once
-#include <JEngine/IO/Serialization/ISerializable.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 
 namespace JEngine {
     struct JColor24;
     struct JColor32;
-    struct JColor : public ISerializable<JColor, sizeof(float) * 4> {
+    struct JColor {
         static const JColor White;
         static const JColor Black;
         static const JColor Gray;
@@ -50,10 +50,6 @@ namespace JEngine {
 
         JColor& operator/=(const JColor& other);
         JColor& operator*=(const JColor& other);
-
-        const bool deserializeJson(json& jsonF);
-        const bool serializeJson(json & jsonF) const;
-        static const bool jsonToBinary(json& jsonF, std::ostream& stream);
     };
 
     inline std::ostream& operator<<(std::ostream& os, const JColor& rgba) {
@@ -73,4 +69,23 @@ namespace JEngine {
     inline const JColor JColor::Yellow = JColor(1.0f, 1.0f, 0.0f, 1.0f);
     inline const JColor JColor::Cyan = JColor(0.0f, 1.0f, 1.0f, 1.0f);
 
+#pragma region Serialization
+    template<>
+    inline const bool Serializable<JColor>::deserializeJson(JColor& itemRef, json& jsonF, const JColor& defaultValue) {
+        Serialization::deserialize(itemRef.r, jsonF["r"], defaultValue.r);
+        Serialization::deserialize(itemRef.g, jsonF["g"], defaultValue.g);
+        Serialization::deserialize(itemRef.b, jsonF["b"], defaultValue.b);
+        Serialization::deserialize(itemRef.a, jsonF["a"], defaultValue.a);
+        return true;
+    }
+
+    template<>
+    inline const bool Serializable<JColor>::serializeJson(const JColor& itemRef, json& jsonF) {
+        Serialization::serialize(itemRef.r, jsonF["r"]);
+        Serialization::serialize(itemRef.g, jsonF["g"]);
+        Serialization::serialize(itemRef.b, jsonF["b"]);
+        Serialization::serialize(itemRef.a, jsonF["a"]);
+        return true;
+    }
+#pragma endregion
 }

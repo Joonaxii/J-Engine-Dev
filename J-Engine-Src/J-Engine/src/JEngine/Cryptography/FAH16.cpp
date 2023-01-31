@@ -38,16 +38,16 @@ namespace JEngine {
         return sStrm.str();
     }
 
-    FAH16& FAH16::parse(const std::string& str) {
-        return parse(ConstSpan(str.c_str(), str.length()));
+    FAH16& FAH16::parse(const std::string& str, const FAH16& defaultValue) {
+        return parse(ConstSpan(str.c_str(), str.length()), defaultValue);
     }
 
-    FAH16& FAH16::parse(const char* str, const size_t count) {
-        return parse(ConstSpan(str, count));
+    FAH16& FAH16::parse(const char* str, const size_t count, const FAH16& defaultValue) {
+        return parse(ConstSpan(str, count), defaultValue);
     }
 
-    FAH16& FAH16::parse(ConstSpan<char>& str) {
-        if (str.length() < HASH_STR_LEN) { *this = FAH16(); return *this; }
+    FAH16& FAH16::parse(ConstSpan<char>& str, const FAH16& defaultValue) {
+        if (str.length() < HASH_STR_LEN) { *this = defaultValue; return *this; }
 
         Helpers::tryParseHex(str.slice(0 , 8 ), _hash[0], true);
         Helpers::tryParseHex(str.slice(9 , 8 ), _hash[1], true);
@@ -127,21 +127,6 @@ namespace JEngine {
             pos += len;
         }
         return *this;
-    }
-
-    const bool FAH16::deserializeJson(json& jsonF) {
-        jsonF.swap(json({ _hash[0], _hash[1] }));
-        return true;
-    }
-
-    const bool FAH16::serializeJson(json& jsonF) {
-        auto& val = jsonF.get<std::vector<uint64_t>>();
-
-        if (val.size() < 2) { _hash[0] = 0; _hash[1] = 0; return false;; }
-
-        _hash[0] = uint32_t((val[0] & 0xFFFFFFFFU));
-        _hash[1] = uint32_t(val[0]);
-        return true;
     }
 
     const uint32_t FAH16::compute(ConstSpan<uint8_t>& span, uint32_t crc) {

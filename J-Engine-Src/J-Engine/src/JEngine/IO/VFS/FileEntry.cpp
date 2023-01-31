@@ -4,6 +4,7 @@
 #include <JEngine/IO/VFS/FileEntry.h>
 #include <stack>
 #include <fstream>
+#include <JEngine/IO/Serialization/Serialization.h>
 
 namespace JEngine {
     FileEntry::FileEntry() : FileEntry(nullptr, std::string_view(), EntryData()) { }
@@ -177,7 +178,7 @@ namespace JEngine {
 
         if (strncmp(hdr, ASSET_CACHE_HDR, 4) != 0) { return; }
         uint32_t count = 0;
-        Serialization::deserializeBinary(stream, count);
+        Serialization::deserialize(count, stream);
         std::vector<std::string_view> strs;
 
         for (size_t i = 0; i < count; i++) {
@@ -189,13 +190,13 @@ namespace JEngine {
         stream.write(ASSET_CACHE_HDR, 4);
         uint32_t count = 0;
         auto pos = stream.tellp();
-        Serialization::serializeBinary(stream, count);
+        Serialization::serialize(count, stream);
 
         count = writeMetaDataToDB(stream);
         auto end = stream.tellp();
 
         stream.seekp(pos, std::ios::beg);
-        Serialization::serializeBinary(stream, count);
+        Serialization::serialize(count, stream);
         stream.seekp(end, std::ios::beg);
     }
 
@@ -303,12 +304,13 @@ namespace JEngine {
     }
 
     void FileEntry::readMetaDataFromDB(std::istream& stream, std::vector<std::string_view>& strs) {
-        std::string path = Serialization::deserializeStringBinary(stream);
+        std::string path = "";
         EntryData data;
-        data.deserializeBinary(stream);
-
         AssetMetaData meta;
-        meta.deserializeBinary(stream);
+
+        Serialization::deserialize(path, stream);
+        Serialization::deserialize(data, stream);
+        Serialization::deserialize(meta, stream);
         FileEntry* entry;
         bool addNew = false;
 
@@ -326,14 +328,14 @@ namespace JEngine {
         if (_data.type != ET_FOLDER) {
             std::string path = "";
             getPath(path);
-            Serialization::serializeStringBinary(stream, path);
-            _data.serializeBinary(stream);
+            Serialization::serialize(path, stream);
+            Serialization::serialize(_data, stream);
             UUID uuid = _metadata.getUUID();
-            if (uuid == UUIDFactory::UUID_EMPTY) {
+            if (uuid == UUIDFactory::Empty) {
                 UUIDFactory::generateUUID<IAsset>(uuid);
                 _metadata.setUUID(uuid);
             }
-            _metadata.serializeBinary(stream);
+            Serialization::serialize(_metadata, stream);
             c++;
         }
 
@@ -349,7 +351,7 @@ namespace JEngine {
         std::string metaPath = root + pth + ".meta";
 
         json jsonF;
-        _metadata.serializeJson(jsonF);
+        Serialization::serialize(_metadata, jsonF);
         try {
             std::ofstream outStr(metaPath, std::ofstream::out | std::ofstream::trunc);
             outStr.exceptions(std::ios_base::badbit | std::ios_base::failbit);
@@ -379,7 +381,7 @@ namespace JEngine {
             if (valid) {
                 strm.seekg(0, std::ios::beg);
                 json& jsonF = json::parse(strm);
-                _metadata.deserializeJson(jsonF);
+                Serialization::deserialize(_metadata, jsonF);
                 strm.close();
                 UUIDFactory::addUUID<IAsset>(_metadata.getUUID());
             }

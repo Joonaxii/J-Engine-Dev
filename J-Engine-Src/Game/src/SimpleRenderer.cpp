@@ -52,7 +52,7 @@ const uint32_t* SimpleRenderer::getIndices() const {
     return _sprite ? _sprite->getIndices() : nullptr;
 }
 
-const JMatrix4f& SimpleRenderer::getWorldMatrix() const {
+const JEngine::JMatrix4f& SimpleRenderer::getWorldMatrix() const {
     return _matrix;
 }
 

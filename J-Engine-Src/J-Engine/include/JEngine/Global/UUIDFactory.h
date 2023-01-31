@@ -4,6 +4,7 @@
 
 #include <string>
 #include <unordered_set>
+#include <JEngine/IO/Serialization/Serializable.h>
 
 namespace JEngine {
     struct UUIDHash {
@@ -18,7 +19,7 @@ typedef std::unordered_set<UUID, const JEngine::UUIDHash> UUIDSet;
 namespace JEngine {
     class UUIDFactory {
     public:
-        static constexpr UUID UUID_EMPTY{ 0 };
+        static constexpr UUID Empty{ 0 };
 
         template<typename T>
         static UUIDSet& getUUIDSet();
@@ -45,8 +46,8 @@ namespace JEngine {
             return uuidStr;
         }
 
-        static const bool parseUUID(const std::string& str, UUID& uuid) {
-            if (str.length() < 32) { *&uuid = UUID_EMPTY; return false; }
+        static const bool parseUUID(const std::string& str, UUID& uuid, const UUID& defaultVal = UUIDFactory::Empty) {
+            if (str.length() < 32) { *&uuid = defaultVal; return false; }
             RPC_CSTR rpcStr = RPC_CSTR(str.c_str());
             auto ret = UuidFromStringA(rpcStr, &uuid);
             return ret == RPC_S_OK;
@@ -63,14 +64,14 @@ namespace JEngine {
     template<typename T>
     inline const bool UUIDFactory::generateUUID(UUID& uuid) {
         auto& uuids = getUUIDSet<T>();
-        *&uuid = UUID_EMPTY;
+        *&uuid = Empty;
         auto ret = UuidCreate(&uuid);
 
         while (isUUIDFound<T>(uuid)) {
-            *&uuid = UUID_EMPTY;
+            *&uuid = Empty;
             ret = UuidCreate(&uuid);
             if (ret != RPC_S_OK) {
-                *&uuid = UUID_EMPTY;
+                *&uuid = Empty;
                 return false;
             }
         }
@@ -88,7 +89,7 @@ namespace JEngine {
 
     template<typename T>
     inline const void UUIDFactory::removeUUID(const UUID& uuid) {
-        if (uuid == UUID_EMPTY) { return; }
+        if (uuid == Empty) { return; }
         getUUIDSet<T>().erase(uuid);
     }
 
@@ -97,6 +98,25 @@ namespace JEngine {
         auto& uuids = getUUIDSet<T>();
         return uuids.find(uuid) != uuids.end();
     }
+
+#pragma region Serialization
+    template<>
+    inline const bool Serializable<UUID>::deserializeJson(UUID& itemRef, json& jsonF, const UUID& defaultValue) {
+        if (jsonF.is_string()) {
+            UUIDFactory::parseUUID(jsonF.get<std::string>(), itemRef, defaultValue);
+            return true;
+        }
+
+        itemRef = defaultValue;
+        return false;
+    }
+
+    template<>
+    inline const bool Serializable<UUID>::serializeJson(const UUID& itemRef, json& jsonF) {
+        jsonF = UUIDFactory::getUUIDStr(itemRef);
+        return true;
+    }
+#pragma endregion
 }
 
 #define REGISTER_UUID_FACTORY(TYPE) \

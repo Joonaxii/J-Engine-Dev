@@ -1,7 +1,7 @@
 #pragma once
 #include <JEngine/Global/UUIDFactory.h>
 #include <JEngine/Assets/AssetType.h>
-#include <JEngine/IO/Serialization/ISerializable.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Utility/Flags.h>
 #include <JEngine/Assets/AssetMetaData.h>
 #include <cstdint>
@@ -11,7 +11,6 @@ namespace JEngine {
 
     template<typename T>
     struct AssetID {
-        static const AssetType TYPE;
         static int32_t CUR_ID;
     };
 
@@ -48,31 +47,24 @@ namespace JEngine {
         virtual const bool serializeMetaBinary(std::ostream& stream) const;
         virtual const bool deserializeMetaBinary(std::istream& stream, const size_t size);
 
-        virtual const bool serializeJson(json& jsonF) const = 0;
-        virtual const bool deserializeJson(json& jsonF) = 0;
+        virtual const bool serializeJson(json& jsonF) const override = 0;
+        virtual const bool deserializeJson(json& jsonF) override = 0;
 
-        virtual const bool serializeBinary(std::ostream& stream) const = 0;
+        virtual const bool serializeBinary(std::ostream& stream) const override = 0;
         virtual const bool deserializeBinary(std::istream& stream, const size_t size) = 0;
 
-        virtual const bool jsonToBinary(json& jsonF, std::ostream& stream);
-    
     protected:
         UI8Flags _flags;
         std::string _name;
         FileEntry* _fEntry;
       
         AssetMetaData _meta;
+
+        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override = 0;
     };
 }
 REGISTER_UUID_FACTORY(JEngine::IAsset)
 
 
-#define REGISTER_ASSET(T, ATYPE) \
+#define REGISTER_ASSET(T) \
 template<> inline int32_t JEngine::AssetID<T>::CUR_ID = 0; \
-template<> inline const JEngine::AssetType JEngine::AssetID<T>::TYPE = JEngine::AssetType::ATYPE; \
-
-
-//#define REGISTER_ASSET_SER(T, ATYPE) REGISTER_ASSET(T, ATYPE, JEngine::AssetFileType::Binary | JEngine::AssetFileType::JSON)
-//#define REGISTER_ASSET_ALL(T, ATYPE) REGISTER_ASSET(T, ATYPE, JEngine::AssetFileType::All)
-//#define REGISTER_ASSET_SRC(T, ATYPE) REGISTER_ASSET(T, ATYPE, JEngine::AssetFileType::Source)
-//#define REGISTER_ASSET_BIN(T, ATYPE) REGISTER_ASSET(T, ATYPE, JEngine::AssetFileType::Binary | JEngine::AssetFileType::Source)

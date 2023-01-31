@@ -35,7 +35,7 @@ namespace JEngine {
         GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     }
 
-    void IndexBuffer::updateBuffer(const uint32_t* data, const size_t count) {
+    void IndexBuffer::updateBuffer(const uint32_t* data, const uint32_t count) {
         _count = count;
         if (_rendererID) {
             GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _rendererID));

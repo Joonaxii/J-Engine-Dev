@@ -23,8 +23,8 @@ namespace JEngine {
         const size_t getHeight() const;
 
         const JRectf& getWorldRect() const;
-        const JMatrix& getWorldProjectionMatrix() const;
-        const JMatrix& getScreenProjectionMatrix() const;
+        const JMatrix4f& getWorldProjectionMatrix() const;
+        const JMatrix4f& getScreenProjectionMatrix() const;
         const bool isInitialized() const;
 
         void clear(const JColor32& clearColor, const uint32_t clearFlags = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -49,8 +49,8 @@ namespace JEngine {
         static std::unordered_map<GLFWwindow*, Window*> _glWindowToWindow;
 
         JRectf _worldRect;
-        JMatrix _worldProjection;
-        JMatrix _screenProjection;
+        JMatrix4f _worldProjection;
+        JMatrix4f _screenProjection;
         GLFWwindow* _window;
         JVector2i _size;
         ResizeEvent _onResize;

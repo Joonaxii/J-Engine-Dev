@@ -80,11 +80,11 @@ int main() {
 
         float rotation = 0;
         JVector2f position(0, 0);
-        JMatrix mat;
+        JMatrix4f mat;
 
-        Sprite spriteA("Test A", ObjectRef<Texture2D>(&texA), 128, JVector2f(0.5f, 0.5f), JRecti(0, 0, texA.getSize().x, texA.getSize().y));
-        Sprite spriteB("Test B", ObjectRef<Texture2D>(&texB), 32, JVector2f(0.5f, 0.0f), JRecti(0, 0, texB.getSize().x, texB.getSize().y));
-        Sprite spriteC("Test C", ObjectRef<Texture2D>(&texC), 128, JVector2f(0.5f, 0.5f), JRecti(0, 0, texC.getSize().x, texC.getSize().y));
+        Sprite spriteA("Test A", ObjectRef<Texture>(&texA), 128, JVector2f(0.5f, 0.5f), JRecti(0, 0, texA.getSize().x, texA.getSize().y));
+        Sprite spriteB("Test B", ObjectRef<Texture>(&texB), 32, JVector2f(0.5f, 0.0f), JRecti(0, 0, texB.getSize().x, texB.getSize().y));
+        Sprite spriteC("Test C", ObjectRef<Texture>(&texC), 128, JVector2f(0.5f, 0.5f), JRecti(0, 0, texC.getSize().x, texC.getSize().y));
 
         Material materials[3]{
             Material(&texB, &shaderB),

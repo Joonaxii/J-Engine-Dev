@@ -1,10 +1,9 @@
 #pragma once
 #include <JEngine/Assets/IAsset.h>
-#include <JEngine/IO/Serialization/ISerializable.h>
 #include <JEngine/Assets/Graphics/Texture/Texture.h>
 
 namespace JEngine {
-    class Texture2D : public Texture, public ISerializable<Texture2D> {
+    class Texture2D : public Texture {
     public:
         static constexpr char* JTEX_HEADER = "JTEX";
 
@@ -16,7 +15,9 @@ namespace JEngine {
         const bool serializeJson(json& jsonF) const override;
         const bool deserializeJson(json& jsonF) override;
 
+    protected:
+        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
     };
 }
 
-REGISTER_ASSET(JEngine::Texture2D, Texture2D);
+REGISTER_ASSET(JEngine::Texture2D);

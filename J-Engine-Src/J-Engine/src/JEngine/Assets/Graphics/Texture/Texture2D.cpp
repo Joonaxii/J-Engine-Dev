@@ -12,10 +12,11 @@ namespace JEngine {
     const bool Texture2D::serializeBinary(std::ostream& stream) const {
         stream.write(JTEX_HEADER, 4);
  
-        _texFlags.serializeBinary(stream);
-        _size.serializeBinary(stream);
-        Serialization::serializeBinary(stream, _format);
-        Serialization::serializeBinary(stream, _filter);
+        Serialization::serialize(_texFlags, stream);
+        Serialization::serialize(_size, stream);
+
+        Serialization::serialize(_format, stream);
+        Serialization::serialize(_filter, stream);
 
         const int32_t bitsPP = getBitsPerPixel(_format);
         const int32_t bytesPP = bitsPP >> 3;
@@ -82,10 +83,11 @@ namespace JEngine {
         stream.read(hdr, 4);
 
         if (strcmp(hdr, JTEX_HEADER) == 0) {
-            _texFlags.deserializeBinary(stream);
-            _size.deserializeBinary(stream);
-            Serialization::deserializeBinary(stream, _format);
-            Serialization::deserializeBinary(stream, _filter);
+            Serialization::deserialize(_texFlags, stream);
+            Serialization::deserialize(_size, stream);
+
+            Serialization::deserialize(_format, stream);
+            Serialization::deserialize(_filter, stream);
 
             const uint16_t compression = _texFlags.select(VALUE_COMPRESSION);
 

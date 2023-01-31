@@ -107,24 +107,4 @@ namespace JEngine {
         b = Math::multiplyBytes(b, other.b);
         return *this;
     }
-
-    const bool JColor24::deserializeJson(json& jsonF) {
-        r = Math::clamp(jsonF.value("r", 0x00), 0x00, 0xFF);
-        g = Math::clamp(jsonF.value("g", 0x00), 0x00, 0xFF);
-        b = Math::clamp(jsonF.value("b", 0x00), 0x00, 0xFF);
-        return true;
-    }
-
-    const bool JColor24::serializeJson(json& jsonF) const {
-        jsonF["r"] = r;
-        jsonF["g"] = g;
-        jsonF["b"] = b;
-        return true;
-    }
-
-    const bool JColor24::jsonToBinary(json& jsonF, std::ostream& stream) {
-        JColor24 temp;
-        temp.deserializeJson(jsonF);
-        return temp.serializeBinary(stream);
-    }
 }

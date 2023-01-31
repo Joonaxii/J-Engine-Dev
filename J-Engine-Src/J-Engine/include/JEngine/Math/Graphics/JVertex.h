@@ -1,10 +1,11 @@
 #pragma once
+#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Math/Graphics/JColor32.h>
 #include <JEngine/Math/Units/JVector.h>
 
 namespace JEngine {
     template<typename T>
-    struct JVertex : public ISerializable<JVertex<T>, sizeof(JColor32) + sizeof(JVector2f) + sizeof(T)> {
+    struct JVertex {
     public:
         T position;
         JColor32 color;
@@ -12,53 +13,55 @@ namespace JEngine {
 
         JVertex();
         JVertex(const T& position, const JColor32& color, const JVector2f& uv);
-     
-        const bool deserializeBinary(std::istream& stream);
-        const bool serializeBinary(std::ostream& stream) const;
-
-        const bool deserializeJson(json& jsonF);
-        const bool serializeJson(json& jsonF) const;
-        static const bool jsonToBinary(json& jsonF, std::ostream& stream);
     };
 
-    template<typename T> inline JVertex<T>::JVertex() : position(), color(0, 0, 0), uv(0.0f, 0.0f) { }
+    template<typename T> inline JVertex<T>::JVertex() : position(), color(JColor32::White), uv(0.0f, 0.0f) { }
 
     template<typename T>
     inline JVertex<T>::JVertex(const T& position, const JColor32& color, const JVector2f& uv) : position(position), color(color), uv(uv) { }
 
-    template<typename T> inline const bool JVertex<T>::deserializeBinary(std::istream& stream) {
-        position.deserializeBinary(stream);
-        color.deserializeBinary(stream);
-        uv.deserializeBinary(stream);
+#pragma region Serialization
+    template<typename T>
+    struct Serializable<JVertex<T>> {
+        static const bool deserializeJson(JVertex<T>& itemRef, json& jsonF, const JVertex<T>& defaultValue);
+        static const bool serializeJson(const JVertex<T>& itemRef, json& jsonF);
+
+        static const bool deserializeBinary(JVertex<T>& itemRef, std::istream& stream);
+        static const bool serializeBinary(const JVertex<T>& itemRef, std::ostream& stream);
+    };
+
+    template<typename T>
+    inline const bool Serializable<JVertex<T>>::deserializeJson(JVertex<T>& itemRef, json& jsonF, const JVertex<T>& defaultValue) {
+        Serialization::deserialize(itemRef.position, jsonF["position"], defaultValue.position);
+        Serialization::deserialize(itemRef.color, jsonF["color"], defaultValue.color);
+        Serialization::deserialize(itemRef.uv, jsonF["uv"], defaultValue.uv);
         return true;
     }
 
-    template<typename T> inline const bool JVertex<T>::serializeBinary(std::ostream& stream) const {
-        position.serializeBinary(stream);
-        color.serializeBinary(stream);
-        uv.serializeBinary(stream);
+    template<typename T>
+    inline const bool Serializable<JVertex<T>>::serializeJson(const JVertex<T>& itemRef, json& jsonF) {
+        Serialization::serialize(itemRef.position, jsonF["position"]);
+        Serialization::serialize(itemRef.color, jsonF["color"]);
+        Serialization::serialize(itemRef.uv, jsonF["uv"]);
         return true;
     }
 
-    template<typename T> inline const bool JVertex<T>::deserializeJson(json& jsonF) {
-        position.deserializeJson(jsonF["position"]);
-        color.deserializeJson(jsonF["color"]);
-        uv.deserializeJson(jsonF["uv"]);
+    template<typename T>
+    inline const bool Serializable<JVertex<T>>::deserializeBinary(JVertex<T>& itemRef, std::istream& stream) {
+        Serialization::deserialize(itemRef.position, stream);
+        Serialization::deserialize(itemRef.color, stream);
+        Serialization::deserialize(itemRef.uv, stream);
         return true;
     }
 
-    template<typename T> inline const bool JVertex<T>::serializeJson(json& jsonF) const {
-        position.serializeJson(jsonF["position"]);
-        color.serializeJson(jsonF["color"]);
-        uv.serializeJson(jsonF["uv"]);
+    template<typename T>
+    inline const bool Serializable<JVertex<T>>::serializeBinary(const JVertex<T>& itemRef, std::ostream& stream) {
+        Serialization::serialize(itemRef.position, stream);
+        Serialization::serialize(itemRef.color, stream);
+        Serialization::serialize(itemRef.uv, stream);
         return true;
     }
-
-    template<typename T> inline const bool JVertex<T>::jsonToBinary(json& jsonF, std::ostream& stream) {
-        JVertex temp;
-        temp.deserializeJson(jsonF);
-        return temp.serializeBinary(stream);
-    }
+#pragma endregion
 }
 
 typedef JEngine::JVertex<JVector2f> JVertex2f;

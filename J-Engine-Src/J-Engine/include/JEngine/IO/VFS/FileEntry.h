@@ -1,9 +1,9 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <JEngine/IO/Serialization/Serialization.h>
 #include <JEngine/Assets/AssetMetaData.h>
 #include <JEngine/Assets/IAsset.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 
 namespace JEngine {
     class FileEntry {
@@ -17,18 +17,6 @@ namespace JEngine {
             EntryData() : position(0), type(0), pak(-1), getAsset(nullptr) {}
             EntryData(const uint8_t type) : position(0), type(type), pak(-1), getAsset(nullptr){}
             EntryData(const uint8_t type, IAsset*(*get)(void)) : position(0), type(type), pak(-1), getAsset(get){}
-
-            const void serializeBinary(std::ostream& stream) {
-                Serialization::serializeBinary(stream, type);
-                Serialization::serializeBinary(stream, pak);
-                Serialization::serializeBinary(stream, position);
-            }
-
-            const void deserializeBinary(std::istream& stream) {
-                Serialization::deserializeBinary(stream, type);
-                Serialization::deserializeBinary(stream, pak);
-                Serialization::deserializeBinary(stream, position);
-            }
         };
 
         struct PathEntry {
@@ -108,4 +96,23 @@ namespace JEngine {
         void writeMetadataToJson(const std::string& root);
         void validateMetaDataRecurse(const std::string& root, std::vector<FileEntry*>& generate);
     };
+
+
+#pragma region Serialization
+    template<>
+    inline const bool Serializable<FileEntry::EntryData>::deserializeBinary(FileEntry::EntryData& itemRef, std::istream& stream) {
+        Serialization::deserialize(itemRef.type, stream);
+        Serialization::deserialize(itemRef.pak, stream);
+        Serialization::deserialize(itemRef.position, stream);
+        return true;
+    }
+
+    template<>
+    inline const bool Serializable<FileEntry::EntryData>::serializeBinary(const FileEntry::EntryData& itemRef, std::ostream& stream) {
+        Serialization::serialize(itemRef.type, stream);
+        Serialization::serialize(itemRef.pak, stream);
+        Serialization::serialize(itemRef.position, stream);
+        return true;
+    }
+#pragma endregion
 }

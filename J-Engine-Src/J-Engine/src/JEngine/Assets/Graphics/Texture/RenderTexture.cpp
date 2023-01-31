@@ -158,7 +158,7 @@ namespace JEngine {
 
             ConstSpan<uint8_t> data(pixels, pixelC * (getBitsPerPixel(format) >> 3));
             JColor32* tempC = reinterpret_cast<JColor32*>(temp);
-            for (size_t i = 0; i < pixelC; i++, tempC++)
+            for (int32_t i = 0; i < pixelC; i++, tempC++)
             {
                 readPixel(data, format, i, *tempC);
             }

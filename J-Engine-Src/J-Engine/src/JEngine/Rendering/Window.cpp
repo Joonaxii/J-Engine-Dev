@@ -68,11 +68,11 @@ namespace JEngine {
         return _worldRect;
     }
 
-    const JMatrix& Window::getWorldProjectionMatrix() const {
+    const JMatrix4f& Window::getWorldProjectionMatrix() const {
         return _worldProjection;
     }
         
-    const JMatrix& Window::getScreenProjectionMatrix() const {
+    const JMatrix4f& Window::getScreenProjectionMatrix() const {
         return _screenProjection;
     }
 
@@ -151,7 +151,7 @@ namespace JEngine {
 
         const float w = orthoSize * aspect;
         _worldRect       = JRectf({ -0.5f * aspect, -0.5f }, { 0.5f * aspect, 0.5f });
-        _worldProjection = JMatrix::ortho(-w, w, -orthoSize, orthoSize);
+        _worldProjection = JMatrix4f::ortho(-w, w, -orthoSize, orthoSize);
 
         _screenProjection = _worldProjection;
         _screenProjection.translate(-w, -orthoSize);

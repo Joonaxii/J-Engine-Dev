@@ -2,6 +2,7 @@
 #include <JEngine/Math/Units/JVector.h>
 #include <JEngine/Helpers/EnumMacros.h>
 #include <JEngine/Math/Math.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 
 #ifdef _WIN32_WINDOWS
 #undef _WIN32_WINDOWS
@@ -480,6 +481,33 @@ namespace JEngine {
 
         static const bool any(const int32_t mode, const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
     };
+
+#pragma region Serialization
+    template<>
+    inline const bool Serializable<Input::DeviceIndex>::deserializeJson(Input::DeviceIndex& itemRef, json& jsonF, const Input::DeviceIndex& defaultValue) {
+        itemRef = jsonF.is_number_integer() ? Input::DeviceIndex(jsonF.get<uint8_t>()) : defaultValue;
+        return true;
+    }
+
+    template<>
+    inline const bool Serializable<Input::DeviceIndex>::serializeJson(const Input::DeviceIndex& itemRef, json& jsonF) {
+        jsonF.update(uint8_t(itemRef));
+        return true;
+    } 
+    
+
+    template<>
+    inline const bool Serializable<Input::InputCode>::deserializeJson(Input::InputCode& itemRef, json& jsonF, const Input::InputCode& defaultValue) {
+        itemRef = jsonF.is_number_integer() ? Input::InputCode(jsonF.get<uint16_t>()) : defaultValue;
+        return true;
+    }
+
+    template<>
+    inline const bool Serializable<Input::InputCode>::serializeJson(const Input::InputCode& itemRef, json& jsonF) {
+        jsonF.update(uint16_t(itemRef));
+        return true;
+    }
+#pragma endregion
 }
 
 CREATE_ENUM_OPERATORS_SELF(JEngine::Input::DeviceIndex);
