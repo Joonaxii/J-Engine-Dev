@@ -120,7 +120,7 @@ namespace JEngine {
         return _pivot;
     }
 
-    const Texture* Sprite::getTexture() const {
+    const Texture* Sprite::getTexturePtr() const {
         return _texture.getPtr();
     }
 

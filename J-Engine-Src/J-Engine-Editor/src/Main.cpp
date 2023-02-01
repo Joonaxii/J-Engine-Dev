@@ -6,7 +6,7 @@
 #include <JEngine/Assets/Decoders/BMPDecoder.h>
 #include <JEngine/Assets/Graphics/Texture/Texture2D.h>
 #include <JEngine/Assets/Graphics/Sprite.h>
-#include <JEngine/Debugging/FPS.h>
+#include <JEngine/Debug/FPS.h>
 #include <JEngine/Math/Math.h>
 #include <JEngine/Input/Input.h>
 #include <imgui.h>

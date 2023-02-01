@@ -8,10 +8,12 @@ namespace JEngine {
     public:
         IReferenceProvider(const bool isOrdered) : _ordered(isOrdered), _version(0), _count(0), _items(nullptr) {}
 
-        void setVersion(const uint32_t& version) { _version = version; }
-        const uint32_t getVersion() const { return _version; }
+        void setVersion(const uint8_t& version) { _version = version; }
+        const uint8_t getVersion() const { return _version; }
 
-        const bool versionChanged(const uint32_t& version) const { return _version != version; }
+        const bool hasToUpdate(const uint8_t& version, const T* ptr) const  { 
+            return !ptr || _version != version || (ptr < _items || ptr >= (_items + _count));
+        }
 
         const int32_t indexOfID(const int32_t id) const {
             if (_ordered)
@@ -54,9 +56,9 @@ namespace JEngine {
         virtual const bool removeById(const int32_t id) = 0;
 
     protected:
-        int _count;
+        int32_t _count;
         T* _items;
-        uint32_t _version;
+        uint8_t _version;
         bool _ordered;
     };
 }

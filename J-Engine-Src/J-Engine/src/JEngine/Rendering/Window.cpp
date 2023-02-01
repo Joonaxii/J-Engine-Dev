@@ -11,7 +11,7 @@ namespace JEngine {
 
     }
 
-    Window::Window() : _screenBuffer(), _window(nullptr), _size(), _worldRect(), _worldProjection(), _onResize() { }
+    Window::Window() : _screenBuffer(GL_RGBA32F), _window(nullptr), _size(), _worldRect(), _worldProjection(), _onResize() { }
     Window::~Window() {
         close();
     }

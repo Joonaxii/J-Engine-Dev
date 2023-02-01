@@ -3,8 +3,10 @@
 #include <cassert>
 
 namespace JEngine {
-    FrameBuffer::FrameBuffer() : _specs(), _bufferId(0), _colorAttachId(0), _depthAttachId(0) { }
-    FrameBuffer::FrameBuffer(const FrameBufferSpecs& specs) : _specs(specs), _bufferId(0), _colorAttachId(0), _depthAttachId(0) { }
+    FrameBuffer::FrameBuffer() : FrameBuffer(GL_RGBA8) { }
+    FrameBuffer::FrameBuffer(const uint32_t colorFormat) : _colorFormat(colorFormat), _specs(), _bufferId(0), _colorAttachId(0), _depthAttachId(0) { }
+    FrameBuffer::FrameBuffer(const FrameBufferSpecs& specs) : FrameBuffer(GL_RGBA8, specs) { }
+    FrameBuffer::FrameBuffer(const uint32_t colorFormat, const FrameBufferSpecs& specs) :_colorFormat(colorFormat), _specs(specs), _bufferId(0), _colorAttachId(0), _depthAttachId(0) { }
     FrameBuffer::~FrameBuffer() { release(); releaseTexture(); releaseDepthBuffer(); }
 
     void FrameBuffer::invalidate(const FrameBufferSpecs& specs) {
@@ -33,7 +35,7 @@ namespace JEngine {
         }
 
         GLCall(glBindTexture(GL_TEXTURE_2D, _colorAttachId));
-        GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _specs.width, _specs.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
+        GLCall(glTexImage2D(GL_TEXTURE_2D, 0, _colorFormat, _specs.width, _specs.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
 
         if (createdTex || createdBuf) {
             GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));

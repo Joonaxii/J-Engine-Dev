@@ -3,7 +3,7 @@
 #include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Collections/ObjectRef.h>
 #include <JEngine/Assets/Graphics/Material/MaterialProperty.h>
-#include <JEngine/Assets/Graphics/Texture/Texture2D.h>
+#include <JEngine/Assets/Graphics/Texture/Texture.h>
 #include <JEngine/Assets/Graphics/Shader/Shader.h>
 #include <JEngine/Rendering/FrameBuffer.h>
 
@@ -13,7 +13,7 @@ namespace JEngine {
 
         Material();
         Material(const ObjectRef<Shader>& shader);
-        Material(const ObjectRef<Texture2D>& texture, const ObjectRef<Shader>& shader);
+        Material(const ObjectRef<Texture>& texture, const ObjectRef<Shader>& shader);
 
         void addProperty(const MaterialProperty& prop);
         void removeProperty(const std::string& name);
@@ -29,7 +29,7 @@ namespace JEngine {
 
         const std::vector<MaterialProperty>& getProperties() const;
 
-        void setTexture(const ObjectRef<Texture2D>& tex);
+        void setMainTexture(const ObjectRef<Texture>& tex);
         void setFrameBuffer(const ObjectRef<FrameBuffer>& fBuffer);
 
         const bool serializeJson(json& jsonF) const override;
@@ -44,6 +44,12 @@ namespace JEngine {
         const ObjectRef<Shader>& getShader() const;
         ObjectRef<Shader>& getShader();
 
+        const Texture* getMainTexturePtr() const;
+        Texture* getMainTexturePtr();
+
+        const ObjectRef<Texture>& getMainTexture() const;
+        ObjectRef<Texture>& getMainTexture();
+
         const bool bind();
         void unbind() const;
 
@@ -52,7 +58,7 @@ namespace JEngine {
 
     private:
         ObjectRef<Shader> _shader;
-        ObjectRef<Texture2D> _mainTex;
+        ObjectRef<Texture> _mainTex;
         ObjectRef<FrameBuffer> _frameBuffer;
 
         std::vector<MaterialProperty> _properties;

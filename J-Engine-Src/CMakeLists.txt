@@ -1,12 +1,13 @@
-# Specify minimum supported cmake version
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required (VERSION 2.4...3.8)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# set the project name
+set(CMAKE_WARN_DEPRECATED OFF)
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+
 project(JEngine-Game)
 
-# enable project folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 

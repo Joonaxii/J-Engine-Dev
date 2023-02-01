@@ -1,4 +1,3 @@
-cmake_minimum_required (VERSION 3.8)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -10,8 +9,8 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory("ext/imgui")
 add_subdirectory("ext/glfw-3.3.8")
-add_subdirectory("ext/zlib-1.2.12")
-add_subdirectory("ext/json")
+add_subdirectory("ext/zlib")
+add_subdirectory("ext/nlohmann/json")
 
 add_compile_definitions(GLEW_STATIC)
 
@@ -346,6 +345,6 @@ include_directories("include")
 include_directories("ext/include")
 include_directories("ext/imgui")
 include_directories("include/JEngine")
-include_directories("ext/json/include")
-include_directories("ext/zlib-1.2.12")
-include_directories(BEFORE "${CMAKE_CURRENT_BINARY_DIR}/ext/zlib-1.2.12")
+include_directories("ext/nlohmann/json/include")
+include_directories("ext/zlib")
+include_directories(BEFORE "${CMAKE_CURRENT_BINARY_DIR}/ext/zlib")

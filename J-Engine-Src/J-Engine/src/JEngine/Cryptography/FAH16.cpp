@@ -13,9 +13,10 @@ namespace JEngine {
         _len = other._len;
     }
     FAH16::FAH16(const uint32_t a, const uint32_t b, const int64_t len) : _hash { a, b }, _len(len) { }
-    FAH16::FAH16(const std::string& str) : _hash{ 0, 0 }, _len(0) {
-        parse(str);
-    }
+    FAH16::FAH16(const std::string& str) : _hash{ 0, 0 }, _len(0) { parse(str); }
+
+    FAH16::FAH16(const char* str) : _hash{ 0, 0 }, _len(0) { parse(str); }
+    FAH16::FAH16(const char* str, const size_t size) : _hash{ 0, 0 }, _len(0) {parse(str); }
 
     const bool FAH16::operator==(const FAH16& other) const {
         return (_hash[0] == other._hash[0]) && (_hash[1] == other._hash[1]);
@@ -38,13 +39,9 @@ namespace JEngine {
         return sStrm.str();
     }
 
-    FAH16& FAH16::parse(const std::string& str, const FAH16& defaultValue) {
-        return parse(ConstSpan(str.c_str(), str.length()), defaultValue);
-    }
-
-    FAH16& FAH16::parse(const char* str, const size_t count, const FAH16& defaultValue) {
-        return parse(ConstSpan(str, count), defaultValue);
-    }
+    FAH16& FAH16::parse(const std::string& str, const FAH16& defaultValue) { return parse(ConstSpan(str.c_str(), str.length()), defaultValue); }
+    FAH16& FAH16::parse(const char* str, const FAH16& defaultValue) { return parse(ConstSpan(str, strlen(str)), defaultValue); }
+    FAH16& FAH16::parse(const char* str, const size_t count, const FAH16& defaultValue) { return parse(ConstSpan(str, count), defaultValue); }
 
     FAH16& FAH16::parse(ConstSpan<char>& str, const FAH16& defaultValue) {
         if (str.length() < HASH_STR_LEN) { *this = defaultValue; return *this; }

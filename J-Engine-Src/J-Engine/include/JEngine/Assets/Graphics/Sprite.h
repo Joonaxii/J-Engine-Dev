@@ -33,7 +33,12 @@ namespace JEngine {
         void setPivot(const JVector2f& pivot);
         const JVector2f& getPivot() const;
 
-        const Texture* getTexture() const;
+        Texture* getTexturePtr();
+        const Texture* getTexturePtr() const;
+
+        ObjectRef<Texture> getTexture();
+        const ObjectRef<Texture> getTexture() const;
+
         const JRecti& getTextureRect() const;
 
         const JColor32& getColor() const;

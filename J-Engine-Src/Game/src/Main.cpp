@@ -19,7 +19,7 @@
 #include <JEngine/Rendering/ImGui/IImGuiDrawable.h>
 #include <SimpleRenderer.h>
 #include <imgui.h>
-#include <JEngine/Debugging/FPS.h>
+#include <JEngine/Debug/FPS.h>
 
 using namespace JEngine;
 

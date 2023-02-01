@@ -1,4 +1,5 @@
 #pragma once
+
 #include <JEngine/Assets/IAsset.h>
 #include <JEngine/Math/Units/JVector.h>
 #include <JEngine/Math/Units/JMatrix.h>
@@ -8,6 +9,8 @@
 #include <string>
 #include <iostream>
 #include <unordered_map>
+#include <JEngine/Cryptography/FAH16.h>
+#include <JEngine/Collections/ObjectRef.h>
 
 namespace JEngine {
     struct ShaderSources {
@@ -19,8 +22,7 @@ namespace JEngine {
         uint16_t blendFunc;
     };
 
-    class Texture2D;
-    struct JMatrix4f;
+    class Texture;
     class Shader : public IAsset {
     public:
         typedef bool (*FindInclude)(const std::string& line, const std::ostream& stream);
@@ -70,7 +72,7 @@ namespace JEngine {
 
         void setUniformMat4f(const std::string& name, const JMatrix4f& mat);
 
-        const uint32_t setTextures(const std::string& name, const Texture2D* texture, const uint32_t position = 0);
+        const uint32_t setTextures(const std::string& name, const Texture* texture, const uint32_t position = 0);
 
         const bool serializeJson(json& jsonF) const override;
         const bool deserializeJson(json& jsonF) override;
@@ -80,11 +82,20 @@ namespace JEngine {
 
         const uint64_t getBlendUnion() const;
 
+        static bool tryFindShader(const char* name, ObjectRef<Shader>& shader);
+        static Shader* findShader(const char* name);
+
+        static void addShaderToLUT(const ObjectRef<Shader>& shader);
+        static const bool removeShaderFromLUT(const ObjectRef<Shader>& shader);
+
     protected:
         virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
 
     private:
+        typedef std::unordered_map<FAH16, ObjectRef<Shader>, std::hash<FAH16>> ShaderLUT;
+
         static uint64_t CURRENT_BLENDING_MODE;
+        static ShaderLUT SHADER_LUT;
 
         uint16_t _blendingModes[4];
         uint32_t _shaderID;

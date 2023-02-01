@@ -1,4 +1,4 @@
-#include <JEngine/Debugging/FPS.h>
+#include <JEngine/Debug/FPS.h>
 
 namespace JEngine {
     FPS::FPS() : _fps(60), _tempFrame(0), _tempTime(0), _histPos(0) {

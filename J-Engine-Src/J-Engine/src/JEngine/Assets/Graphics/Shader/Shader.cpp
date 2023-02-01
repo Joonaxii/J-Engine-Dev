@@ -1,5 +1,5 @@
 #include <JEngine/Assets/Graphics/Shader/Shader.h>
-#include <JEngine/Assets/Graphics/Texture/Texture2D.h>
+#include <JEngine/Assets/Graphics/Texture/Texture.h>
 #include <JEngine/Rendering/OpenGL/GLHelpers.h>
 #include <JEngine/IO/Helpers/FileExtensions.h>
 #include <JEngine/Helpers/StringExtensions.h>
@@ -9,6 +9,7 @@
 
 namespace JEngine {
     uint64_t Shader::CURRENT_BLENDING_MODE = 0;
+    Shader::ShaderLUT Shader::SHADER_LUT{};
 
     struct BlendMode {
         const char* name;
@@ -93,7 +94,7 @@ namespace JEngine {
         return _shaderID; 
     }
 
-    const uint32_t Shader::setTextures(const std::string& name, const Texture2D* texture, const uint32_t position) {
+    const uint32_t Shader::setTextures(const std::string& name, const Texture* texture, const uint32_t position) {
         if (!texture || !_shaderID) { return position; }
 
         uint32_t pos = position;
@@ -135,6 +136,48 @@ namespace JEngine {
 
     const uint64_t Shader::getBlendUnion() const {
         return *reinterpret_cast<const uint64_t*>(_blendingModes);
+    }
+
+    bool Shader::tryFindShader(const char* name, ObjectRef<Shader>& shader) {
+        FAH16 hash(name);
+
+        auto find = SHADER_LUT.find(hash);
+        if (find == SHADER_LUT.end()) { return false; }
+
+        shader = find->second;
+        return true;
+    }
+
+    Shader* Shader::findShader(const char* name) {
+        FAH16 hash(name);
+        auto find = SHADER_LUT.find(hash);
+
+        if (find == SHADER_LUT.end()) { return nullptr; }
+        return find->second.getPtr();
+    }
+
+    void Shader::addShaderToLUT(const ObjectRef<Shader>& shader) {
+        const Shader* shaderPtr = shader.getPtr();
+
+        if (shaderPtr) {
+            FAH16 hash(shaderPtr->getName().c_str());
+            SHADER_LUT.insert(std::make_pair(hash, ObjectRef<Shader>(shader)));
+        }
+    }
+
+    const bool Shader::removeShaderFromLUT(const ObjectRef<Shader>& shader) {
+        const Shader* shaderPtr = shader.getPtr();
+
+        if (shaderPtr) {
+            FAH16 hash(shaderPtr->getName().c_str());
+            auto find = SHADER_LUT.find(hash);
+
+            if (find == SHADER_LUT.end()) { return false; }
+
+            SHADER_LUT.erase(hash);
+        }
+
+        return false;
     }
 
     void Shader::setUniform1i(const std::string& name, const int32_t value) {

@@ -1,6 +1,13 @@
 #include <SimpleRenderer.h>
 using namespace JEngine;
 
+Material* getNewMaterial(const Material* other) {
+    if (other) {
+        return new Material(*other);
+    }
+    return new Material();
+}
+
 SimpleRenderer::SimpleRenderer() : _flip(0), _sprite(nullptr), _matrix(JMatrix4f::Identity), _layer(1) {}
 
 SimpleRenderer::SimpleRenderer(JEngine::Sprite* sprite) : SimpleRenderer() {
@@ -22,6 +29,13 @@ const bool SimpleRenderer::getFlipY() const { return bool(_flip & FLIP_Y); }
 
 void SimpleRenderer::setSprite(JEngine::Sprite* sprite) {
     _sprite = sprite;
+    Material* mat = _material.getPtr();
+    Texture* texture = mat ? mat->getMainTexturePtr() : nullptr;
+
+    if (!mat || texture != sprite->getTexture()) {
+        Material* newMat = getNewMaterial(mat);
+        newMat->setMainTexture(sprite->getTexture());
+    }
 }
 
 const bool SimpleRenderer::canRender() const {

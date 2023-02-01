@@ -1,0 +1,6 @@
+[submodule "J-Engine-Src/J-Engine/ext/zlib"]
+	path = J-Engine-Src/J-Engine/ext/zlib
+	url = https://github.com/madler/zlib
+[submodule "J-Engine-Src/J-Engine/ext/nlohmann/json"]
+	path = J-Engine-Src/J-Engine/ext/nlohmann/json
+	url = https://github.com/nlohmann/json

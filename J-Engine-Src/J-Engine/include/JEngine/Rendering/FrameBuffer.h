@@ -23,7 +23,9 @@ namespace JEngine {
     public:
 
         FrameBuffer();
+        FrameBuffer(const uint32_t colorFormat);
         FrameBuffer(const FrameBufferSpecs& specs);
+        FrameBuffer(const uint32_t colorFormat, const FrameBufferSpecs& specs);
         ~FrameBuffer();
 
         const uint32_t& getBufferId() const { return _bufferId; }
@@ -46,6 +48,8 @@ namespace JEngine {
         void invalidate(const bool rebuild);
         FrameBufferSpecs _specs;
         uint32_t _bufferId;
+
+        uint32_t _colorFormat;
         uint32_t _colorAttachId;
         uint32_t _depthAttachId;
     };

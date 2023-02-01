@@ -3,7 +3,7 @@
 namespace JEngine {
     Material::Material() : _mainTex(), _shader(){ }
     Material::Material(const ObjectRef<Shader>& shader) : _shader(shader), _mainTex() { }
-    Material::Material(const ObjectRef<Texture2D>& texture, const ObjectRef<Shader>& shader) : _mainTex(texture), _shader(shader) { }
+    Material::Material(const ObjectRef<Texture>& texture, const ObjectRef<Shader>& shader) : _mainTex(texture), _shader(shader) { }
 
     void Material::addProperty(const MaterialProperty& prop) {
         const int32_t index = indexOfProperty(prop.getName());
@@ -122,10 +122,6 @@ namespace JEngine {
         return _properties;
     }
 
-    void Material::setTexture(const ObjectRef<Texture2D>& tex) {
-        _mainTex = tex;
-    }
-
     void Material::setFrameBuffer(const ObjectRef<FrameBuffer>& fBuffer) {
         _frameBuffer = fBuffer;
     }
@@ -215,6 +211,26 @@ namespace JEngine {
 
     const ObjectRef<Shader>& Material::getShader() const {
         return _shader;
+    }
+
+    void Material::setMainTexture(const ObjectRef<Texture>& tex) {
+        _mainTex = tex;
+    }
+
+    const Texture* Material::getMainTexturePtr() const {
+        return _mainTex.getPtr();
+    }
+
+    Texture* Material::getMainTexturePtr() {
+        return _mainTex.getPtr();
+    }
+
+    ObjectRef<Texture>& Material::getMainTexture() {
+        return _mainTex;
+    }
+
+    const ObjectRef<Texture>& Material::getMainTexture() const {
+        return _mainTex;
     }
 
     const bool Material::bind() {
