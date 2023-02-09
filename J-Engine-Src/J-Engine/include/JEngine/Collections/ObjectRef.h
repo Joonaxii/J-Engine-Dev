@@ -5,141 +5,191 @@
 #include <stdint.h>
 
 namespace JEngine {
+    static constexpr uint32_t MAX_UINT_24 = 0xFFFFFFU;
+
+    namespace priv {
+        struct IndexData {
+            uint32_t data;
+
+            IndexData(const uint32_t index, const UI8Flags flags) {
+                data = index & MAX_UINT_24;
+                data |= uint32_t(flags) << 24;
+            }
+
+            IndexData(const uint32_t index, const uint8_t flags) {
+                data = index & MAX_UINT_24;
+                data |= uint32_t(flags) << 24;
+            }
+
+            void setIndex(const uint32_t index) {
+                data &= ~MAX_UINT_24;
+                data |= index & MAX_UINT_24;
+            }
+
+            uint32_t getIndex() const {
+                return data & MAX_UINT_24;
+            }
+
+            UI8Flags& getFlags() {
+                return *(reinterpret_cast<UI8Flags*>(&data) + 3);
+            }
+        };
+
+        struct RefPtr {
+            mutable void* ptr;
+
+            RefPtr(void* ptr) : ptr(ptr) {}
+
+            operator bool() { return bool(ptr); }
+
+            RefPtr& operator=(void* other) {
+                ptr = other;
+                return *this;
+            }
+
+            template<typename T>
+            T* getAs() { return reinterpret_cast<T*>(ptr); }
+
+            template<typename T>
+            const T* getAs()const { return reinterpret_cast<const T*>(ptr); }
+        };
+    }
+
     template<typename T, bool isArray = false>
     class ObjectRef {
     public:
-        ObjectRef() :_flags(0), _id(-1), _version(0), _object(nullptr), _referenceProvider(nullptr) {}
+        static constexpr uint32_t NULL_ID = UINT_20_MAX;
+
+        ObjectRef() : _data(MAX_UINT_24, 0), _idData(NULL_ID, 0), _obj(nullptr) {}
         ObjectRef(const int32_t id) : ObjectRef(id, false) {}
         ObjectRef(const int32_t id, const bool ownedByThis) :
-            _flags((ownedByThis ? OWNS_PTR_FLAG : 0)), _id(-1), _version(0), _object(nullptr), _referenceProvider(nullptr) {
+            _data(MAX_UINT_24, (ownedByThis ? OWNS_PTR_FLAG : 0)), _idData(NULL_ID, 0), _obj(nullptr) {
             setPtr(id);
         }
 
         ObjectRef(T* ptr) : ObjectRef(ptr, false) { }
-        ObjectRef(T* ptr, const bool ownedByThis) : 
-            _flags((ownedByThis ? OWNS_PTR_FLAG : 0)), _id(-1), _version(0), _object(ptr), _referenceProvider(nullptr) { }
+        ObjectRef(T* ptr, const bool ownedByThis) :
+            _data(MAX_UINT_24, (ownedByThis ? OWNS_PTR_FLAG : 0)), _idData(NULL_ID, 0), _obj(ptr) { }
 
         ObjectRef(const int32_t id, IReferenceProvider<T>& referenceProvider) :ObjectRef(id, refrenceProvider, false) {}
-        ObjectRef(const int32_t id, IReferenceProvider<T>& referenceProvider, const bool ownedByThis) : 
-            _flags((ownedByThis ? OWNS_PTR_FLAG : 0)), _id(-1), _version(0), _object(nullptr), _referenceProvider(&referenceProvider) {
-            setPtr(id);
+        ObjectRef(const int32_t id, IReferenceProvider<T>& referenceProvider, const bool ownedByThis) :
+            _data(MAX_UINT_24, (ownedByThis ? OWNS_PTR_FLAG : 0) | IS_FROM_PROVIDER), _idData(NULL_ID, 0), _obj(nullptr) {
+            setPtr(id, referenceProvider);
         }
 
-        ObjectRef(const ObjectRef<T>& other) : _flags(other._flags & ~OWNS_PTR_FLAG), _id(other._id), _version(other._version), _object(other._object), _referenceProvider(other._referenceProvider) { }
-
+        ObjectRef(const ObjectRef<T>& other) : 
+            _data(MAX_UINT_24, uint8_t(other._data.getFlags()) & ~OWNS_PTR_FLAG), _idData(other._idData), _obj(other._obj) { }
 
         ~ObjectRef() {
-            getPtr();
+            T* ptr = getPtr();
             if (ownsPointer() && isValid()) {
-                if (_referenceProvider) {
-                    _referenceProvider->removeById(_id);
+                if (_data.getFlags() & IS_FROM_PROVIDER) {
+                    IReferenceProvider<T>* refProv = _obj.getAs<IReferenceProvider<T>>();
+                    if (refProv) {
+                        refProv->removeById(_idData.getId());
+                    }
                 }
 
                 if (isArray) {
-                    delete[] _object;
+                    delete[] ptr;
                 }
                 else {
-                    delete _object;
+                    delete ptr;
                 }
             }
         }
 
         void setOwnsPointerFlag(const bool owns) {
-            _flags.setBit(OWNS_PTR_FLAG, owns);
-        }
-        const bool ownsPointer() const {
-            return bool(_flags & OWNS_PTR_FLAG);
+            _data.getFlags().setBit(OWNS_PTR_FLAG, owns);
         }
 
-        ObjectRef<T, isArray>& operator=(ObjectRef<T, isArray>& other) {
-            _flags = other._flags & ~OWNS_PTR_FLAG;
-            _id = other._id;
-            _referenceProvider = other._referenceProvider;
-            _version = other._version;
-            _object = other._object;
+        bool ownsPointer() const { 
+            return bool(_data.getFlags() & OWNS_PTR_FLAG); 
+        }
+
+        ObjectRef<T>& operator=(const ObjectRef<T>& other) {
+            _data = other._data;
+            _data.getFlags().setBit(OWNS_PTR_FLAG, false);
+            _obj = other._obj;
+            _idData = other._idData;
             return *this;
         }
 
-        const bool operator==(const ObjectRef<T, isArray>& other) const {
-            if (_referenceProvider && other._referenceProvider) {
-                return _referenceProvider == other._referenceProvider && (_id == other._id);
+        bool operator==(const ObjectRef<T, isArray>& other) const {
+            const bool isFromProvT = (_data.getFlags() & IS_FROM_PROVIDER);
+            const bool isFromProvO = (other._data.getFlags() & IS_FROM_PROVIDER);
+            if (isFromProvT && isFromProvO) {
+                return _obj.ptr == other._obj.ptr && (_idData.getId() == other._idData.getId());
             }
-            return _object == other._object;
+            return isFromProvT == isFromProvO && _obj == other._obj.ptr;
         }
 
-        const bool operator!=(const ObjectRef<T, isArray>& other) const {
-            return !(*this == other);
-        }
+        bool operator!=(const ObjectRef<T, isArray>& other) const { return !(*this == other); }
 
-        operator T* () {
-            return getPtr();
-        }
+        operator T* () { return getPtr(); }
+        operator const T* () const { return getPtr(); }
 
-        operator T* () const {
-            return getPtr();
+        bool isValid() const { 
+            return  _obj && (_idData.getId() != NULL_ID || !(_data.getFlags() & IS_FROM_PROVIDER));
         }
-
-        const bool isValid() const { return (!_referenceProvider || _id > -1) && _object; }
 
         T* getPtr() {
-            if (_referenceProvider == nullptr) { return _object; }
-            if (_referenceProvider->hasToUpdate(_version, _object)) {
-                _object = _referenceProvider->getPtr(_id, _version);
+            if (!(_data.getFlags() & IS_FROM_PROVIDER)) { return _obj.getAs<T>(); }
+            IReferenceProvider<T>* refProv = _obj.getAs<IReferenceProvider<T>>();
+
+            if (!refProv) { return nullptr; }
+            if (refProv->hasToUpdate(_idData.getVersion()) || _data.getIndex() == MAX_UINT_24) {
+                _data.setIndex(refProv->indexOfID(_idData.getId(), MAX_UINT_24));
             }
-            return _object;
+            return refProv->getPtrByIndex(_data.getIndex(), _idData);
         }
 
         const T* getPtr() const {
-            if (_referenceProvider == nullptr) { return _object; }
-            if (_referenceProvider->hasToUpdate(_version, _object)) {
-                _object = _referenceProvider->getPtr(_id, _version);
+            if (!(_data.getFlags() & IS_FROM_PROVIDER)) { return _obj.getAs<T>(); }
+            IReferenceProvider<T>* refProv = _obj.getAs<IReferenceProvider<T>>();
+
+            if (!refProv) { return nullptr; }
+            if (refProv->hasToUpdate(_idData.getVersion()) || _data.getIndex() == MAX_UINT_24) {
+                _data.setIndex(refProv->indexOfID(_idData.getId(), MAX_UINT_24));
             }
-            return _object;
+            return refProv->getPtrByIndex(_data.getIndex(), _idData);
         }
 
         void setPtr(T* refe) {
-            _id = -1;
-            _version = 0;
+            _idData.setId(NULL_ID);
+            _idData.setVersion(0);
+            _data.setIndex(MAX_UINT_24);
             _object = refe;
-            _referenceProvider = nullptr;
+            _data.getFlags().setBit(IS_FROM_PROVIDER, false);
         }
 
-        void setPtr(const int32_t id) {
-            _id = id;
-            if (_referenceProvider == nullptr) {
-                _object = _id < 0 ? nullptr : _object;
+        void setPtr(const uint32_t id) {
+            if (_idData.getId() != (id & UINT_20_MAX)) {
+                _data.setIndex(MAX_UINT_24);
+            }
+
+            _idData.setId(id);
+            if (!(_data.getFlags() & IS_FROM_PROVIDER)) {
+                _obj = _idData.getId() == NULL_ID ? nullptr : _obj.ptr;
                 return;
             }
-            if (id < 0) {
-                _object = nullptr;
-                return;
-            }
-            _object = _referenceProvider->getPtr(_id, _version);
         }
 
-        void setPtr(const int32_t id, IReferenceProvider<T>& refProvider) {
-            _referenceProvider = &refProvider;
-            setPtr(id);
+        void setPtr(const uint32_t id, IReferenceProvider<T>& refProvider) {
+            _data.getFlags() |= IS_FROM_PROVIDER;
+            _obj = &refProvider;
+            this->setPtr(id);
         }
 
-        const uint32_t getVersion() const {
-            return _version;
-        }
-
-        const int32_t getID() const {
-            return _id;
-        }
+        const uint32_t getVersion() const { return _idData.getVersion(); }
+        const uint32_t getID() const { return _idData.getId(); }
 
     private:
         static constexpr uint8_t OWNS_PTR_FLAG = 0x1;
+        static constexpr uint8_t IS_FROM_PROVIDER = 0x2;
 
-        mutable T* _object;
-
-        int32_t _id;
-        uint8_t _version;
-        UI8Flags _flags;
-
-        IReferenceProvider<T>* _referenceProvider;
-
+        mutable priv::RefPtr _obj;
+        mutable priv::IndexData _data;
+        mutable RefID _idData;
     };
 }

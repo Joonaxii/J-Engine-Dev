@@ -55,7 +55,7 @@ namespace JEngine {
         return index;
     }
 
-    const int32_t Texture::generatePaletteAndTexture(const uint8_t* inputData, const uint16_t width, const uint16_t height, const TextureFormat format, uint8_t* outputData, const bool validate) {
+    int32_t Texture::generatePaletteAndTexture(const uint8_t* inputData, const uint16_t width, const uint16_t height, const TextureFormat format, uint8_t* outputData, const bool validate) {
         assert(format != TextureFormat::Indexed && "Input data can't be indexed!");
         int32_t count = 0;
 
@@ -145,15 +145,15 @@ namespace JEngine {
         }
     }
 
-    const bool Texture::create(const uint16_t width, const uint16_t height) {
+    bool Texture::create(const uint16_t width, const uint16_t height) {
         return create(width, height, _format, _filter);
     }
 
-    const bool Texture::create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter) {
+    bool Texture::create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter) {
         return create(width, height, format, filter, NULL, _texFlags & FLAG_KEEP_DATA);
     }
 
-    const bool Texture::create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter, uint8_t* pixelData, const bool keepData) {
+    bool Texture::create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter, uint8_t* pixelData, const bool keepData) {
         const uint32_t maxSize = getMaximumSize();
         const bool validSize = width > 0 && height > 0 && height <= maxSize && width <= maxSize;
         if (!validSize) {
@@ -229,11 +229,11 @@ namespace JEngine {
         free(pixelData);
     }
 
-    const JVector2i Texture::getSize() const {
-        return JVector2i(_size.x, _size.y);
+    const JVector2<uint16_t>& Texture::getSize() const {
+        return _size;
     }
 
-    const uint32_t Texture::getMaximumSize() { return 8192; }
+    uint32_t Texture::getMaximumSize() { return 8192; }
 
     uint8_t* Texture::getTextureData() const {
         if (!_texId) { return nullptr; }
@@ -358,7 +358,7 @@ namespace JEngine {
         update(pix, texture._format, texture._size.x, texture._size.y, toFormat, filter, _texFlags & FLAG_KEEP_DATA);
         free(pix);
     }
-    const uint32_t Texture::bind(const uint32_t slot) const {
+    uint32_t Texture::bind(const uint32_t slot) const {
         uint32_t bindP = slot;
 
         GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));
@@ -371,7 +371,7 @@ namespace JEngine {
         return bindP;
     }
 
-    const uint32_t Texture::unbind(const uint32_t slot) const {
+    uint32_t Texture::unbind(const uint32_t slot) const {
         uint32_t bindP = slot;
 
         GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));
@@ -402,17 +402,17 @@ namespace JEngine {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
         }
     }
-    const FilterMode Texture::getFilterMode() const { return _filter; }
+    FilterMode Texture::getFilterMode() const { return _filter; }
 
     void Texture::setCompressionLevel(const int32_t level) {
         _texFlags.setValue(uint16_t(level > 10 ? 10 : level < 0 ? 0 : level), VALUE_COMPRESSION);
     }
 
-    const int32_t Texture::getCompressionLevel() const {
+    int32_t Texture::getCompressionLevel() const {
         return _texFlags.select(VALUE_COMPRESSION);
     }
 
-    const uint32_t Texture::bindNull(const uint32_t slot) {
+    uint32_t Texture::bindNull(const uint32_t slot) {
         uint32_t bindP = slot;
 
         GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));

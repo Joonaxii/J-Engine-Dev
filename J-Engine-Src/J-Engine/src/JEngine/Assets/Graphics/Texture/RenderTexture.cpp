@@ -14,7 +14,7 @@ namespace JEngine {
 
     RenderTexture::~RenderTexture() { }
 
-    const bool RenderTexture::create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter, uint8_t* pixelData, const bool keepData) {
+    bool RenderTexture::create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter, uint8_t* pixelData, const bool keepData) {
 
         return false;
     }
@@ -93,17 +93,17 @@ namespace JEngine {
         }
     }
 
-    const uint8_t RenderTexture::getDepth() const {
+    uint8_t RenderTexture::getDepth() const {
         return _texDepth;
     }
 
-    const bool RenderTexture::serializeBinary(std::ostream& stream) const {
+    bool RenderTexture::serializeBinary(std::ostream& stream) const {
         stream.write(JRTX_HEADER, 4);
 
         return true;
     }
 
-    const bool RenderTexture::deserializeBinary(std::istream& stream, const size_t size) {
+    bool RenderTexture::deserializeBinary(std::istream& stream, const size_t size) {
         char headerId[5]{0};
         stream.read(headerId, 4);
 
@@ -116,12 +116,12 @@ namespace JEngine {
         return false;
     }
 
-    const bool RenderTexture::serializeJson(json& jsonF) const {
+    bool RenderTexture::serializeJson(json& jsonF) const {
 
         return true;
     }
 
-    const bool RenderTexture::deserializeJson(json& jsonF) {
+    bool RenderTexture::deserializeJson(json& jsonF) {
 
         return true;
     }

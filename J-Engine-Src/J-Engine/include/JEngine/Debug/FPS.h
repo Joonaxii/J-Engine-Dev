@@ -7,8 +7,8 @@ namespace JEngine {
     public:
         FPS();
 
-        const double update(const JTime& time);
-        const double getFPS() const;
+        double update(const JTime& time);
+        double getFPS() const;
 
     private:
         static constexpr int TOTAL_HIST_SIZE = 8;

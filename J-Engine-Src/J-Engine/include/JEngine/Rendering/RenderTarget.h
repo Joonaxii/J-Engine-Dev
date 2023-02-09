@@ -12,7 +12,7 @@ namespace JEngine {
 
         virtual void invalidate() = 0;
 
-        const bool bindAsRenderTarget() const;
+        bool bindAsRenderTarget() const;
         void unbindAsRenderTarget() const;
 
     private:

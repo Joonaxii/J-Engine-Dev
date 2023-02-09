@@ -10,7 +10,7 @@ namespace JEngine {
     public:
         ReferenceVector() : ReferenceVector(8, false) {}
         ReferenceVector(const bool isOrdered) : ReferenceVector(8, isOrdered) {}
-        ReferenceVector(const int32_t capacity, const bool isOrdered) : _capacity(0), IReferenceProvider<T>(isOrdered) {
+        ReferenceVector(const uint32_t capacity, const bool isOrdered) : _capacity(0), IReferenceProvider<T>(isOrdered) {
             reserve(capacity);
         }
 
@@ -18,6 +18,7 @@ namespace JEngine {
             if (_items) {
                 delete[] _items;
             }
+
             _items = nullptr;
             _count = 0;
             _capacity = 0;
@@ -33,12 +34,10 @@ namespace JEngine {
             return _items[i];
         }
 
-        const size_t size() const {
-            return _count;
-        }
+        size_t size() const { return _count; }
 
         T& push_back(const T& ref) {
-            int newC = _count + 1;
+            int32_t newC = _count + 1;
 
             if (newC >= _capacity) {
                 auto cap = _capacity;
@@ -55,26 +54,26 @@ namespace JEngine {
             }
             _items[_count] = ref;
             auto& item = _items[_count++];
-            int32_t id = T::CUR_ID++;
+            uint32_t id = T::CUR_ID++;
 
             item.setId(id);
             return item;
         }
 
-        const bool remove(const T& ref) override {
+        bool remove(const T& ref) override {
             auto ind = IReferenceProvider<T>::indexOf(ref);
             return removeAt(ind);
         }
 
-        const bool removeByID(const int32_t id) override {
+        bool removeByID(const uint32_t id) override {
             auto ind = IReferenceProvider<T>::indexOfID(id);
             return removeAt(ind);
         }
 
-        const bool removeAt(const int32_t index) {
-            if (index < 0 || index >= _count) { return false; }
+        bool removeAt(const uint32_t index) {
+            if (index >= _count) { return false; }
 
-            int count = _count - index - 1;
+            uint32_t count = _count - index - 1;
             if (count > 0) {
                 memcpy((_items + index), (_items + index + 1), (count * sizeof(T)));
             }
@@ -82,7 +81,7 @@ namespace JEngine {
             return true;
         }
 
-        const void resize(int32_t count, const bool clear) {
+        void resize(uint32_t count, const bool clear) {
             if (count == _capacity) { return; }
 
             if (count <= 0) {
@@ -100,7 +99,7 @@ namespace JEngine {
             }
         }
 
-        const void reserve(int32_t amount, const bool force = false) {
+        void reserve(uint32_t amount, const bool force = false) {
             if (amount < _capacity && !force) { return; }
 
             auto prev = _items;
@@ -116,14 +115,14 @@ namespace JEngine {
             _capacity = amount;
         }
 
-        const int32_t indexOf(const T& type) {
-            for (size_t i = 0; i < _count; i++) {
+        uint32_t indexOf(const T& type) const {
+            for (uint32_t i = 0; i < _count; i++) {
                 if (_items[i] == type) { return i; }
             }
-            return -1;
+            return UINT_24_MAX;
         }
 
     private:
-        int32_t _capacity;
+        uint32_t _capacity;
     };
 }

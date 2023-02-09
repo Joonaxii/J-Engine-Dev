@@ -25,16 +25,16 @@ namespace JEngine {
         static UUIDSet& getUUIDSet();
 
         template<typename T>
-        static const bool generateUUID(UUID& uuid);
+        static bool generateUUID(UUID& uuid);
 
         template<typename T>
-        static const bool addUUID(const UUID& uuid);
+        static bool addUUID(const UUID& uuid);
 
         template<typename T>
         static const void removeUUID(const UUID& uuid);
 
         template<typename T>
-        static const bool isUUIDFound(const UUID& uuid);
+        static bool isUUIDFound(const UUID& uuid);
 
         static const std::string getUUIDStr(const UUID& uuid) {
             std::string uuidStr;
@@ -46,7 +46,7 @@ namespace JEngine {
             return uuidStr;
         }
 
-        static const bool parseUUID(const std::string& str, UUID& uuid, const UUID& defaultVal = UUIDFactory::Empty) {
+        static bool parseUUID(const std::string& str, UUID& uuid, const UUID& defaultVal = UUIDFactory::Empty) {
             if (str.length() < 32) { *&uuid = defaultVal; return false; }
             RPC_CSTR rpcStr = RPC_CSTR(str.c_str());
             auto ret = UuidFromStringA(rpcStr, &uuid);
@@ -62,7 +62,7 @@ namespace JEngine {
     }*/
 
     template<typename T>
-    inline const bool UUIDFactory::generateUUID(UUID& uuid) {
+    inline bool UUIDFactory::generateUUID(UUID& uuid) {
         auto& uuids = getUUIDSet<T>();
         *&uuid = Empty;
         auto ret = UuidCreate(&uuid);
@@ -80,7 +80,7 @@ namespace JEngine {
     }
 
     template<typename T>
-    inline const bool UUIDFactory::addUUID(const UUID& uuid) {
+    inline bool UUIDFactory::addUUID(const UUID& uuid) {
         auto& uuids = getUUIDSet<T>();
         if (isUUIDFound<T>(uuid)) { return false; }
         uuids.insert(uuid);
@@ -94,14 +94,14 @@ namespace JEngine {
     }
 
     template<typename T>
-    inline const bool UUIDFactory::isUUIDFound(const UUID& uuid) {
+    inline bool UUIDFactory::isUUIDFound(const UUID& uuid) {
         auto& uuids = getUUIDSet<T>();
         return uuids.find(uuid) != uuids.end();
     }
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<UUID>::deserializeJson(UUID& itemRef, json& jsonF, const UUID& defaultValue) {
+    inline bool Serializable<UUID>::deserializeJson(UUID& itemRef, json& jsonF, const UUID& defaultValue) {
         if (jsonF.is_string()) {
             UUIDFactory::parseUUID(jsonF.get<std::string>(), itemRef, defaultValue);
             return true;
@@ -112,7 +112,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const bool Serializable<UUID>::serializeJson(const UUID& itemRef, json& jsonF) {
+    inline bool Serializable<UUID>::serializeJson(const UUID& itemRef, json& jsonF) {
         jsonF = UUIDFactory::getUUIDStr(itemRef);
         return true;
     }

@@ -28,6 +28,8 @@ namespace JEngine {
             JRectf screenRect;
             JVector2i reso;
             FrameBuffer* frameBuffer;
+            ICamera* camera;
+            bool doBlend;
         };
 
         typedef void (*RegistrationEvent)(ICamera* camera);
@@ -54,19 +56,19 @@ namespace JEngine {
         void setScreenRect(const JRectf& screenRect);
         const JRectf& getScreenRect() const;
      
-        const int32_t compareTo(const ICamera& other) const;
+        int32_t compareTo(const ICamera& other) const;
 
         void setManualRenderMode(const bool state);
-        const bool getManualRenderModeState() const;
+        bool getManualRenderModeState() const;
 
         void setCameraDisabled(const bool state);
-        const bool isCameraDisabled() const;
+        bool isCameraDisabled() const;
 
         void setCameraDepth(const float depth);
-        const float getCameraDepth() const;
+        float getCameraDepth() const;
 
         void setClearFlags(const ClearFlags flags);
-        const ClearFlags getClearFlags() const;
+        ClearFlags getClearFlags() const;
 
         void setClearColor(const JColor32& color);
         const JColor32& getClearColor() const;
@@ -75,21 +77,21 @@ namespace JEngine {
         const JColor32& getCameraTint() const;
 
         void setLayerMask(const LayerMask mask);
-        const LayerMask getLayerMask() const; 
+        LayerMask getLayerMask() const; 
 
-        virtual const bool shouldRender() const;
+        virtual bool shouldRender() const;
 
-        const bool render();
+        bool render();
 
         virtual void setTransformMatrix(const JMatrix4f&) = 0;
         virtual const JMatrix4f& getTransformMatrix() const = 0;
         virtual void transformProjection(JMatrix4f& projection) const;
 
-        virtual const bool serializeJson(json& jsonF) const override;
-        virtual const bool deserializeJson(json& jsonF) override;
+        virtual bool serializeJson(json& jsonF) const override;
+        virtual bool deserializeJson(json& jsonF) override;
 
-        virtual const bool serializeBinary(std::ostream& stream) const override;
-        virtual const bool deserializeBinary(std::istream& stream) override;
+        virtual bool serializeBinary(std::ostream& stream) const override;
+        virtual bool deserializeBinary(std::istream& stream) override;
 
         static void setRegistrationMethods(RegistrationEvent reg, RegistrationEvent unreg) {
             REGISTER_CAMERA = reg;
@@ -104,7 +106,7 @@ namespace JEngine {
 
     protected:
         friend class Renderer;
-        virtual const bool renderInternal(const bool isAuto = true);
+        virtual bool renderInternal(const bool isAuto = true);
 
     protected:
         static constexpr uint8_t AUTO_RENDER_CAMERA = 0x1;
@@ -140,13 +142,13 @@ namespace JEngine {
     };
 
     template<>
-    inline const bool Serializable<ICamera::ClearFlags>::deserializeJson(ICamera::ClearFlags& itemRef, json& jsonF, const ICamera::ClearFlags& defaultValue) {
+    inline bool Serializable<ICamera::ClearFlags>::deserializeJson(ICamera::ClearFlags& itemRef, json& jsonF, const ICamera::ClearFlags& defaultValue) {
         itemRef = jsonF.is_number_integer() ? ICamera::ClearFlags(jsonF.get<uint32_t>()) : defaultValue;
         return true;
     }
 
     template<>
-    inline const bool Serializable<ICamera::ClearFlags>::serializeJson(const ICamera::ClearFlags& itemRef, json& jsonF) {
+    inline bool Serializable<ICamera::ClearFlags>::serializeJson(const ICamera::ClearFlags& itemRef, json& jsonF) {
         jsonF.update(uint32_t(itemRef));
         return true;
     }

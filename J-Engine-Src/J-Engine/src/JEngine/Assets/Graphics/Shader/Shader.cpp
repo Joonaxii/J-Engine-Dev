@@ -1,7 +1,7 @@
 #include <JEngine/Assets/Graphics/Shader/Shader.h>
 #include <JEngine/Assets/Graphics/Texture/Texture.h>
 #include <JEngine/Rendering/OpenGL/GLHelpers.h>
-#include <JEngine/IO/Helpers/FileExtensions.h>
+#include <JEngine/IO/Helpers/IOHelpers.h>
 #include <JEngine/Helpers/StringExtensions.h>
 #include <JEngine/Utility/Span.h>
 #include <fstream>
@@ -15,11 +15,11 @@ namespace JEngine {
         const char* name;
         const uint16_t value;
 
-        const bool isEqual(const Span<char>& str) const {
+        bool isEqual(const Span<char>& str) const {
             return Helpers::equalsNoCase(ConstSpan<char>(str), ConstSpan<char>(name, strlen(name)));
         }
 
-        const bool isEqual(const ConstSpan<char>& str) const {
+        bool isEqual(const ConstSpan<char>& str) const {
             return Helpers::equalsNoCase(str, ConstSpan<char>(name, strlen(name)));
         }
     };
@@ -49,7 +49,7 @@ namespace JEngine {
     };
     static constexpr size_t BLEND_COUNT = sizeof(BLEND_MODES) / sizeof(BLEND_MODES[0]);
 
-    const uint16_t strToGLBlendingMode(const Span<char>& str, const bool isSrc = true) {
+    uint16_t strToGLBlendingMode(const Span<char>& str, const bool isSrc = true) {
         for (size_t i = 0; i < BLEND_COUNT; i++) {
             const auto& blend = BLEND_MODES[i];
             if (blend.isEqual(str)) { 
@@ -86,15 +86,11 @@ namespace JEngine {
             GLCall(glUseProgram(_shaderID));
         }
     }
-    void Shader::unbind() const {
-        GLCall(glUseProgram(0));
-    }
+    void Shader::unbind() const { GLCall(glUseProgram(0)); }
 
-    const uint32_t Shader::getNativeHandle() const {
-        return _shaderID; 
-    }
+    uint32_t Shader::getNativeHandle() const { return _shaderID; }
 
-    const uint32_t Shader::setTextures(const std::string& name, const Texture* texture, const uint32_t position) {
+    uint32_t Shader::setTextures(const std::string& name, const Texture* texture, const uint32_t position) {
         if (!texture || !_shaderID) { return position; }
 
         uint32_t pos = position;
@@ -111,11 +107,11 @@ namespace JEngine {
         return pos;
     }
 
-    const bool Shader::serializeJson(json& jsonF) const { return false; }
-    const bool Shader::deserializeJson(json& jsonF) { return false; }
+    bool Shader::serializeJson(json& jsonF) const { return false; }
+    bool Shader::deserializeJson(json& jsonF) { return false; }
 
-    const bool Shader::serializeBinary(std::ostream& stream) const { return false; }
-    const bool Shader::deserializeBinary(std::istream& stream, const size_t size) {
+    bool Shader::serializeBinary(std::ostream& stream) const { return false; }
+    bool Shader::deserializeBinary(std::istream& stream, const size_t size) {
         if (stream.good()) {
             char* data = reinterpret_cast<char*>(malloc(size));
             stream.read(data, size);
@@ -134,14 +130,14 @@ namespace JEngine {
         return true;
     }
 
-    const uint64_t Shader::getBlendUnion() const {
+    uint64_t Shader::getBlendUnion() const {
         return *reinterpret_cast<const uint64_t*>(_blendingModes);
     }
 
     bool Shader::tryFindShader(const char* name, ObjectRef<Shader>& shader) {
         FAH16 hash(name);
 
-        auto find = SHADER_LUT.find(hash);
+        auto& find = SHADER_LUT.find(hash);
         if (find == SHADER_LUT.end()) { return false; }
 
         shader = find->second;
@@ -165,7 +161,7 @@ namespace JEngine {
         }
     }
 
-    const bool Shader::removeShaderFromLUT(const ObjectRef<Shader>& shader) {
+    bool Shader::removeShaderFromLUT(const ObjectRef<Shader>& shader) {
         const Shader* shaderPtr = shader.getPtr();
 
         if (shaderPtr) {
@@ -282,7 +278,7 @@ namespace JEngine {
         GLCall(glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &mat[0]));
     }
 
-    const int32_t Shader::getUniformLocation(const std::string& name) {
+    int32_t Shader::getUniformLocation(const std::string& name) {
         if (!_shaderID) { return -1; }
         if (_uniformCache.find(name) != _uniformCache.end()) { return _uniformCache[name]; }
 
@@ -360,7 +356,7 @@ namespace JEngine {
         return { ss[0].str(), ss[1].str(), blendSrc, blendDst, blendFunc };
     }
 
-    const uint32_t Shader::compileShader(const uint32_t type, const char* shader) {
+    uint32_t Shader::compileShader(const uint32_t type, const char* shader) {
         uint32_t shaderId = glCreateShader(type);
         GLCall(glShaderSource(shaderId, 1, &shader, NULL));
         GLCall(glCompileShader(shaderId));
@@ -381,7 +377,7 @@ namespace JEngine {
         return shaderId;
     }
 
-    const uint32_t Shader::createShader(const char* vertShader, const char* fragShader) {
+    uint32_t Shader::createShader(const char* vertShader, const char* fragShader) {
         uint32_t program = glCreateProgram();
         uint32_t vs = compileShader(GL_VERTEX_SHADER, vertShader);
         uint32_t fs = compileShader(GL_FRAGMENT_SHADER, fragShader);

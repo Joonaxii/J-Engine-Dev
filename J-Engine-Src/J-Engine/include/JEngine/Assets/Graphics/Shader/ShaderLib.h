@@ -91,23 +91,24 @@ namespace JEngine {
         };
 
         struct FunctionDefinition {
-            static constexpr uint8_t MAX_PARAMS = 32;
+            static constexpr uint8_t MAX_PARAMS = 16;
 
             FuncDefType returnType = FuncDefType::FUNC_Void;
 
             uint8_t paramCount = 0;
             FuncDefType params[MAX_PARAMS]{ FuncDefType::FUNC_Unknown };
 
+            std::string name = "";
             std::string code = "";
         };
 
         static const FuncDefType strToDataType(const char* str, const bool isArg = false) {
-            static struct cmp_str
+            struct cmp_str
             {
                 bool operator()(char const* a, char const* b) const { return (std::strcmp(a, b) < 0); }
             };
 
-            static std::map<const char*, uint8_t, cmp_str> localMap;
+            static std::map<const char*, FuncDefType, cmp_str> localMap;
             if (localMap.empty())
             {
                 //Misc
@@ -182,9 +183,15 @@ namespace JEngine {
                 localMap["struct"]      = FUNC_Struct;
             }
 
+            auto find = localMap.find(str);
+            if (find != localMap.end()) {
+                return find->second;
+            }
+            return FuncDefType::FUNC_Unknown;
         }
 
         std::vector<GLStruct> _structs;
+        std::vector<FunctionDefinition*> _funcs;
         std::vector<ShaderLib*> _dependencies;
     };
 }

@@ -1,5 +1,5 @@
 #shader vertex
-#blend SrcAlpha OneMinusSrcAlpha Add
+
 #version 330 core
 
 layout(location = 0) in vec2 vertPos;
@@ -21,6 +21,7 @@ void main()
 #version 330 core
 
 uniform sampler2D _MainTex;
+#blend SrcAlpha OnMinusSrcAlpha Add
 
 in vec4 _VertexColor;
 in vec2 _VertexUV;
@@ -29,4 +30,5 @@ void main()
 {
     vec4 texCol = texture2D(_MainTex, _VertexUV);
     _FragColor = texCol * _VertexColor;
+    _FragColor.rgb *= _FragColor.a;
 };

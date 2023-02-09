@@ -18,25 +18,25 @@ namespace JEngine {
         void addProperty(const MaterialProperty& prop);
         void removeProperty(const std::string& name);
 
-        const bool operator <(const Material& other) const;
-        const bool operator >(const Material& other) const;
+        bool operator <(const Material& other) const;
+        bool operator >(const Material& other) const;
 
-        const bool operator ==(const Material& other) const;
-        const bool operator !=(const Material& other) const;
+        bool operator ==(const Material& other) const;
+        bool operator !=(const Material& other) const;
 
-        const bool trySetProperty(const MaterialProperty& prop);
-        const bool tryGetProperty(const std::string& name, MaterialProperty& prop) const;
+        bool trySetProperty(const MaterialProperty& prop);
+        bool tryGetProperty(const std::string& name, MaterialProperty& prop) const;
 
         const std::vector<MaterialProperty>& getProperties() const;
 
         void setMainTexture(const ObjectRef<Texture>& tex);
         void setFrameBuffer(const ObjectRef<FrameBuffer>& fBuffer);
 
-        const bool serializeJson(json& jsonF) const override;
-        const bool deserializeJson(json& jsonF) override;
+        bool serializeJson(json& jsonF) const override;
+        bool deserializeJson(json& jsonF) override;
 
-        const bool serializeBinary(std::ostream& stream) const override;
-        const bool deserializeBinary(std::istream& stream, const size_t size) override;
+        bool serializeBinary(std::ostream& stream) const override;
+        bool deserializeBinary(std::istream& stream, const size_t size) override;
 
         const Shader* getShaderPtr() const;
         Shader* getShaderPtr();
@@ -50,11 +50,11 @@ namespace JEngine {
         const ObjectRef<Texture>& getMainTexture() const;
         ObjectRef<Texture>& getMainTexture();
 
-        const bool bind();
+        bool bind();
         void unbind() const;
 
     protected:
-        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override;
+        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override;
 
     private:
         ObjectRef<Shader> _shader;
@@ -63,7 +63,7 @@ namespace JEngine {
 
         std::vector<MaterialProperty> _properties;
 
-        const int32_t indexOfProperty(const std::string& name) const;
+        int32_t indexOfProperty(const std::string& name) const;
         void applyProperties(Shader& shader) const;
     };
 }

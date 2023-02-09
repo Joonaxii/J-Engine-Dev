@@ -29,8 +29,12 @@ namespace JEngine {
         operator JColor32();
         operator JColor();
 
-        const bool operator==(const JColor24& other) const;
-        const bool operator!=(const JColor24& other) const;
+        void set(const JColor& rgba);
+        void set(const JColor32& rgba);
+        void set(const uint8_t r, const uint8_t g, const uint8_t b);
+
+        bool operator==(const JColor24& other) const;
+        bool operator!=(const JColor24& other) const;
 
         JColor24 operator-(const JColor24& other) const;
         JColor24 operator+(const JColor24& other) const;
@@ -46,7 +50,6 @@ namespace JEngine {
 
         JColor24 operator*(const JColor24& other) const;
         JColor24& operator*=(const JColor24& other);
-
     };
 
     inline std::ostream& operator<<(std::ostream& os, const JColor24& rgb) {
@@ -67,7 +70,7 @@ namespace JEngine {
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<JColor24>::deserializeJson(JColor24& itemRef, json& jsonF, const JColor24& defaultValue) {
+    inline bool Serializable<JColor24>::deserializeJson(JColor24& itemRef, json& jsonF, const JColor24& defaultValue) {
         Serialization::deserialize(itemRef.r, jsonF["r"], defaultValue.r);
         Serialization::deserialize(itemRef.g, jsonF["g"], defaultValue.g);
         Serialization::deserialize(itemRef.b, jsonF["b"], defaultValue.b);
@@ -75,7 +78,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const bool Serializable<JColor24>::serializeJson(const JColor24& itemRef, json& jsonF) {
+    inline bool Serializable<JColor24>::serializeJson(const JColor24& itemRef, json& jsonF) {
         Serialization::serialize(itemRef.r, jsonF["r"]);
         Serialization::serialize(itemRef.g, jsonF["g"]);
         Serialization::serialize(itemRef.b, jsonF["b"]);

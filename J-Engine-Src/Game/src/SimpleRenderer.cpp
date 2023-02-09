@@ -19,13 +19,11 @@ void SimpleRenderer::setTRS(const JVector2f& position, const float rotation, con
     _matrix.setTRS(position, rotation, scale);
 }
 
-
 void SimpleRenderer::setFlipX(const bool flip) { _flip.setBit(FLIP_X, flip); }
-const bool SimpleRenderer::getFlipX() const { return bool(_flip & FLIP_X); }
+bool SimpleRenderer::getFlipX() const { return bool(_flip & FLIP_X); }
 
 void SimpleRenderer::setFlipY(const bool flip) { _flip.setBit(FLIP_Y, flip); }
-const bool SimpleRenderer::getFlipY() const { return bool(_flip & FLIP_Y); }
-
+bool SimpleRenderer::getFlipY() const { return bool(_flip & FLIP_Y); }
 
 void SimpleRenderer::setSprite(JEngine::Sprite* sprite) {
     _sprite = sprite;
@@ -38,7 +36,7 @@ void SimpleRenderer::setSprite(JEngine::Sprite* sprite) {
     }
 }
 
-const bool SimpleRenderer::canRender() const {
+bool SimpleRenderer::canRender() const {
     return IRenderer::canRender() && _sprite != nullptr;
 }
 
@@ -46,15 +44,15 @@ void SimpleRenderer::setObjectLayer(const uint32_t layer) {
     _layer = layer;
 }
 
-const uint32_t SimpleRenderer::getObjectLayer() const {
+uint32_t SimpleRenderer::getObjectLayer() const {
     return _layer;
 }
 
-const int32_t SimpleRenderer::getVertexCount() const {
+int32_t SimpleRenderer::getVertexCount() const {
     return _sprite ? _sprite->getVertexCount() : 0;
 }
 
-const int32_t SimpleRenderer::getIndexCount() const {
+int32_t SimpleRenderer::getIndexCount() const {
     return _sprite ? _sprite->getIndexCount() : 0;
 }
 

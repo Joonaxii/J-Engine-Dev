@@ -11,7 +11,7 @@ namespace JEngine {
         IImGuiDrawable() : _camera(nullptr), _sortingLayer(), _flags(FLAG_VISIBLE) { registerGuiDrawable(this); }
         ~IImGuiDrawable() { unregisterGuiDrawable(this); }
 
-        const int32_t compareTo(const IImGuiDrawable& other) const {
+        int32_t compareTo(const IImGuiDrawable& other) const {
             if (_camera == other._camera) {
                 if (_camera) {
                     const int32_t comp = _camera->compareTo(*other._camera);
@@ -31,7 +31,7 @@ namespace JEngine {
         const SortingLayer& getGuiLayer() const { return _sortingLayer; }
 
         void setGuiVisible(const bool value) { _flags.setBit(FLAG_VISIBLE, value); }
-        virtual const bool canRenderGui() const { return bool(_flags & FLAG_VISIBLE); }
+        virtual bool canRenderGui() const { return bool(_flags & FLAG_VISIBLE); }
 
         const ICamera* getGuiCamera() const { return _camera; }
         ICamera* getGuiCamera() { return _camera; }

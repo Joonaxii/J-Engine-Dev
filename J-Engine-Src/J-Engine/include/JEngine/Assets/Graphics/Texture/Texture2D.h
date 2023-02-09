@@ -9,14 +9,14 @@ namespace JEngine {
 
         Texture2D();
    
-        const bool serializeBinary(std::ostream& stream) const override;
-        const bool deserializeBinary(std::istream& stream, const size_t size) override;
+        bool serializeBinary(std::ostream& stream) const override;
+        bool deserializeBinary(std::istream& stream, const size_t size) override;
 
-        const bool serializeJson(json& jsonF) const override;
-        const bool deserializeJson(json& jsonF) override;
+        bool serializeJson(json& jsonF) const override;
+        bool deserializeJson(json& jsonF) override;
 
     protected:
-        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
+        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
     };
 }
 

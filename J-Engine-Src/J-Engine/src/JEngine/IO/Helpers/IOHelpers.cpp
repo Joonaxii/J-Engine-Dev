@@ -1,9 +1,48 @@
-#include <JEngine/IO/Helpers/FileExtensions.h>
+#include <JEngine/IO/Helpers/IOHelpers.h>
 #include <fstream>
 #include <sys/stat.h>
 
 namespace JEngine::IO {
-    const void enumerateFiles(const std::string& path, const std::string& extension, std::function<const void(const std::string&)> callback, const bool fixPath, const bool reverse) {
+    AssetDataFormat checkFileType(std::istream& stream) {
+        //Check if a known binary format
+        char hdr[5] { 0, 0, 0, 0, 0 };
+        stream.read(hdr, 4);
+        stream.seekg(0, std::ios::beg);
+
+        AssetDataFormat fmt = headerToAssetFormat(hdr);
+        if (fmt != AssetDataFormat::Unknown) { return fmt; }
+
+        //Check for JSON
+        {
+            char c = '\0';
+            while (!stream.eof()) {
+                stream.read(&c, 1);
+                if (c == '{') { break; }
+                if (!std::isspace(c)) { break; }
+            }
+
+            if (c == '{') {
+                int off = 1;
+                stream.seekg(-1, std::ios::end);
+                auto len = stream.tellg();
+                while (!stream.eof()) {
+                    stream.read(&c, 1);
+
+                    if (c == '}') { break; }
+                    if (!std::isspace(c)) { break; }
+
+                    off++;
+                    stream.seekg(-off, std::ios::end);
+                }
+
+                stream.seekg(0, std::ios::beg);
+                if (c == '}') { return AssetDataFormat::JSON; }
+            }
+        }
+        return AssetDataFormat::Unknown;
+    }
+
+    void enumerateFiles(const std::string& path, const std::string& extension, std::function<const void(const std::string&)> callback, const bool fixPath, const bool reverse) {
         if (!dirExists(path)) {
             std::cout << "Path '" << path << "' was not found!\n";
             return;
@@ -42,7 +81,7 @@ namespace JEngine::IO {
         }
     }
 
-    const void enumerateFiles(const std::string& path, const std::string& extension, std::vector<std::string>& paths, const bool fixPath, const bool reverse) {
+    void enumerateFiles(const std::string& path, const std::string& extension, std::vector<std::string>& paths, const bool fixPath, const bool reverse) {
         for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
             std::string name = entry.path().string();
             std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -76,12 +115,12 @@ namespace JEngine::IO {
         }
     }
 
-    const bool fileExists(const std::string& path) {
+    bool fileExists(const std::string& path) {
         std::ifstream f(path.c_str());
         return f.good();
     }
 
-    const bool dirExists(const std::string& path) {
+    bool dirExists(const std::string& path) {
         struct stat info;
 
         if (stat(path.c_str(), &info) != 0) { return 0; }
@@ -90,7 +129,7 @@ namespace JEngine::IO {
         return 0;
     }
 
-    const bool isFile(const std::string& path) {
+    bool isFile(const std::string& path) {
         struct stat info;
 
         if (stat(path.c_str(), &info) != 0) { return 0; }
@@ -99,7 +138,7 @@ namespace JEngine::IO {
         return 0;
     }
 
-    const bool isDir(const std::string& path) {
+    bool isDir(const std::string& path) {
         struct stat info;
 
         if (stat(path.c_str(), &info) != 0) { return 0; }

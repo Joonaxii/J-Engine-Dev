@@ -47,12 +47,12 @@ namespace JEngine {
         Renderer();
         ~Renderer();
 
-        const bool init(const char* title, const int32_t width = RenderingConsts::DEF_WINDOW_WIDTH, const int32_t height = RenderingConsts::DEF_WINDOW_HEIGHT);
+        bool init(const char* title, const int32_t width = RenderingConsts::DEF_WINDOW_WIDTH, const int32_t height = RenderingConsts::DEF_WINDOW_HEIGHT);
         void terminate();
 
         const RenderInfo& getRenderInfo() const;
 
-        const bool doRender();
+        bool doRender();
 
         void setCameraBlendMaterial(const ObjectRef<Material>& blendMaterial);
 
@@ -82,6 +82,9 @@ namespace JEngine {
 
         bool _initialized;
 
+        BufferLayout _defaultBufferLayout;
+        BufferLayout _gizmoBufferLayout;
+
         uint64_t _tick;
         RenderInfoGroup _renderStats;
 
@@ -93,10 +96,12 @@ namespace JEngine {
         std::set<IImGuiDrawable*> _imGuiDrawables;
         std::vector<IImGuiDrawable*> _activeImGuiDrawables;
 
+        ICamera* _firstCam;
         std::map<ICamera*, RenderInfoGroup> _camerasToDraw;
 
         ObjectRef<Material> _blendMaterial;
         DynamicBatch2D _batch;
+        DynamicBatch2D _batchGizmos;
   
         void renderNull(RenderInfo& renderInfo, RenderInfo& uiRenderInfo);
 

@@ -18,9 +18,10 @@ void main()
 
 #shader fragment
 #version 330 core
+#blend One OneMinusSrcAlpha Add
 
 uniform sampler2D _MainTex;
-uniform sampler1D _MainPal;
+uniform sampler1D _MainTex_Pal;
 
 in vec4 _VertexColor;
 in vec2 _VertexUV;
@@ -28,7 +29,8 @@ out vec4 _FragColor;
 void main()
 {
     vec4 texU  = texture(_MainTex, _VertexUV);
-    vec4 color = texture(_MainPal, texU.x);
+    vec4 color = texture(_MainTex_Pal, texU.x);
     _FragColor = _VertexColor * vec4(color.x, color.y, color.z, color.w);
+    _FragColor.rgb *= _FragColor.a;
 };
 

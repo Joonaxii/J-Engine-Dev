@@ -39,13 +39,13 @@ namespace JEngine {
 
         JMatrix4f& combine(const JMatrix4f& matrix);
 
-        const JVector2f transformPoint(const float x, const float y) const;
-        const JVector2f transformPoint(const JVector2f vec) const;
+        JVector2f transformPoint(const float x, const float y) const;
+        JVector2f transformPoint(const JVector2f vec) const;
 
-        const JRectf transformRect(const JVector2f& min, const JVector2f& max) const;
-        const JRectf transformRect(const JRectf& rectangle) const;
+        JRectf transformRect(const JVector2f& min, const JVector2f& max) const;
+        JRectf transformRect(const JRectf& rectangle) const;
 
-        const void decompose(JVector2f& position, float& rotation, JVector2f& scale) const;
+        void decompose(JVector2f& position, float& rotation, JVector2f& scale) const;
 
         JRectf& transformRect(JRectf& rectangle) const;
 
@@ -83,7 +83,7 @@ namespace JEngine {
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<JMatrix4f>::deserializeJson(JMatrix4f& itemRef, json& jsonF, const JMatrix4f& defaultValue) {
+    inline bool Serializable<JMatrix4f>::deserializeJson(JMatrix4f& itemRef, json& jsonF, const JMatrix4f& defaultValue) {
         itemRef = defaultValue;
         const size_t size = jsonF.size() > 16 ? 16 : jsonF.size();
         if (size > 0) {
@@ -95,7 +95,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const bool Serializable<JMatrix4f>::serializeJson(const JMatrix4f& itemRef, json& jsonF) {
+    inline bool Serializable<JMatrix4f>::serializeJson(const JMatrix4f& itemRef, json& jsonF) {
         for (size_t i = 0; i < 16; i++) {
             jsonF.push_back(itemRef._mat[i]);
         }

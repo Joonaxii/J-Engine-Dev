@@ -4,6 +4,7 @@
 #include <JEngine/Utility/JTime.h>
 #include <JEngine/Assets/Graphics/Shader/Shader.h>
 #include <JEngine/Assets/Decoders/BMPDecoder.h>
+#include <JEngine/Assets/Decoders/PNGDecoder.h>
 #include <JEngine/Assets/Graphics/Texture/Texture2D.h>
 #include <JEngine/Assets/Graphics/Sprite.h>
 #include <JEngine/Debug/FPS.h>
@@ -16,6 +17,7 @@
 #include <JEngine/Math/Graphics/JColor.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <JEngine/IO/Helpers/IOHelpers.h>
 
 static const std::string SHADER_PATH = "../../../J-Engine-Editor/Assets/builtin/shaders/";
 static const std::string TEXTURE_PATH = "../../../Game/Assets/textures/";
@@ -26,7 +28,7 @@ struct DebugCamera : public ICamera {
 public:
     JMatrix4f matrix;
 
-    DebugCamera() : matrix({ 0, 0 }, 0, {1, 1}) {
+    DebugCamera() : matrix({ 0, 0 }, 0, { 1, 1 }) {
         _clearColor = JColor32::Black;
     }
 
@@ -39,14 +41,14 @@ public:
     }
 
 protected:
-    virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
+    virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
 };
 
 struct DebugWindow : public IImGuiDrawable {
     struct TransformSettings {
-        JVector2f pos = {0, 0};
+        JVector2f pos = { 0, 0 };
         float rot = 0;
-        JVector2f size = {1.0f, 1.0f};
+        JVector2f size = { 1.0f, 1.0f };
     };
 
     struct CameraSettings {
@@ -78,7 +80,7 @@ struct DebugWindow : public IImGuiDrawable {
 
     DebugWindow(Renderer& renderer, JTime& timeRef, FPS& fpsRef, ICamera** cams, size_t camCount, SimpleRenderer* renderers, size_t rendCount) :
         debugOpen(true), timeRef(timeRef), fps(fpsRef), renderer(renderer)
-        { 
+    {
         cameras.clear();
         camSettings.clear();
 
@@ -136,10 +138,10 @@ struct DebugWindow : public IImGuiDrawable {
                     ImGui::Text("Triangle Count: %i", rendInf.triCount);
                 }
 
-                
+
                 if (ImGui::CollapsingHeader("Cameras")) {
 
-                    for (size_t i = 0; i < cameras.size(); i++)
+                    for (int32_t i = 0; i < cameras.size(); i++)
                     {
                         ImGui::PushID(i);
                         memset(buffer, 0, sizeof(buffer));
@@ -193,7 +195,7 @@ struct DebugWindow : public IImGuiDrawable {
 
                 if (ImGui::CollapsingHeader("Objects")) {
 
-                    for (size_t i = 0; i < simpleRenderers.size(); i++)
+                    for (int32_t i = 0; i < simpleRenderers.size(); i++)
                     {
                         ImGui::PushID(i);
                         memset(buffer, 0, sizeof(buffer));
@@ -202,7 +204,7 @@ struct DebugWindow : public IImGuiDrawable {
                             auto object = simpleRenderers[i];
                             auto& objTr = rendTransforms[i];
                             bool changedTr = false;
-                   
+
                             ImGui::BeginDisabled(!object);
 
                             changedTr |= ImGui::DragFloat2("Position##Obj", reinterpret_cast<float*>(&objTr.pos), 0.1f);
@@ -272,62 +274,93 @@ private:
 
 };
 
+struct TextureInstance {
+    const std::string path;
+    Texture2D texture;
+
+    TextureInstance(const std::string& path) : path(path), texture() {}
+
+    void loadFromDisk() {
+        DecoderResult res;
+        std::ifstream stream(path, std::ios::binary);
+
+        std::string err;
+        auto format = IO::checkFileType(stream);
+        stream.seekg(0, std::ios::beg);
+        switch (format)
+        {
+            case JEngine::AssetDataFormat::PNG:
+                std::cout << "Texture format for '" << path << "' is PNG!\n";
+
+                res = decodePng(stream);
+                getDecodeErrorString<AssetDataFormat::PNG>(err, res.errFlags);
+                break;
+            case JEngine::AssetDataFormat::BMP:
+                std::cout << "Texture format for '" << path << "' is BMP!\n";
+
+                res = decodeBmp(stream);
+                getDecodeErrorString<AssetDataFormat::BMP>(err, res.errFlags);
+                break;
+            default:
+                std::cout << "Unknown texture format for '" << path << "'!\n";
+                return;
+        }
+
+        if (res.errFlags == DECODER_OK) {
+            std::cout << "'" << path << "' Decode results:\n";
+            std::cout << res << "\n";
+
+            texture.create(res.resolution.x, res.resolution.y, res.format, FilterMode::Nearest, res.data, false);
+            res.clear(true);
+        }
+        else {
+            std::cout << "Failed to decode: " << err << std::endl;
+        }
+    }
+};
+
+
 int main() {
 
-    Renderer renderer;    
+    Renderer renderer;
     if (!renderer.init("J-Engine [Editor]")) {
         renderer.terminate();
         return -1;
     }
 
     {
-        Shader shader(SHADER_PATH + "Textured.shader");
+        Shader shaderA(SHADER_PATH + "Indexed.shader");
+        Shader shaderB(SHADER_PATH + "Textured.shader");
         Shader shaderBlend(SHADER_PATH + "FB-Default-Blend.shader");
-        auto dec = decodeBmp(TEXTURE_PATH + "Simba.bmp");
-        Texture2D texA;
 
-        if (dec.errFlags == DECODER_OK) {
-            texA.create(dec.resolution.x, dec.resolution.y, dec.format, FilterMode::Nearest, dec.data, false);
-        }
-        else {
-            std::string err;
-            std::cout << "Failed to read texture! [" << getBmpErrorString(err, dec.errFlags) << "]\n";
-        }
-        dec.clear(false);
+        TextureInstance texIA("K:\\Stuff\\CSharper\\Doxy\\KLK\\hollow_FRC.png");
+        TextureInstance texIB(TEXTURE_PATH + "Blade.bmp");
 
-        dec = decodeBmp(TEXTURE_PATH + "Blade.bmp");
-        Texture2D texB;
+        texIA.loadFromDisk();
+        texIB.loadFromDisk();
 
-        if (dec.errFlags == DECODER_OK) {
-            texB.create(dec.resolution.x, dec.resolution.y, dec.format, FilterMode::Nearest, dec.data, false);
-        }
-        else {
-            std::string err;
-            std::cout << "Failed to read texture! [" << getBmpErrorString(err, dec.errFlags) << "]\n";
-        }
-        dec.clear(false);
 
         JTime time;
 
-        Sprite spriteA("Simba", &texA, float(texA.getSize().y), {0.5f, 0.5f}, JRecti(0, 0, texA.getSize().x, texA.getSize().y));
-        Sprite spriteB("Blade", &texB, 32, {0.5f, 0.125f}, JRecti(0, 0, texB.getSize().x, texB.getSize().y));
-        Material matA(&texA, &shader);
-        Material matB(&texB, &shader);
+        Sprite spriteA("Simba", &texIA.texture, float(texIA.texture.getSize().y), { 0.5f, 0.5f }, JRecti(0, 0, texIA.texture.getSize().x, texIA.texture.getSize().y));
+        Sprite spriteB("Blade", &texIB.texture, 32, { 0.5f, 0.125f }, JRecti(0, 0, texIB.texture.getSize().x, texIB.texture.getSize().y));
+        Material matA(&texIA.texture, &shaderB);
+        Material matB(&texIB.texture, &shaderB);
         Material matBlend(&shaderBlend);
 
         renderer.setCameraBlendMaterial(&matBlend);
 
         SimpleRenderer rend[1]{};
         rend[0].setObjectLayer(1);
-       
+
         rend[0].setSprite(&spriteA);
         rend[0].setMaterial(&matA);
 
         rend[0].setColor({ 255, 255, 255, 255 });
         rend[0].setTRS({ 0, 0 }, 0, { 1, 1 });
- 
+
         Input::init();
-        uint64_t connId = Input::addDeviceConnectionCB([](const Input::DeviceIndex index, const bool status) 
+        uint64_t connId = Input::addDeviceConnectionCB([](const Input::DeviceIndex index, const bool status)
             {
                 switch (index)
                 {
@@ -363,17 +396,20 @@ int main() {
         cam[1].setLayerMask(2);
         cam[2].setLayerMask(2);
 
-        cam[0].setClearColor(JColor32(26, 26, 26, 255));
-        cam[0].setCameraTint(JColor32(128, 128, 128, 255));
+        cam[0].setClearColor(JColor32(0, 0, 0, 255));
+        cam[0].setCameraTint(JColor32(255, 255, 255, 255));
 
         cam[1].setClearColor({ 26, 48, 26, 0 });
-        cam[1].setCameraTint({0, 0, 0, 96});
+        cam[1].setCameraTint({ 0, 0, 0, 96 });
         cam[1].setCameraDisabled(true);
 
-        cam[2].setClearColor({26, 48, 26, 0});
+        cam[2].setClearColor({ 26, 48, 26, 0 });
+        cam[1].setClearFlags(ICamera::Clear_None);
+        cam[2].setClearFlags(ICamera::Clear_None);
 
         cam[1].setTransformMatrix(JMatrix4f({ 0, 0 }, 0, { 20, 20 }));
         cam[2].setTransformMatrix(JMatrix4f({ 0, 0 }, 0, { 20, 20 }));
+        cam[2].setCameraDisabled(true);
 
         ICamera* camPtrs[3]{
         &cam[0],
@@ -383,17 +419,18 @@ int main() {
 
         DebugWindow window(renderer, time, fps, camPtrs, 3, rend, 1);
 
-        static constexpr size_t BLADE_COUNT = 256;
+        static constexpr size_t BLADE_COUNT = 2048;
         static constexpr size_t BLADE_COUNT_HALF = BLADE_COUNT >> 1;
         static constexpr size_t BLADE_COUNT_QUAD = BLADE_COUNT >> 2;
 
-        SimpleRenderer blades[BLADE_COUNT];
+        SimpleRenderer* blades = new SimpleRenderer[BLADE_COUNT];
         for (size_t i = 0; i < BLADE_COUNT; i++) {
             auto& blade = blades[i];
 
             blade.setObjectLayer(2);
             blade.setMaterial(&matB);
             blade.setSprite(&spriteB);
+            blade.setColor(JColor32(255, 255, 255, 128));
         }
 
         static constexpr float START_Y = -8.0f;
@@ -414,84 +451,90 @@ int main() {
         float timeF = 0;
         while (renderer.doRender()) {
 
-            for (size_t i = 0, j = 0; i < BLADE_COUNT_QUAD; i++, j++)
-            {
-                auto& blade = blades[j];
+                if(Input::isDown(Input::DEV_Keyboard, Input::INP_F2)) {
+                    texIA.loadFromDisk();
+                }
 
-                const float n = i / (BLADE_COUNT_HALF - 1.0f);
-                const float nA = i / (BLADE_COUNT_QUAD - 1.0f);
-                const float sin = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY);
-                const float sinA = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY * FREQUENCY_ROT);
-                const float sinN = (sin + 1.0f) * 0.5f;
-                const float sinNA = (sinA + 1.0f) * 0.5f;
+                for (size_t i = 0, j = 0; i < BLADE_COUNT_QUAD; i++, j++)
+                {
+                    auto& blade = blades[j];
 
-                const float y = -MID_Y + Math::lerp(START_Y, END_Y, n);
-                const float x = Math::lerp<float>(0, CENTER_X + Math::lerp(MIN_X, MAX_X, sinN), nA * nA * nA);
+                    const float n = i / (BLADE_COUNT_HALF - 1.0f);
+                    const float nA = i / (BLADE_COUNT_QUAD - 1.0f);
+                    const float sin = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY);
+                    const float sinA = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY * FREQUENCY_ROT);
+                    const float sinN = (sin + 1.0f) * 0.5f;
+                    const float sinNA = (sinA + 1.0f) * 0.5f;
 
-                const float scale = Math::lerp(0.1f, 1.0f, nA * nA * nA);
+                    const float y = -MID_Y + Math::lerp(START_Y, END_Y, n);
+                    const float x = Math::lerp<float>(0, CENTER_X + Math::lerp(MIN_X, MAX_X, sinN), nA * nA * nA);
 
-                blade.setTRS({ x, y }, 180 - ROT_OFF * sinNA, { scale, scale });
+                    const float scale = Math::lerp(0.1f, 1.0f, nA * nA * nA);
+
+                    blade.setTRS({ x, y }, 180 - ROT_OFF * sinNA, { scale, scale });
+                    blade.setFlipX(true);
+                }
+
+                for (size_t i = 0, j = BLADE_COUNT_QUAD; i < BLADE_COUNT_QUAD; i++, j++)
+                {
+                    auto& blade = blades[j];
+
+                    const float n = i / (BLADE_COUNT_HALF - 1.0f);
+                    const float nA = i / (BLADE_COUNT_QUAD - 1.0f);
+                    const float sin = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY);
+                    const float sinA = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY * FREQUENCY_ROT);
+                    const float sinN = (sin + 1.0f) * 0.5f;
+                    const float sinNA = (sinA + 1.0f) * 0.5f;
+
+                    const float y = MID_Y + Math::lerp(END_Y, START_Y, n);
+                    const float x = Math::lerp<float>(0, CENTER_X + Math::lerp(MIN_X, MAX_X, sinN), nA * nA * nA);
+
+                    const float scale = Math::lerp(0.1f, 1.0f, nA * nA * nA);
+
+                    blade.setTRS({ x, y }, 0 + ROT_OFF * sinNA, { scale, scale });
+                    blade.setFlipX(false);
+                }
+          
+                for (size_t i = 0, j = BLADE_COUNT_QUAD + BLADE_COUNT_QUAD; i < BLADE_COUNT_QUAD; i++, j++)
+                {
+                    auto& blade = blades[j];
+
+                    const float n = i / (BLADE_COUNT_HALF - 1.0f);
+                    const float nA = i / (BLADE_COUNT_QUAD - 1.0f);
+                    const float sin = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY);
+                    const float sinA = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY * FREQUENCY_ROT);
+                    const float sinN = (sin + 1.0f) * 0.5f;
+                    const float sinNA = (sinA + 1.0f) * 0.5f;
+
+                    const float y = -MID_Y + Math::lerp(START_Y, END_Y, n);
+                    const float x = Math::lerp<float>(0, -CENTER_X + Math::lerp(-MIN_X, -MAX_X, sinN), nA * nA * nA);
+
+                    const float scale = Math::lerp(0.1f, 1.0f, nA * nA * nA);
+
+                    blade.setTRS({ x, y }, 180 + ROT_OFF * sinNA, { scale, scale });
+                    blade.setFlipX(false);
+                }
+
+                for (size_t i = 0, j = BLADE_COUNT_QUAD + BLADE_COUNT_QUAD + BLADE_COUNT_QUAD; i < BLADE_COUNT_QUAD; i++, j++)
+                {
+                    auto& blade = blades[j];
+
+                    const float n = i / (BLADE_COUNT_HALF - 1.0f);
+                    const float nA = i / (BLADE_COUNT_QUAD - 1.0f);
+                    const float sin = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY);
+                    const float sinA = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY * FREQUENCY_ROT);
+                    const float sinN = (sin + 1.0f) * 0.5f;
+                    const float sinNA = (sinA + 1.0f) * 0.5f;
+
+                    const float y = MID_Y + Math::lerp(END_Y, START_Y, n);
+                    const float x = Math::lerp<float>(0, -CENTER_X + Math::lerp(-MIN_X, -MAX_X, sinN), nA * nA * nA);
+
+                    const float scale = Math::lerp(0.1f, 1.0f, nA * nA * nA);
+
+                    blade.setTRS({ x, y }, 0 - ROT_OFF * sinNA, { scale, scale });
+                    blade.setFlipX(true);
+                
             }
-
-            for (size_t i = 0, j = BLADE_COUNT_QUAD; i < BLADE_COUNT_QUAD; i++, j++)
-            {
-                auto& blade = blades[j];
-
-                const float n = i / (BLADE_COUNT_HALF - 1.0f);
-                const float nA = i / (BLADE_COUNT_QUAD - 1.0f);
-                const float sin = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY);
-                const float sinA = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY * FREQUENCY_ROT);
-                const float sinN = (sin + 1.0f) * 0.5f;
-                const float sinNA = (sinA + 1.0f) * 0.5f;
-
-                const float y = MID_Y + Math::lerp(END_Y, START_Y, n);
-                const float x = Math::lerp<float>(0, CENTER_X + Math::lerp(MIN_X, MAX_X, sinN), nA * nA * nA);
-               
-                const float scale = Math::lerp(0.1f, 1.0f, nA * nA * nA);
-
-                blade.setTRS({ x, y }, 0 + ROT_OFF * sinNA, { scale, scale });
-                blade.setFlipX(true);
-            }
-
-            for (size_t i = 0, j = BLADE_COUNT_QUAD + BLADE_COUNT_QUAD; i < BLADE_COUNT_QUAD; i++, j++)
-            {
-                auto& blade = blades[j];
-
-                const float n = i / (BLADE_COUNT_HALF - 1.0f);
-                const float nA = i / (BLADE_COUNT_QUAD - 1.0f);
-                const float sin = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY);
-                const float sinA = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY * FREQUENCY_ROT);
-                const float sinN = (sin + 1.0f) * 0.5f;
-                const float sinNA = (sinA + 1.0f) * 0.5f;
-
-                const float y = -MID_Y + Math::lerp(START_Y, END_Y, n);
-                const float x = Math::lerp<float>(0, -CENTER_X + Math::lerp(-MIN_X, -MAX_X, sinN), nA * nA * nA);
-
-                const float scale = Math::lerp(0.1f, 1.0f, nA * nA * nA);
-
-                blade.setTRS({ x, y }, 180 + ROT_OFF * sinNA, { scale, scale });
-            }
-
-            for (size_t i = 0, j = BLADE_COUNT_QUAD + BLADE_COUNT_QUAD + BLADE_COUNT_QUAD; i < BLADE_COUNT_QUAD; i++, j++)
-            {
-                auto& blade = blades[j];
-
-                const float n = i / (BLADE_COUNT_HALF - 1.0f);
-                const float nA = i / (BLADE_COUNT_QUAD - 1.0f);
-                const float sin = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY);
-                const float sinA = sinf((timeF * PI * 2.0f * SPEED) + n * PI * FREQUENCY * FREQUENCY_ROT);
-                const float sinN = (sin + 1.0f) * 0.5f;
-                const float sinNA = (sinA + 1.0f) * 0.5f;
-
-                const float y = MID_Y + Math::lerp(END_Y, START_Y, n);
-                const float x = Math::lerp<float>(0, -CENTER_X + Math::lerp(-MIN_X, -MAX_X, sinN), nA * nA * nA);
-
-                const float scale = Math::lerp(0.1f, 1.0f, nA * nA * nA);
-
-                blade.setTRS({ x, y }, 0 - ROT_OFF * sinNA, { scale, scale });
-                blade.setFlipX(true);
-            }
-
             timeF += time.getEngineDeltaTime<float>();
             Input::update(true);
             time.tick();

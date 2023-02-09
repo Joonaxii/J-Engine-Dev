@@ -19,26 +19,25 @@ namespace JEngine {
         DynamicBatch() :
             _vertexBuffer(nullptr), _indexBuffer(nullptr), _material(nullptr),
             _vertCount(0), _indCount(0),
-            _ib(), _vb(), 
-            _bl(), _va()   {  }
+            _ib(), _vb(), _va()   {  }
 
         ~DynamicBatch() {
             release();
         }
 
-        void init() {
-            _bl.push<float>(2);
-            _bl.push<uint8_t>(4);
-            _bl.push<float>(2);
+        void init(const BufferLayout& bufferLayout, const uint32_t vertCount = MAX_VERTS, const uint32_t indCount = MAX_INDICES) {
+            if (vertCount) {
+                _vertexBuffer = reinterpret_cast<TVert*>(malloc(vertCount * sizeof(TVert)));
+                _vb.init(nullptr, vertCount * sizeof(TVert), GL_DYNAMIC_DRAW);
 
-            _ib.init(nullptr, MAX_INDICES, GL_DYNAMIC_DRAW);
-            _vb.init(nullptr, MAX_VERTS * sizeof(TVert), GL_DYNAMIC_DRAW);
+                _va.init();
+                _va.addBuffer(_vb, bufferLayout);
+            }
 
-            _va.init();
-            _va.addBuffer(_vb, _bl);
-
-            _vertexBuffer = reinterpret_cast<TVert*>(malloc(MAX_VERTS * sizeof(TVert)));
-            _indexBuffer = reinterpret_cast<uint32_t*>(malloc(MAX_VERTS * 3 * sizeof(uint32_t)));
+            if (indCount) {
+                _indexBuffer = reinterpret_cast<uint32_t*>(malloc(indCount * sizeof(uint32_t)));
+                _ib.init(nullptr, indCount, GL_DYNAMIC_DRAW);
+            }
         }
 
         void release() {
@@ -60,7 +59,6 @@ namespace JEngine {
         void setup(Material* material) {
             _vertCount = 0;
             _indCount = 0;
-
             _material = material;
         }
 
@@ -83,10 +81,10 @@ namespace JEngine {
             if (_material) {
                 if (_material->bind()) {
                     _vb.updateBuffer(_vertexBuffer, _vertCount * sizeof(TVert));
-                    _ib.updateBuffer(_indexBuffer, _indCount);
-
                     _vb.bind();
                     _va.bind();
+
+                    _ib.updateBuffer(_indexBuffer, _indCount);
                     _ib.bind();
 
                     GLCall(glDrawElements(GL_TRIANGLES, _ib.getCount(), GL_UNSIGNED_INT, nullptr));
@@ -105,7 +103,6 @@ namespace JEngine {
         uint32_t* _indexBuffer;
 
         IndexBuffer _ib;
-        BufferLayout _bl;
         VertexBuffer _vb;
         VertexArray _va;
     };

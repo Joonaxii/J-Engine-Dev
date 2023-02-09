@@ -1,19 +1,16 @@
 #include <JEngine/Helpers/StringExtensions.h>
 #include <JEngine/Helpers/TypeHelpers.h>
-#include <JEngine/IO/Helpers/FileExtensions.h>
+#include <JEngine/IO/Helpers/IOHelpers.h>
 #include <JEngine/IO/VFS/FileEntry.h>
 #include <stack>
 #include <fstream>
-#include <JEngine/IO/Serialization/Serialization.h>
 
 namespace JEngine {
     FileEntry::FileEntry() : FileEntry(nullptr, std::string_view(), EntryData()) { }
     FileEntry::FileEntry(FileEntry* parent, const std::string& name, const EntryData& data) : _parent(parent), _items(0), _name(name), _data(data) { }
     FileEntry::FileEntry(FileEntry* parent, const std::string_view& name, const EntryData& data) : _parent(parent), _items(0), _name(name), _data(data) { }
 
-    const std::string& FileEntry::getName() const {
-        return _name;
-    }
+    const std::string& FileEntry::getName() const { return _name; }
 
     FileEntry* FileEntry::findOrAdd(std::string_view& path, const EntryData& data, bool& addNew) {
         int32_t indOf = indexOf(path);
@@ -146,7 +143,7 @@ namespace JEngine {
         }
     }
 
-    const void FileEntry::getPath(std::string& path) {
+    void FileEntry::getPath(std::string& path) {
         std::stack<std::string*> paths;
         paths.push(&_name);
         size_t len = 0;
@@ -225,43 +222,38 @@ namespace JEngine {
         _name = "";
     }
 
-    const uint8_t FileEntry::getEntryType() const {
-        return _data.type;
-    }
+    uint8_t FileEntry::getEntryType() const { return _data.type; }
+    uint32_t FileEntry::getDataPosition() const { return _data.position; }
 
-    const uint32_t FileEntry::getDataPosition() const {
-        return _data.position;
-    }
-
-    const int32_t FileEntry::indexOf(const std::string& name) const {
+    int32_t FileEntry::indexOf(const std::string& name) const {
         for (size_t i = 0; i < _items.size(); i++) {
             if (_items[i]._name == name) { return int32_t(i); }
         }
         return -1;
     }
 
-    const int32_t FileEntry::indexOf(const std::string& name, const uint8_t type) const {
+    int32_t FileEntry::indexOf(const std::string& name, const uint8_t type) const {
         for (size_t i = 0; i < _items.size(); i++) {
             if (_items[i]._data.type == type && _items[i]._name == name) { return int32_t(i); }
         }
         return -1;
     }
 
-    const int32_t FileEntry::indexOf(const std::string_view& name) const {
+    int32_t FileEntry::indexOf(const std::string_view& name) const {
         for (size_t i = 0; i < _items.size(); i++) {
             if (_items[i]._name == name) { return int32_t(i); }
         }
         return -1;
     }
 
-    const int32_t FileEntry::indexOf(const std::string_view& name, const uint8_t type) const {
+    int32_t FileEntry::indexOf(const std::string_view& name, const uint8_t type) const {
         for (size_t i = 0; i < _items.size(); i++) {
             if (_items[i]._data.type == type && _items[i]._name == name) { return int32_t(i); }
         }
         return -1;
     }
 
-    const void FileEntry::print() {
+    void FileEntry::print() {
         printSub(0);
         for (size_t i = 0; i < _items.size(); i++) {
             _items[i].printSub(1);
@@ -269,34 +261,14 @@ namespace JEngine {
         return void();
     }
 
-    const std::vector<FileEntry>& FileEntry::getItems() {
-        return _items;
-    }
+    const std::vector<FileEntry>& FileEntry::getItems() { return _items; }
 
-    const std::string FileEntry::entryTypeToStr(uint8_t input) {
-        switch (input)
-        {
-        default: return "UNKNOWN";
-        case ET_FOLDER: return NAMEOF(ET_FOLDER);
-        case ET_FILE: return NAMEOF(ET_FILE);
-        case ET_PAK_FILE: return NAMEOF(ET_PAK_FILE);
-        case ET_ASSET: return NAMEOF(ET_ASSET);
-        }
-    }
+    AssetMetaData& FileEntry::getMetaData() { return _metadata; }
+    const AssetMetaData& FileEntry::getMetaData() const { return _metadata; }
 
-    AssetMetaData& FileEntry::getMetaData() {
-        return _metadata;
-    }
+    FileEntry::EntryData& FileEntry::getEntryData() { return _data; }
 
-    const AssetMetaData& FileEntry::getConstMetaData() const {
-        return _metadata;
-    }
-
-    FileEntry::EntryData& FileEntry::getEntryData() {
-        return _data;
-    }
-
-    const void FileEntry::printSub(int depth) {
+    void FileEntry::printSub(int depth) {
         std::cout << "|-" << std::string(depth << 1U, '-') << _name << " [" << entryTypeToStr(_data.type) << "]\n";
         for (size_t i = 0; i < _items.size(); i++) {
             _items[i].printSub(depth + 1);
@@ -375,7 +347,7 @@ namespace JEngine {
             std::ifstream strm;
             if (valid) {
                 strm.open(metaPath);
-                valid = Serialization::checkFileType(strm, "NONE") == Serialization::JSON_FILE;
+                valid = IO::checkFileType(strm) == AssetDataFormat::JSON;
             }
 
             if (valid) {

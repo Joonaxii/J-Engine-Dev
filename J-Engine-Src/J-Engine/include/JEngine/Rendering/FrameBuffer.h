@@ -8,13 +8,11 @@ namespace JEngine {
         uint16_t width;
         uint16_t height;
 
-        uint32_t samples = 1;
-
-        const bool operator==(const FrameBufferSpecs& other) const {
-            return width == other.width && height == other.height && samples == other.samples;
+        bool operator==(const FrameBufferSpecs& other) const {
+            return width == other.width && height == other.height;
         }
 
-        const bool operator!=(const FrameBufferSpecs& other) const {
+        bool operator!=(const FrameBufferSpecs& other) const {
             return !(*this == other);
         }
     };
@@ -37,20 +35,20 @@ namespace JEngine {
         void releaseTexture();
         void releaseDepthBuffer();
 
-        const uint32_t bindColorAttachment(const uint32_t slot) const;
-        const uint32_t unbindColorAttachment(const uint32_t slot) const;
+        uint32_t bindColorAttachment(const uint32_t slot) const;
+        uint32_t unbindColorAttachment(const uint32_t slot) const;
 
-        const bool bind() const;
+        bool bind() const;
         void unbind() const;
 
     private:
-
-        void invalidate(const bool rebuild);
         FrameBufferSpecs _specs;
         uint32_t _bufferId;
 
         uint32_t _colorFormat;
         uint32_t _colorAttachId;
         uint32_t _depthAttachId;
+
+        void invalidate(const bool rebuild);
     };
 }

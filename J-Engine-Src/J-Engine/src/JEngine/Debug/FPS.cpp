@@ -7,7 +7,7 @@ namespace JEngine {
         }
     }
 
-    const double FPS::update(const JTime& time) {
+    double FPS::update(const JTime& time) {
         _tempFrame++;
         _tempTime += time.getEngineDeltaTime();
         if (_tempFrame >= 20) {
@@ -34,7 +34,5 @@ namespace JEngine {
         return _fps;
     }
 
-    const double FPS::getFPS() const {
-        return _fps;
-    }
+    double FPS::getFPS() const { return _fps; }
 }

@@ -81,7 +81,7 @@ namespace JEngine {
         }
     }
 
-    const uint32_t FrameBuffer::bindColorAttachment(const uint32_t slot) const {
+    uint32_t FrameBuffer::bindColorAttachment(const uint32_t slot) const {
         uint32_t bindP = slot;
 
         GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));
@@ -89,7 +89,7 @@ namespace JEngine {
         return slot;
     }
 
-    const uint32_t FrameBuffer::unbindColorAttachment(const uint32_t slot) const {
+    uint32_t FrameBuffer::unbindColorAttachment(const uint32_t slot) const {
         uint32_t bindP = slot;
 
         GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));
@@ -98,7 +98,7 @@ namespace JEngine {
         return bindP;
     }
 
-    const bool FrameBuffer::bind() const {
+    bool FrameBuffer::bind() const {
         if (_bufferId) {
             GLCall(glBindFramebuffer(GL_FRAMEBUFFER, _bufferId));
             return true;

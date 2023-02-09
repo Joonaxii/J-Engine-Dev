@@ -15,19 +15,19 @@ public:
 
     void setSprite(JEngine::Sprite* sprite);
 
-    const bool canRender() const override;
+    bool canRender() const override;
    
     void setFlipX(const bool flip);
-    const bool getFlipX() const;
+    bool getFlipX() const;
 
     void setFlipY(const bool flip);
-    const bool getFlipY() const;
+    bool getFlipY() const;
 
     void setObjectLayer(const uint32_t layer);
-    const uint32_t getObjectLayer() const override;
+    uint32_t getObjectLayer() const override;
 
-    const int32_t getVertexCount() const override;
-    const int32_t getIndexCount() const override;
+    int32_t getVertexCount() const override;
+    int32_t getIndexCount() const override;
 
     const JVertex2f* getVertices() const override;
     const uint32_t* getIndices() const override;
@@ -38,7 +38,7 @@ public:
 
 protected:
     const JRectf& getLocalBounds() const override;
-    virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
+    virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
 
 private:
     static constexpr uint8_t FLIP_X = 0x1;

@@ -1,7 +1,6 @@
 #include <JEngine/Assets/AssetMetaData.h>
 #include <JEngine/Assets/IAsset.h>
 #include <JEngine/Global/UUIDFactory.h>
-#include <JEngine/IO/Serialization/Serialization.h>
 
 namespace JEngine {
     AssetMetaData::AssetMetaData() : _uuid(UUIDFactory::Empty), _assetFlags(0) { }

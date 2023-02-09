@@ -4,13 +4,15 @@
 namespace JEngine {
     class IRef {
     public:
-        IRef() : _id(-1) {}
-        IRef(const int32_t id) : _id(id) {}
+        static constexpr uint32_t NULL_ID = 0xFFFFFFU;
 
-        void setId(const int32_t id) { _id = id; }
-        const int32_t getId() const { return _id; }
+        IRef() : _id(NULL_ID) {}
+        IRef(const uint32_t id) : _id(id & NULL_ID) {}
 
-    protected:
-        int32_t _id;
+        void setId(const uint32_t id) { _id = id & NULL_ID; }
+        uint32_t getId() const { return _id; }
+
+    private:
+        uint32_t _id;
     };
 }

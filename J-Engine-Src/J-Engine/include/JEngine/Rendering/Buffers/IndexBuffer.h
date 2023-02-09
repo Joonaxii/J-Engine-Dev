@@ -16,9 +16,7 @@ namespace JEngine {
 
         void updateBuffer(const uint32_t* data, const uint32_t count);
 
-        inline const uint32_t getCount() const {
-            return _count;
-        }
+        uint32_t getCount() const;
 
     private:
         uint32_t _rendererID;

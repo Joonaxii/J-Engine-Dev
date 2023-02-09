@@ -19,7 +19,7 @@ namespace JEngine {
         _frameBufferID = 0;
     }
 
-    const bool RenderTarget::bindAsRenderTarget() const  {
+    bool RenderTarget::bindAsRenderTarget() const  {
         if (_frameBufferID) {
             GLCall(glBindFramebuffer(GL_FRAMEBUFFER, _frameBufferID));
             return true;

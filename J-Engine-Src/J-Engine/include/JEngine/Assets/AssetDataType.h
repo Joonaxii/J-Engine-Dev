@@ -1,118 +1,127 @@
 #pragma once
 #include <cstdint>
 #include <JEngine/IO/Serialization/Serializable.h>
+#include <JEngine/Utility/ConstSpan.h>
+#include <algorithm>
+#define STR_TO_UINT(x) *reinterpret_cast<const uint32_t*>(x)
 
-namespace JEngine 
+namespace JEngine
 {
-	enum class AssetDataFormat : uint16_t
-	{
-		Unknown,
-		
-		//Engine Formats
-		JPAK,
+    enum class AssetDataFormat : uint16_t
+    {
+        Unknown,
 
-		JPRF,
-		
-		JMAT,
-		JSHD,
-		JGLI,
+        //Engine Formats
+        JPAK,
 
-		JTEX,
-		JRTX,
-		JATL,
+        JPRF,
 
-		JINP,
+        JMAT,
+        JSHD,
+        JGLI,
 
-		JSCN,
-		JPFB,
+        JTEX,
+        JRTX,
+        JATL,
 
-		JTXT,
-		JBIN,
+        JINP,
 
-		//External formats
-		WAV,
-		OGG,
+        JSCN,
+        JPFB,
 
-		//Supported Image Formats
-		PNG,
-		BMP,
+        JTXT,
+        JBIN,
 
-		//Unsupported Image Formats
-		JPEG,
-		GIF87,
-		GIF89,
+        //Text files
+        JSON,
 
+        //External formats
+        WAV,
+        OGG,
 
-		//Used as a base for custom formats
-		MAX, 
-	};
+        //Supported Image Formats
+        PNG,
+        BMP,
 
-	enum class AssetDataType : uint8_t
-	{
-		Binary,
-		JSON,
-	};
+        //Unsupported Image Formats
+        JPEG,
+        GIF87,
+        GIF89,
 
-	static inline constexpr char* assetDataFormatToHeader(const AssetDataFormat format) {
-		switch (format)
-		{
-			//Engine formats
-			case AssetDataFormat::JPAK:			return "JPAK";
+        //Used as a base for custom formats
+        MAX,
+    };
 
-			case AssetDataFormat::JPRF:			return "JPRF";
+    enum class AssetDataType : uint8_t
+    {
+        Binary,
+        JSON,
+    };
 
-			case AssetDataFormat::JMAT:			return "JMAT";
-			case AssetDataFormat::JSHD:			return "JSHD";
-			case AssetDataFormat::JGLI:			return "JGLI";
+    static inline constexpr char* assetDataFormatToHeader(const AssetDataFormat format) {
+        switch (format)
+        {
+            //Engine formats
+            case AssetDataFormat::JPAK:			return "JPAK";
 
-			case AssetDataFormat::JTEX:			return "JTEX";
-			case AssetDataFormat::JRTX:			return "JRTX";
-			case AssetDataFormat::JATL:			return "JATL";
+            case AssetDataFormat::JPRF:			return "JPRF";
 
-			case AssetDataFormat::JINP:			return "JINP";
+            case AssetDataFormat::JMAT:			return "JMAT";
+            case AssetDataFormat::JSHD:			return "JSHD";
+            case AssetDataFormat::JGLI:			return "JGLI";
 
-			case AssetDataFormat::JSCN:			return "JSCN";
-			case AssetDataFormat::JPFB:			return "JPFB";
+            case AssetDataFormat::JTEX:			return "JTEX";
+            case AssetDataFormat::JRTX:			return "JRTX";
+            case AssetDataFormat::JATL:			return "JATL";
 
-			case AssetDataFormat::JTXT:			return "JTXT";
-			case AssetDataFormat::JBIN:			return "JBIN";
+            case AssetDataFormat::JINP:			return "JINP";
 
-			//External formats
-			case AssetDataFormat::BMP:			return "BM";
-			case AssetDataFormat::PNG:			return "‰PNG";
-			case AssetDataFormat::WAV:			return "RIFF¤¤¤¤WAVE";
-			case AssetDataFormat::OGG:			return "OggS";
-			case AssetDataFormat::GIF87:		return "GIF87a";
-			case AssetDataFormat::GIF89:		return "GIF89a";
+            case AssetDataFormat::JSCN:			return "JSCN";
+            case AssetDataFormat::JPFB:			return "JPFB";
 
-			default: return "";
-		}
-	}
+            case AssetDataFormat::JTXT:			return "JTXT";
+            case AssetDataFormat::JBIN:			return "JBIN";
+
+                //External formats
+            case AssetDataFormat::JSON:			return "JSON";
+            case AssetDataFormat::BMP:			return "BM";
+            case AssetDataFormat::PNG:			return "‰PNG";
+            case AssetDataFormat::WAV:			return "RIFF¤¤¤¤WAVE";
+            case AssetDataFormat::OGG:			return "OggS";
+            case AssetDataFormat::GIF87:		return "GIF87a";
+            case AssetDataFormat::GIF89:		return "GIF89a";
+
+            default: return "";
+        }
+    }
+
+    AssetDataFormat headerToAssetFormat(const ConstSpan<char> header);
+    AssetDataFormat headerToAssetFormat(const char* header);
 
 #pragma region Serialization
-	template<>
-	inline const bool Serializable<AssetDataFormat>::deserializeJson(AssetDataFormat& itemRef, json& jsonF, const AssetDataFormat& defaultVal) {
-		itemRef = jsonF.is_number() ? AssetDataFormat(jsonF.get<uint16_t>()) : defaultVal;
-		return true;
-	}
+    template<>
+    inline bool Serializable<AssetDataFormat>::deserializeJson(AssetDataFormat& itemRef, json& jsonF, const AssetDataFormat& defaultVal) {
+        itemRef = jsonF.is_number() ? AssetDataFormat(jsonF.get<uint16_t>()) : defaultVal;
+        return true;
+    }
 
-	template<>
-	inline const bool Serializable<AssetDataFormat>::serializeJson(const AssetDataFormat& itemRef, json& jsonF) {
-		jsonF = uint16_t(itemRef);
-		return true;
-	}
+    template<>
+    inline bool Serializable<AssetDataFormat>::serializeJson(const AssetDataFormat& itemRef, json& jsonF) {
+        jsonF = uint16_t(itemRef);
+        return true;
+    }
 
 
-	template<>
-	inline const bool Serializable<AssetDataType>::deserializeJson(AssetDataType& itemRef, json& jsonF, const AssetDataType& defaultVal) {
-		itemRef = jsonF.is_number() ? AssetDataType(jsonF.get<uint8_t>()) : defaultVal;
-		return true;
-	}
+    template<>
+    inline bool Serializable<AssetDataType>::deserializeJson(AssetDataType& itemRef, json& jsonF, const AssetDataType& defaultVal) {
+        itemRef = jsonF.is_number() ? AssetDataType(jsonF.get<uint8_t>()) : defaultVal;
+        return true;
+    }
 
-	template<>
-	inline const bool Serializable<AssetDataType>::serializeJson(const AssetDataType& itemRef, json& jsonF) {
-		jsonF = uint8_t(itemRef);
-		return true;
-	}
+    template<>
+    inline bool Serializable<AssetDataType>::serializeJson(const AssetDataType& itemRef, json& jsonF) {
+        jsonF = uint8_t(itemRef);
+        return true;
+    }
 #pragma endregion
 }

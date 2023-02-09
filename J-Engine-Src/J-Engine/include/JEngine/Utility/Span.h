@@ -14,8 +14,10 @@ namespace JEngine {
 
         Span() : _ptr(nullptr), _len(0) {}
         Span(T* ptr, const size_t len) : _ptr(ptr), _len(len) {}
+        Span(void* ptr, const size_t len) : _ptr(reinterpret_cast<T*>(ptr)), _len(len) {}
 
         Span(T* beg, const T* end) : _ptr(beg), _len(end - beg) {}
+        Span(void* beg, const void* end) : _ptr(reinterpret_cast<T*>(beg)), _len(reinterpret_cast<T*>(end) - reinterpret_cast<T*>(beg)) {}
 
         template<typename TIn>
         Span(TIn& value);
@@ -35,14 +37,28 @@ namespace JEngine {
         const T* begin() const { return _ptr; }
         const T* end() const { return _ptr + _len; }
 
-        const size_t length() const { return _len; }
+        size_t length() const { return _len; }
+
+        bool equals(const Span<T> other) const {
+            for (size_t i = 0; i < _len; i++) {
+                if (_ptr[i] != other._ptr[i]) { return false; }
+            }
+            return true;
+        }
+
+        bool equals(const T* other) const {
+            for (size_t i = 0; i < _len; i++) {
+                if (_ptr[i] != other[i]) { return false; }
+            }
+            return true;
+        }
 
         void set(T* ptr, const size_t len) {
             _len = len;
             _ptr = ptr;
         }
 
-        const int32_t lastIndexOf(const T& input) const {
+        int32_t lastIndexOf(const T& input) const {
             assert(_ptr && "Internal pointer is null!");
 
             for (size_t i = _len - 1; i >= 0; i--) {
@@ -51,7 +67,7 @@ namespace JEngine {
             return -1;
         }
 
-        const int32_t indexOf(const T& input) const {
+        int32_t indexOf(const T& input) const {
             assert(_ptr && "Internal pointer is null!");
 
             for (size_t i = 0; i < _len; i++) {
@@ -60,7 +76,55 @@ namespace JEngine {
             return -1;
         }
 
-        const int32_t lastIndexOfAny(const T* input, const size_t length) const {
+        int32_t indexOf(const Span<T>& span) const {
+            assert(_ptr && "Internal pointer is null!");
+            assert(span.length() <= _len && "Given sequence is longer than Span!");
+
+            size_t inARow = 0;
+            int32_t index = -1;
+            for (size_t i = 0; i < _len; i++) {
+                if (span._ptr[inARow] == _ptr[i]) {
+                    if (inARow == 0) {
+                        index = i;
+                    }
+                    inARow++;
+                    if (inARow >= span.length()) { return index; }
+                    continue;
+                }
+                inARow = 0;
+            }
+            return -1;
+        }
+
+        int32_t indexOf(const T* sequence) const {
+            assert(_ptr && "Internal pointer is null!");
+            assert(sequence && "Input sequence is null!");
+
+            size_t length = 0;
+            while (true) {
+                if (sequence[length] == '\0') { break; }
+                length++;
+            }
+
+            assert(length <= _len && "The given sequence is longer than Span!");
+
+            size_t inARow = 0;
+            int32_t index = -1;
+            for (int32_t i = 0; i < _len; i++) {
+                if (sequence[inARow] == _ptr[i]) {
+                    if (inARow == 0) {
+                        index = i;
+                    }
+                    inARow++;
+                    if (inARow >= length) { return index; }
+                    continue;
+                }
+                inARow = 0;
+            }
+            return -1;
+        }
+
+        int32_t lastIndexOfAny(const T* input, const size_t length) const {
             assert(_ptr && "Internal pointer is null!");
 
             auto end = input + length;
@@ -71,7 +135,7 @@ namespace JEngine {
             return -1;
         }
 
-        const int32_t indexOfAny(const T* input, const size_t length) const {
+        int32_t indexOfAny(const T* input, const size_t length) const {
             assert(_ptr && "Internal pointer is null!");
 
             auto end = input + length;
@@ -82,15 +146,15 @@ namespace JEngine {
             return -1;
         }
 
-        const Span<T> trim() const {
+        Span<T> trim() const {
             static_assert("Not Implemented!");
         }
 
-        const Span<T> trimStart() const {
+        Span<T> trimStart() const {
             static_assert("Not Implemented!");
         }
 
-        const Span<T> trimEnd() const {
+        Span<T> trimEnd() const {
             static_assert("Not Implemented!");
         }
 
@@ -106,31 +170,81 @@ namespace JEngine {
         }
 
         template<typename TIn>
-        void write(const TIn& value) {
+        void write(const TIn& value, const bool bigEndian = false) {
             assert(sizeof(TIn) <= (_len * sizeof(T)) && "Input type is larger than data in Span");
             *reinterpret_cast<TIn*>(_ptr) = value;
         }
 
         template<typename TIn>
+        void writeBigEndian(const TIn& value) {
+            assert(sizeof(TIn) <= (_len * sizeof(TIn)) && "Input type is larger than data in Span");
+
+            char* ptrBytes = reinterpret_cast<char*>(_ptr);
+            const char* data = reinterpret_cast<const char*>(&value);
+            for (size_t i = 0, j = sizeof(TIn) - 1; i < sizeof(TIn); i++) {
+                ptrBytes[i] = data[j];
+            }
+        }
+
+        template<typename TIn>
         void write(const size_t offset, const TIn& value) {
-            assert(sizeof(TIn) <= ((_len * sizeof(T)) - offset) && "Input type is larger than data in Span");
-            *reinterpret_cast<const TOut*>(reinterpret_cast<char*>(_ptr) = value);
+            assert(sizeof(TIn) <= ((_len * sizeof(TIn)) - offset) && "Input type is larger than data in Span");
+            *reinterpret_cast<const TIn*>(ptrBytes) = value;
+        }
+
+        template<typename TIn>
+        void writeBigEndian(const size_t offset, const TIn& value) {
+            assert(sizeof(TIn) <= ((_len * sizeof(TIn)) - offset) && "Input type is larger than data in Span");
+
+            char* ptrBytes = reinterpret_cast<char*>(_ptr) + offset;
+            const char* data = reinterpret_cast<const char*>(&value);
+            for (size_t i = 0, j = sizeof(TIn) - 1; i < sizeof(TIn); i++) {
+                ptrBytes[i] = data[j];
+            }
         }
 
         template<typename TOut>
-        const TOut read() const {
+        TOut read() const {
             assert(sizeof(TOut) <= (_len * sizeof(T)) && "Target type is larger than data in Span");
             return *reinterpret_cast<TOut*>(_ptr);
         }
 
         template<typename TOut>
-        const TOut read(const size_t offset) const {
+        TOut readBigEndian() const {
+            assert(sizeof(TOut) <= (_len * sizeof(TOut)) && "Target type is larger than data in Span");
+            const char* data = reinterpret_cast<const char*>(_ptr);
+
+            char* buffer = reinterpret_cast<char*>(alloca(sizeof(TOut)));
+            memcpy(buffer, data, sizeof(TOut));
+
+            for (size_t i = 0, j = sizeof(TOut) - 1; i < sizeof(TOut) >> 1; i++, j--) {
+                std::swap(buffer[i], buffer[j]);
+            }
+            return *reinterpret_cast<const TOut*>(buffer);
+        }
+
+        template<typename TOut>
+        TOut read(const size_t offset) const {
             assert(sizeof(TOut) <= ((_len * sizeof(T)) - offset) && "Target type is larger than data in Span");
             return *reinterpret_cast<const TOut*>(reinterpret_cast<const char*>(_ptr) + offset);
         }
 
+        template<typename TOut>
+        TOut readBigEndian(const size_t offset) const {
+            assert(sizeof(TOut) <= ((_len * sizeof(TOut)) - offset) && "Target type is larger than data in Span");
+            const char* data = reinterpret_cast<const char*>(_ptr) + offset;
+
+            char* buffer = reinterpret_cast<char*>(alloca(sizeof(TOut)));
+            memcpy(buffer, data, sizeof(TOut));
+
+            for (size_t i = 0, j = sizeof(TOut) - 1; i < sizeof(TOut) >> 1; i++, j--) {
+                std::swap(buffer[i], buffer[j]);
+            }
+            return *reinterpret_cast<const TOut*>(buffer);
+        }
+
         Span<T> slice(const size_t start) const {
-            assert(start < _len && start >= 0 && "Start position is invalid!");
+            assert(start < _len&& start >= 0 && "Start position is invalid!");
             return Span<T>(_ptr + start, _len - start);
         }
 
@@ -199,7 +313,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const Span<char, sizeof(char)> Span<char, sizeof(char)>::trim() const {
+    inline Span<char, sizeof(char)> Span<char, sizeof(char)>::trim() const {
         auto st = begin();
         auto nd = end() - 1;
 
@@ -229,7 +343,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const Span<char, sizeof(char)> Span<char, sizeof(char)>::trimStart() const {
+    inline Span<char, sizeof(char)> Span<char, sizeof(char)>::trimStart() const {
         auto st = begin();
 
         size_t stI = 0;
@@ -246,7 +360,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const Span<char, sizeof(char)> Span<char, sizeof(char)>::trimEnd() const {
+    inline Span<char, sizeof(char)> Span<char, sizeof(char)>::trimEnd() const {
         auto nd = end() - 1;
 
         size_t stI = _len;

@@ -25,10 +25,10 @@ namespace JEngine {
         void setTextureRect(const JRecti& rectangle);
         void setColor(const JColor32 color);
 
-        const int32_t writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex2f* verts);
+        int32_t writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex2f* verts);
 
         float setPPU(const float ppu);
-        const float getPPU() const;
+        float getPPU() const;
 
         void setPivot(const JVector2f& pivot);
         const JVector2f& getPivot() const;
@@ -37,33 +37,31 @@ namespace JEngine {
         const Texture* getTexturePtr() const;
 
         ObjectRef<Texture> getTexture();
-        const ObjectRef<Texture> getTexture() const;
+        const ObjectRef<Texture>& getTexture() const;
 
         const JRecti& getTextureRect() const;
-
-        const JColor32& getColor() const;
 
         const JRectf& getLocalBounds() const;
         const JRectf& getGlobalBounds() const;
         const JRectf& getGlobalBounds(const uint8_t flip) const;
 
-        const int32_t getVertexCount() const override;
+        int32_t getVertexCount() const override;
         const JVertex2f* getVertices(const uint8_t flip = 0) const override;
 
-        const int32_t getIndexCount() const override;
+        int32_t getIndexCount() const override;
         const uint32_t* getIndices() const override;
      
         //void setSourceAtlas(ObjectRef<Atlas>& atlas);
         //ObjectRef<Atlas>& getSourceAtlas();
 
-        const bool serializeJson(json& jsonF) const override;
-        const bool deserializeJson(json& jsonF) override;
+        bool serializeJson(json& jsonF) const override;
+        bool deserializeJson(json& jsonF) override;
 
-        const bool serializeBinary(std::ostream& stream) const override;
-        const bool deserializeBinary(std::istream& stream, const size_t size) override;
+        bool serializeBinary(std::ostream& stream) const override;
+        bool deserializeBinary(std::istream& stream, const size_t size) override;
 
     protected:
-        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
+        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
 
     private:
         static uint32_t         DEFAULT_INDICES[6];
@@ -71,7 +69,7 @@ namespace JEngine {
         JRectf                  _boundsLocal;
         JRectf                  _boundsWorld[4];
 
-        JVertex2f               _vertices[16]; 
+        JVertex2f               _vertices[16];
 
         JRecti                  _textureRect;
         float                   _ppu;

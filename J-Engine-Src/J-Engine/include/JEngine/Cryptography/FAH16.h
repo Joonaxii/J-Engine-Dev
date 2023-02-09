@@ -33,6 +33,10 @@ namespace JEngine {
         FAH16& computeHash(std::istream& stream, Span<char>& buffer);
 
         FAH16& computeHash(const char* data, const size_t size, const size_t blockSize = BLOCK_SIZE);
+
+        FAH16& computeHash(Span<char> data, const size_t blockSize = BLOCK_SIZE);
+        FAH16& computeHash(ConstSpan<char> data, const size_t blockSize = BLOCK_SIZE);
+
         FAH16& computeHash(Span<uint8_t> data, const size_t blockSize = BLOCK_SIZE);
         FAH16& computeHash(ConstSpan<uint8_t> data, const size_t blockSize = BLOCK_SIZE);
 
@@ -51,13 +55,13 @@ namespace JEngine {
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<FAH16>::deserializeJson(FAH16& itemRef, json& jsonF, const FAH16& defaultValue) {
+    inline bool Serializable<FAH16>::deserializeJson(FAH16& itemRef, json& jsonF, const FAH16& defaultValue) {
         itemRef = jsonF.is_string() ? itemRef.parse(jsonF.get<std::string>(), defaultValue) : defaultValue;
         return true;
     }
 
     template<>
-    inline const bool Serializable<FAH16>::serializeJson(const FAH16& itemRef, json& jsonF) {
+    inline bool Serializable<FAH16>::serializeJson(const FAH16& itemRef, json& jsonF) {
         jsonF.update(itemRef.toString());
         return true;
     }

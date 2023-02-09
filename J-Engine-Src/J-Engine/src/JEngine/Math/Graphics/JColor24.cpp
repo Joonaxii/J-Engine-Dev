@@ -33,11 +33,29 @@ namespace JEngine {
             1.0f);
     }
 
-    const bool JColor24::operator==(const JColor24& other) const {
+    void JColor24::set(const JColor& rgba) {
+        r = Math::scalarToUInt<uint8_t, float>(rgba.r);
+        g = Math::scalarToUInt<uint8_t, float>(rgba.g);
+        b = Math::scalarToUInt<uint8_t, float>(rgba.b);
+    }
+
+    void JColor24::set(const JColor32& rgb) {
+        r = rgb.r;
+        g = rgb.g;
+        b = rgb.b;
+    }
+
+    void JColor24::set(const uint8_t r, const uint8_t g, const uint8_t b) {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+    }
+
+    bool JColor24::operator==(const JColor24& other) const {
         return r == other.r && g == other.g && b == other.b;
     }
 
-    const bool JColor24::operator!=(const JColor24& other) const {
+    bool JColor24::operator!=(const JColor24& other) const {
         return !(*this == other);
     }
 

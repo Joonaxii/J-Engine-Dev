@@ -7,8 +7,7 @@ namespace JEngine {
         ~NoCopy() {}
 
     private:
-
-        NoCopy(const NoCopy&);
-        NoCopy& operator =(const NoCopy&);
+        NoCopy(const NoCopy&) = delete;
+        NoCopy& operator =(const NoCopy&) = delete;
     };
 }

@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <JEngine/Math/Units/JVector.h>
 #include <JEngine/Assets/Graphics/Texture/TextureFormat.h>
+#include <JEngine/Assets/AssetDataType.h>
 
 namespace JEngine {
     static constexpr uint32_t FAILED_TO_ALLOCATE_BUFFER = 0x10000000U;
@@ -32,4 +33,31 @@ namespace JEngine {
         os << "- Format    : " << getTextureFormatName(res.format);
         return os;
     }
+
+    inline std::string& appendDecodeErrorString(std::string& strOut, const UI32Flags flag, const char* breakChar = "\0") {
+        if (breakChar != "\0") { strOut.append(breakChar); }
+
+        switch (flag)
+        {
+            case FAILED_TO_ALLOCATE_BUFFER:
+                strOut.append("Failed to allocate a buffer!");
+                break;
+
+            case IO_ERROR:
+                strOut.append("File not found or couldn't be opened!");
+                break;
+        }
+        return strOut;
+    }
+
+    template<AssetDataFormat dataFmt>
+    std::string& getDecodeErrorString(std::string& strOut, const UI32Flags flags) {
+        if (!flags) {
+            strOut.append("Decode Ok!");
+            return strOut;
+        }
+        return strOut;
+    }
+
+
 }

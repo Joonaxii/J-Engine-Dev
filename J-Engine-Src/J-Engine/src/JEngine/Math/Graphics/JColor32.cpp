@@ -10,11 +10,17 @@ namespace JEngine {
     JColor32::JColor32(const uint8_t r, const uint8_t g, const uint8_t b) : r(r), g(g), b(b), a(0xFF) { }
     JColor32::JColor32(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) : r(r), g(g), b(b), a(a) { }
 
-    JColor32::JColor32(const JColor24& rgba) :
-        r(r),
-        g(g),
-        b(b),
+    JColor32::JColor32(const JColor24& rgb) :
+        r(rgb.r),
+        g(rgb.g),
+        b(rgb.b),
         a(0xFF) { }
+
+    JColor32::JColor32(const JColor24& rgb, const uint8_t alpha) :
+        r(rgb.r),
+        g(rgb.g),
+        b(rgb.b),
+        a(alpha) { }
 
     JColor32::JColor32(const JColor& rgba) :
         r(Math::scalarToUInt<uint8_t, float>(rgba.r)),
@@ -37,11 +43,37 @@ namespace JEngine {
             Math::uintToScalar<uint8_t, float>(a));
     }
 
-    const bool JColor32::operator==(const JColor32& other) const {
+    void JColor32::set(const JColor& rgba) {
+        r = Math::scalarToUInt<uint8_t, float>(rgba.r);
+        g = Math::scalarToUInt<uint8_t, float>(rgba.g);
+        b = Math::scalarToUInt<uint8_t, float>(rgba.b);
+        a = Math::scalarToUInt<uint8_t, float>(rgba.a);
+    }
+
+    void JColor32::set(const JColor24& rgb) {
+        r = rgb.r;
+        g = rgb.g;
+        b = rgb.b;
+    }
+
+    void JColor32::set(const uint8_t r, const uint8_t g, const uint8_t b) {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+    }
+
+    void JColor32::set(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+        this->a = a;
+    }
+
+    bool JColor32::operator==(const JColor32& other) const {
         return *reinterpret_cast<const uint32_t*>(this) == *reinterpret_cast<const uint32_t*>(&other);
     }
 
-    const bool JColor32::operator!=(const JColor32& other) const {
+    bool JColor32::operator!=(const JColor32& other) const {
         return *reinterpret_cast<const uint32_t*>(this) != *reinterpret_cast<const uint32_t*>(&other);
     }
 

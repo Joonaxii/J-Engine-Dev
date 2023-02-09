@@ -4,6 +4,8 @@
 #include <functional>
 #include <iostream>
 #include <filesystem>
+#include <JEngine/Assets/AssetDataType.h>
+#define NAMEOF(name) #name
 
 namespace JEngine {
     struct membuf : std::streambuf
@@ -31,14 +33,17 @@ namespace JEngine {
             return gptr() - eback();
         }
     };
-    namespace IO {
-        const void enumerateFiles(const std::string& path, const std::string& extension, std::function<const void(const std::string&)> callback, const bool fixPath = true, const bool reverse = false);
-        const void enumerateFiles(const std::string& path, const std::string& extension, std::vector<std::string>& paths, const bool fixPath = true, const bool reverse = false);
-        const bool fileExists(const std::string& path);
-        const bool dirExists(const std::string& path);
 
-        const bool isFile(const std::string& path);
-        const bool isDir(const std::string& path);
+    namespace IO {
+        AssetDataFormat checkFileType(std::istream& stream);
+
+        void enumerateFiles(const std::string& path, const std::string& extension, std::function<const void(const std::string&)> callback, const bool fixPath = true, const bool reverse = false);
+        void enumerateFiles(const std::string& path, const std::string& extension, std::vector<std::string>& paths, const bool fixPath = true, const bool reverse = false);
+        bool fileExists(const std::string& path);
+        bool dirExists(const std::string& path);
+
+        bool isFile(const std::string& path);
+        bool isDir(const std::string& path);
 
         void delDirRecursively(const std::string& path);
         void copyRecursively(const std::filesystem::path& src, const std::filesystem::path& target) noexcept;

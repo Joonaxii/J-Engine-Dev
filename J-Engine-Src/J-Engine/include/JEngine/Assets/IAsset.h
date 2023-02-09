@@ -29,29 +29,29 @@ namespace JEngine {
         IAsset(const std::string& name) : IRef(-1), _name(name), _fEntry(nullptr), _flags() {}
 
         FileEntry* getFileEntry();
-        const FileEntry* getConstFileEntry() const;
+        const FileEntry* getFileEntry() const;
         void setFileEntry(FileEntry* fEntry);
 
         void setDatabaseFlag(const bool flag);
-        const bool isInDatabase() const;
+        bool isInDatabase() const;
 
-        const void setName(const std::string& name);
+        void setName(const std::string& name);
         const std::string& getName() const;
 
         const UUID& getUUID() const;
-        AssetMetaData& getMetadata();
+        const AssetMetaData& getMetadata() const;
 
-        virtual const bool serializeMetaJson(json& jsonF) const;
-        virtual const bool deserializeMetaJson(json& jsonF);
+        virtual bool serializeMetaJson(json& jsonF) const;
+        virtual bool deserializeMetaJson(json& jsonF);
 
-        virtual const bool serializeMetaBinary(std::ostream& stream) const;
-        virtual const bool deserializeMetaBinary(std::istream& stream, const size_t size);
+        virtual bool serializeMetaBinary(std::ostream& stream) const;
+        virtual bool deserializeMetaBinary(std::istream& stream, const size_t size);
 
-        virtual const bool serializeJson(json& jsonF) const override = 0;
-        virtual const bool deserializeJson(json& jsonF) override = 0;
+        virtual bool serializeJson(json& jsonF) const override = 0;
+        virtual bool deserializeJson(json& jsonF) override = 0;
 
-        virtual const bool serializeBinary(std::ostream& stream) const override = 0;
-        virtual const bool deserializeBinary(std::istream& stream, const size_t size) = 0;
+        virtual bool serializeBinary(std::ostream& stream) const override = 0;
+        virtual bool deserializeBinary(std::istream& stream, const size_t size) = 0;
 
     protected:
         UI8Flags _flags;
@@ -60,7 +60,7 @@ namespace JEngine {
       
         AssetMetaData _meta;
 
-        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override = 0;
+        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override = 0;
     };
 }
 REGISTER_UUID_FACTORY(JEngine::IAsset)

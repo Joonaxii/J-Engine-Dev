@@ -25,13 +25,19 @@ namespace JEngine {
         JColor(const float r, const float g, const float b);
         JColor(const float r, const float g, const float b, const float a);
         JColor(const JColor24& rgb);
+        JColor(const JColor24& rgb, const float alpha);
         JColor(const JColor32& rgba);
 
-        const bool operator==(const JColor& other) const;
-        const bool operator!=(const JColor& other) const;
+        bool operator==(const JColor& other) const;
+        bool operator!=(const JColor& other) const;
 
         operator JColor32();
         operator JColor24();
+
+        void set(const JColor32& rgba);
+        void set(const JColor24& rgb);
+        void set(const float r, const float g, const float b);
+        void set(const float r, const float g, const float b, const float a);
 
         JColor operator-(const JColor& other) const;
         JColor operator+(const JColor& other) const;
@@ -71,7 +77,7 @@ namespace JEngine {
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<JColor>::deserializeJson(JColor& itemRef, json& jsonF, const JColor& defaultValue) {
+    inline bool Serializable<JColor>::deserializeJson(JColor& itemRef, json& jsonF, const JColor& defaultValue) {
         Serialization::deserialize(itemRef.r, jsonF["r"], defaultValue.r);
         Serialization::deserialize(itemRef.g, jsonF["g"], defaultValue.g);
         Serialization::deserialize(itemRef.b, jsonF["b"], defaultValue.b);
@@ -80,7 +86,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const bool Serializable<JColor>::serializeJson(const JColor& itemRef, json& jsonF) {
+    inline bool Serializable<JColor>::serializeJson(const JColor& itemRef, json& jsonF) {
         Serialization::serialize(itemRef.r, jsonF["r"]);
         Serialization::serialize(itemRef.g, jsonF["g"]);
         Serialization::serialize(itemRef.b, jsonF["b"]);

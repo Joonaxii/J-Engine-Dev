@@ -4,6 +4,7 @@
 #include <JEngine/Assets/AssetMetaData.h>
 #include <JEngine/Assets/IAsset.h>
 #include <JEngine/IO/Serialization/Serializable.h>
+#include <JEngine/IO/Helpers/IOHelpers.h>
 
 namespace JEngine {
     class FileEntry {
@@ -53,7 +54,7 @@ namespace JEngine {
 
         void addPaths(std::vector<PathEntry>& paths);
         void addPaths(std::vector<PathEntry>& paths, std::vector<FileEntry*>& entries);
-        const void getPath(std::string& path);
+        void getPath(std::string& path);
         FileEntry* getParent();
 
         void loadFromAssetDB(std::istream& stream);
@@ -64,22 +65,31 @@ namespace JEngine {
 
         void clear();
 
-        const uint8_t getEntryType() const;
-        const uint32_t getDataPosition() const;
+        uint8_t getEntryType() const;
+        uint32_t getDataPosition() const;
 
-        const int32_t indexOf(const std::string& name) const;
-        const int32_t indexOf(const std::string& name, const uint8_t type) const;
+        int32_t indexOf(const std::string& name) const;
+        int32_t indexOf(const std::string& name, const uint8_t type) const;
 
-        const int32_t indexOf(const std::string_view& name) const;
-        const int32_t indexOf(const std::string_view& name, const uint8_t type) const;
-        const void print();
+        int32_t indexOf(const std::string_view& name) const;
+        int32_t indexOf(const std::string_view& name, const uint8_t type) const;
+        void print();
 
         const std::vector<FileEntry>& getItems();
 
-        static const std::string entryTypeToStr(uint8_t input);
+        static inline constexpr char* FileEntry::entryTypeToStr(const uint8_t input) {
+            switch (input)
+            {
+                default: return "UNKNOWN";
+                case ET_FOLDER: return NAMEOF(ET_FOLDER);
+                case ET_FILE: return NAMEOF(ET_FILE);
+                case ET_PAK_FILE: return NAMEOF(ET_PAK_FILE);
+                case ET_ASSET: return NAMEOF(ET_ASSET);
+            }
+        }
 
         AssetMetaData& getMetaData();
-        const AssetMetaData& getConstMetaData() const;
+        const AssetMetaData& getMetaData() const;
         FileEntry::EntryData& getEntryData();
 
     private:
@@ -89,7 +99,7 @@ namespace JEngine {
         AssetMetaData _metadata;
         std::vector<FileEntry> _items;
 
-        const void printSub(int depth);
+        void printSub(int depth);
         void readMetaDataFromDB(std::istream& stream, std::vector<std::string_view>& strs);
         uint32_t writeMetaDataToDB(std::ostream& stream);
 
@@ -100,7 +110,7 @@ namespace JEngine {
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<FileEntry::EntryData>::deserializeBinary(FileEntry::EntryData& itemRef, std::istream& stream) {
+    inline bool Serializable<FileEntry::EntryData>::deserializeBinary(FileEntry::EntryData& itemRef, std::istream& stream) {
         Serialization::deserialize(itemRef.type, stream);
         Serialization::deserialize(itemRef.pak, stream);
         Serialization::deserialize(itemRef.position, stream);
@@ -108,7 +118,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const bool Serializable<FileEntry::EntryData>::serializeBinary(const FileEntry::EntryData& itemRef, std::ostream& stream) {
+    inline bool Serializable<FileEntry::EntryData>::serializeBinary(const FileEntry::EntryData& itemRef, std::ostream& stream) {
         Serialization::serialize(itemRef.type, stream);
         Serialization::serialize(itemRef.pak, stream);
         Serialization::serialize(itemRef.position, stream);

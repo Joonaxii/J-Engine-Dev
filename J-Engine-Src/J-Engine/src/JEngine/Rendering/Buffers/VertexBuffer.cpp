@@ -8,9 +8,7 @@ namespace JEngine {
         init(data, size, drawMode);
     }
 
-    VertexBuffer::~VertexBuffer() {
-        release();
-    }
+    VertexBuffer::~VertexBuffer() { release(); }
 
     void VertexBuffer::init(const void* data, const size_t size, const uint32_t drawMode) {
         if (!_rendererID) {
@@ -33,12 +31,11 @@ namespace JEngine {
         }
     }
 
-    const bool VertexBuffer::bind() const {
+    bool VertexBuffer::bind() const {
         if (_rendererID) {
             GLCall(glBindBuffer(GL_ARRAY_BUFFER, _rendererID));
-            return true;
         }
-        return false;
+        return bool(_rendererID);
     }
 
     void VertexBuffer::unbind() const {

@@ -1,15 +1,15 @@
 #include <JEngine/Assets/Graphics/Texture/Texture2D.h>
-#include <JEngine/IO/Serialization/Serialization.h>
 #include <JEngine/IO/Compression/ZLibStream.h>
 #include <JEngine/Utility/ConstSpan.h>
 #include <JEngine/Math/Graphics/JColor24.h>
+#include <JEngine/IO/Helpers/IOHelpers.h>
 
 #include <fstream>
 
 namespace JEngine {
     Texture2D::Texture2D() : Texture() { }
 
-    const bool Texture2D::serializeBinary(std::ostream& stream) const {
+    bool Texture2D::serializeBinary(std::ostream& stream) const {
         stream.write(JTEX_HEADER, 4);
  
         Serialization::serialize(_texFlags, stream);
@@ -53,7 +53,7 @@ namespace JEngine {
 
             if (res != Z_OK) {
                 std::cout << "ZLib compression failed! " << std::endl;
-                ZLib::zerr(res);
+                std::cout << ZLib::zerr(res) << std::endl;
             }
 
             stream.flush();
@@ -78,7 +78,7 @@ namespace JEngine {
         return false;
     }
 
-    const bool Texture2D::deserializeBinary(std::istream& stream, const size_t size) {
+    bool Texture2D::deserializeBinary(std::istream& stream, const size_t size) {
         char hdr[5]{ 0 };
         stream.read(hdr, 4);
 
@@ -117,7 +117,7 @@ namespace JEngine {
 
                 auto ret = ZLib::inflateData(cStrm, oStrm);
                 if (ret != Z_OK) {
-                    ZLib::zerr(ret);
+                    std::cout << ZLib::zerr(ret) << std::endl;
                 }
                 oStrm.flush();
                 free(ptrComp);
@@ -132,11 +132,11 @@ namespace JEngine {
         return true;
     }
 
-    const bool Texture2D::serializeJson(json& jsonF) const {
+    bool Texture2D::serializeJson(json& jsonF) const {
         return false;
     }
 
-    const bool Texture2D::deserializeJson(json& jsonF) {
+    bool Texture2D::deserializeJson(json& jsonF) {
         return false;
     }
 

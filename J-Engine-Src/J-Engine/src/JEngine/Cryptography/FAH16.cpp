@@ -3,8 +3,7 @@
 #include <sstream>
 
 namespace JEngine {
-
-    static constexpr size_t HASH_STR_LEN = 2 + (32);
+    static constexpr size_t HASH_STR_LEN = 2 + 32;
 
     FAH16::FAH16() : _hash {0, 0}, _len(0) { }
     FAH16::FAH16(const FAH16& other) {
@@ -101,8 +100,16 @@ namespace JEngine {
         return computeHash(ConstSpan<uint8_t>(reinterpret_cast<const uint8_t*>(data), size), blockSize);
     }
 
+    FAH16& FAH16::computeHash(Span<char> span, const size_t blockSize) {
+        return computeHash(ConstSpan<char>(span.begin(), span.end()), blockSize);
+    }
+
+    FAH16& FAH16::computeHash(ConstSpan<char> span, const size_t blockSize) {
+        return computeHash(span.castTo<char>(), blockSize);
+    }
+
     FAH16& FAH16::computeHash(Span<uint8_t> span, const size_t blockSize) {
-        return computeHash(ConstSpan<uint8_t>(span.begin(), span.end()), blockSize);
+        return computeHash(ConstSpan<char>(span.begin(), span.end()), blockSize);
     }
 
     FAH16& FAH16::computeHash(ConstSpan<uint8_t> data, const size_t blockSize) {

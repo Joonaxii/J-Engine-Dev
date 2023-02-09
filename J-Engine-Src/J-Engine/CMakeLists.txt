@@ -12,6 +12,7 @@ add_subdirectory("ext/glfw-3.3.8")
 add_subdirectory("ext/zlib")
 add_subdirectory("ext/nlohmann/json")
 
+add_compile_definitions(NOMINMAX)
 add_compile_definitions(GLEW_STATIC)
 
 set(JENGINE_SOURCES )
@@ -37,6 +38,11 @@ list(APPEND JENGINE_SOURCES ${OPENGL_RENDERING_SRC})
 set(JENGINE_DEBUG_SRC
 	"include/JEngine/Debug/FPS.h"
 	"src/JEngine/Debug/FPS.cpp"
+	
+	"include/JEngine/Debug/GizmoLayer.h"
+	"src/JEngine/Debug/GizmoLayer.cpp"
+	"include/JEngine/Debug/Gizmos.h"
+	"src/JEngine/Debug/Gizmos.cpp"
 )
 source_group("JEngine/Debug" FILES ${JENGINE_DEBUG_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_DEBUG_SRC})
@@ -126,6 +132,7 @@ set(JENGINE_ASSETS_SRC
 	 "src/JEngine/Assets/AssetMetaData.cpp"
 	 "include/JEngine/Assets/AssetType.h"
 	 "include/JEngine/Assets/AssetDataType.h"
+	 "src/JEngine/Assets/AssetDataType.cpp"
 
 	 "include/JEngine/Assets/IAsset.h"
      "src/JEngine/Assets/IAsset.cpp"
@@ -223,8 +230,8 @@ list(APPEND JENGINE_SOURCES ${JENGINE_VFS_SRC})
 
 # JEngine IO Helper files
 set(JENGINE_IO_HELPERS_SRC
-	 "include/JEngine/IO/Helpers/FileExtensions.h"
-     "src/JEngine/IO/Helpers/FileExtensions.cpp"
+	 "include/JEngine/IO/Helpers/IOHelpers.h"
+     "src/JEngine/IO/Helpers/IOHelpers.cpp"
 )
 source_group("JEngine/IO/Helpers" FILES ${JENGINE_IO_HELPERS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_IO_HELPERS_SRC})
@@ -232,8 +239,6 @@ list(APPEND JENGINE_SOURCES ${JENGINE_IO_HELPERS_SRC})
 # JEngine Serialization files
 set(JENGINE_SERIALZIATION_SRC
 	 "include/JEngine/IO/Serialization/Serializable.h"
-	 "include/JEngine/IO/Serialization/Serialization.h"
-     "src/JEngine/IO/Serialization/Serialization.cpp"
 )
 source_group("JEngine/IO/Serialization" FILES ${JENGINE_SERIALZIATION_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_SERIALZIATION_SRC})

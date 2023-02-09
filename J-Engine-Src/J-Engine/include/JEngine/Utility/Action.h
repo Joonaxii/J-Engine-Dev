@@ -10,16 +10,13 @@ namespace JEngine {
         using Func = std::function<void(TIn...)>;
 
         Action() : _id(0), _events {} {}
-        ~Action() {
-            _events.clear();
-        }
-
-        const uint64_t add(const Func& eventIn) {
+   
+        uint64_t add(const Func& eventIn) {
             _events.push_back({ _id, eventIn });
             return _id++;
         }
 
-        const bool remove(const uint64_t id) {
+        bool remove(const uint64_t id) {
             bool found = false;
             _events.erase(std::remove_if(_events.begin(), _events.end(), [id, &found](const FuncBind& b)
                 {
@@ -32,19 +29,6 @@ namespace JEngine {
             return found;
         }
 
-        //Action& operator+= (Func& eventIn) {
-        //    _events.push_back(&eventIn);
-        //    return *this;
-        //}
-
-        //Action& operator-= (Func& eventIn) {
-        //    auto find = std::find(_events.begin(), _events.end(), eventIn);
-        //    if (find != _events.end()) {
-        //        _events.erase(find);
-        //    }
-        //    return *this;
-        //}
-
         Action& operator()(TIn&... input) {
             for (size_t i = 0; i < _events.size(); i++) {
                 _events[i](input...);
@@ -52,7 +36,6 @@ namespace JEngine {
             return *this;
         }
     private:
-        uint64_t _id;
         struct FuncBind {
             uint64_t id;
             Func func;
@@ -65,6 +48,7 @@ namespace JEngine {
             }
         };
 
+        uint64_t _id;
         std::vector<FuncBind> _events;
     };
 }

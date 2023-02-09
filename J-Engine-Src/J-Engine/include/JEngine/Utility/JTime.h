@@ -13,16 +13,16 @@ namespace JEngine {
             TimeSpace() : _time(0), _timeScale(1.0), _deltaTime(0) {}
 
             template<typename P = double> 
-            const P getDeltaTime() const { return P(_deltaTime); }
+            P getDeltaTime() const { return P(_deltaTime); }
 
             template<typename P = double>
-            const P getTime() const { return P(_time); }
+            P getTime() const { return P(_time); }
 
             template<typename P = double>
-            const P getTimeScale() const { return P(_timeScale); }
+            P getTimeScale() const { return P(_timeScale); }
 
             template<typename P = double>
-            const void setTimeScale(const P scale) { _timeScale = double(scale); }
+            void setTimeScale(const P scale) { _timeScale = double(scale); }
 
             void reset() { _time = 0; _timeScale = 1.0; _deltaTime = 0; }
 
@@ -45,27 +45,27 @@ namespace JEngine {
         void reset();
 
         template<typename P = double>
-        const P getEngineTime() const { return P(_time); }
+        P getEngineTime() const { return P(_time); }
 
         template<typename P = double>
-        const P getEngineDeltaTime() const { return P(_delta); }
+        P getEngineDeltaTime() const { return P(_delta); }
 
-        const uint64_t getFrameCount() const;
+        uint64_t getFrameCount() const;
 
         TimeSpace& getTimeSpace(const uint8_t space);
         const TimeSpace& getTimeSpace(const uint8_t space) const;
 
         template<typename P = double>
-        const P getDeltaTime(const uint8_t space) const { return getTimeSpace(space).getDeltaTime<P>(); }
+        P getDeltaTime(const uint8_t space) const { return getTimeSpace(space).getDeltaTime<P>(); }
 
         template<typename P = double>
-        const P getTime(const uint8_t space) const { return getTimeSpace(space).getTime<P>(); }
+        P getTime(const uint8_t space) const { return getTimeSpace(space).getTime<P>(); }
 
         template<typename P = double>
-        const P getTimeScale(const uint8_t space) const { return getTimeSpace(space).getTimeScale<P>(); }
+        P getTimeScale(const uint8_t space) const { return getTimeSpace(space).getTimeScale<P>(); }
 
         template<typename P = double>
-        const void setTimeScale(const uint8_t space, const P scale) { return getTimeSpace(space).setTimeScale<P>(scale); }
+        void setTimeScale(const uint8_t space, const P scale) { return getTimeSpace(space).setTimeScale<P>(scale); }
 
     private:
         TimeSpace _timeSpaces[MAX_TIME_SPACES];

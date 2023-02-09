@@ -10,55 +10,55 @@ namespace JEngine {
 #pragma region Operators Self
         operator bool() const;
 
-        const LayerMask operator~() const;
+        LayerMask operator~() const;
 #pragma endregion
 
-#pragma region Operators UInt32/Size_t/Templated
+#pragma region Operators UInt32/Size/Templated
         operator uint32_t() const;
         operator size_t() const;
 
         template<typename T>
-        const bool operator<(const T& other) const {
+        bool operator<(const T& other) const {
             return _value < other;
         }
 
         template<typename T>
-        const bool operator>(const T& other) const {
+        bool operator>(const T& other) const {
             return _value > other;
         }
 
         template<typename T>
-        const bool operator<=(const T& other) const {
+        bool operator<=(const T& other) const {
             return _value <= other;
         }
 
         template<typename T>
-        const bool operator>=(const T& other) const {
+        bool operator>=(const T& other) const {
             return _value >= other;
         }
 
         template<typename T>
-        const bool operator==(const T& other) const {
+        bool operator==(const T& other) const {
             return _value == other;
         }
 
         template<typename T>
-        const bool operator!=(const T& other) const {
+        bool operator!=(const T& other) const {
             return _value != other;
         }
 
         template<typename T>
-        const LayerMask operator&(const T& other) const {
+        LayerMask operator&(const T& other) const {
             return LayerMask(_value & other);
         }
 
         template<typename T>
-        const LayerMask operator|(const T& other) const {
+        LayerMask operator|(const T& other) const {
             return LayerMask(_value | other);
         }
 
         template<typename T>
-        const LayerMask operator^(const T& other) const {
+        LayerMask operator^(const T& other) const {
             return LayerMask(_value ^ other);
         }
 
@@ -82,47 +82,47 @@ namespace JEngine {
 
 
         template<>
-        inline const bool operator<(const LayerMask& other) const {
+        inline bool operator<(const LayerMask& other) const {
             return _value < other._value;
         }
 
         template<>
-        inline const bool operator>(const LayerMask& other) const {
+        inline bool operator>(const LayerMask& other) const {
             return _value > other._value;
         }
 
         template<>
-        inline const bool operator<=(const LayerMask& other) const {
+        inline bool operator<=(const LayerMask& other) const {
             return _value <= other._value;
         }
 
         template<>
-        inline const bool operator>=(const LayerMask& other) const {
+        inline bool operator>=(const LayerMask& other) const {
             return _value >= other._value;
         }
 
         template<>
-        inline const bool operator==(const LayerMask& other) const {
+        inline bool operator==(const LayerMask& other) const {
             return _value == other._value;
         }
 
         template<>
-        inline const bool operator!=(const LayerMask& other) const {
+        inline bool operator!=(const LayerMask& other) const {
             return _value != other._value;
         }
 
         template<>
-        inline const LayerMask operator&(const LayerMask& other) const {
+        inline LayerMask operator&(const LayerMask& other) const {
             return LayerMask(_value & other._value);
         }
 
         template<>
-        inline const LayerMask operator|(const LayerMask& other) const {
+        inline LayerMask operator|(const LayerMask& other) const {
             return LayerMask(_value | other._value);
         }
 
         template<>
-        inline const LayerMask operator^(const LayerMask& other) const {
+        inline LayerMask operator^(const LayerMask& other) const {
             return LayerMask(_value ^ other._value);
         }
 
@@ -152,13 +152,13 @@ namespace JEngine {
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<LayerMask>::deserializeJson(LayerMask& itemRef, json& jsonF, const LayerMask& defaultValue) {
+    inline bool Serializable<LayerMask>::deserializeJson(LayerMask& itemRef, json& jsonF, const LayerMask& defaultValue) {
         itemRef._value = jsonF.is_number_integer() ? jsonF.get<uint32_t>() : defaultValue;
         return true;
     }
 
     template<>
-    inline const bool Serializable<LayerMask>::serializeJson(const LayerMask& itemRef, json& jsonF) {
+    inline bool Serializable<LayerMask>::serializeJson(const LayerMask& itemRef, json& jsonF) {
         jsonF.update(itemRef._value);
         return true;
     }

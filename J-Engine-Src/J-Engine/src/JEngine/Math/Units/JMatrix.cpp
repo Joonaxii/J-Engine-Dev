@@ -156,16 +156,16 @@ namespace JEngine {
         return *this;
     }
 
-    const JVector2f JMatrix4f::transformPoint(const float x, const float y) const {
+    JVector2f JMatrix4f::transformPoint(const float x, const float y) const {
         return JVector2f(_mat[0] * x + _mat[4] * y + _mat[12],
                          _mat[1] * x + _mat[5] * y + _mat[13]);
     }
 
-    const JVector2f JMatrix4f::transformPoint(const JVector2f vec) const {
+    JVector2f JMatrix4f::transformPoint(const JVector2f vec) const {
         return transformPoint(vec.x, vec.y);
     }
 
-    const JRectf JMatrix4f::transformRect(const JVector2f& min, const JVector2f& max) const {
+    JRectf JMatrix4f::transformRect(const JVector2f& min, const JVector2f& max) const {
         const JVector2f points[4] {
             transformPoint(min),
             transformPoint(min.x, max.y),
@@ -186,11 +186,11 @@ namespace JEngine {
         return JRectf(minO, maxO);
     }
 
-    const JRectf JMatrix4f::transformRect(const JRectf& rectangle) const {
+    JRectf JMatrix4f::transformRect(const JRectf& rectangle) const {
         return transformRect(rectangle.getMin(), rectangle.getMax());
     }
 
-    const void JMatrix4f::decompose(JVector2f& position, float& rotation, JVector2f& scale) const {
+    void JMatrix4f::decompose(JVector2f& position, float& rotation, JVector2f& scale) const {
         position.x = _mat[12];
         position.y = _mat[13];
 
@@ -306,7 +306,6 @@ namespace JEngine {
         mat.at(2, 2) = 1.0f;
         mat.at(3, 0) = (right + left) / (right - left);
         mat.at(3, 1) = (top + bottom) / (top - bottom);
-
         return mat;
     }
 
@@ -319,7 +318,6 @@ namespace JEngine {
         mat.at(3, 0) = (right + left) / (right - left);
         mat.at(3, 1) = (top + bottom) / (top - bottom);
         mat.at(3, 2) = zNear / (zFar - zNear);
-
         return mat;
     }
 }

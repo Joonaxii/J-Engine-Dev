@@ -1,17 +1,24 @@
 #include <JEngine/Helpers/TypeHelpers.h>
 
 namespace JEngine {
-	std::vector<Type*>& TypeHelpers::getTypes() {
-		static std::vector<Type*> _types;
+	std::unordered_map<FAH16, const char*, std::hash<FAH16>> TypeHelpers::HashLUT{};
+
+	std::vector<TypeData>& TypeHelpers::getTypes() {
+		static std::vector<TypeData> _types;
 		return _types;
 	}
 
-	void TypeHelpers::addType(Type& type, const size_t size, const std::pair<const FAH16, const std::string>& data) {
-		if (type.size > -1) { return; }
-		type.size = size;
-		type.hash = data.first;
-		type.name = data.second;
-		getTypes().push_back(&type);
+	int32_t TypeHelpers::indexOfHash(const FAH16& hash) {
+		const auto& types = getTypes();
+		for (int32_t i = 0; i < types.size(); i++) {
+			if (types[i].hashData.hash == hash) { return i; }
+		}
+		return -1;
 	}
 
+	void TypeHelpers::addType(const HashPair& data, const int32_t size) {
+		if (size > -1) { return; }
+		auto& types = getTypes();
+		types.push_back(TypeData(data, size));
+	}
 }

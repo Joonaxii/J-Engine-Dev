@@ -34,7 +34,7 @@ namespace JEngine {
         void bind() const;
         void unbind() const;
 
-        const uint32_t getNativeHandle() const;
+        uint32_t getNativeHandle() const;
 
         void setUniform1i(const std::string& name, const int32_t value);
         void setUniform1ui(const std::string& name, const uint32_t value);
@@ -72,24 +72,24 @@ namespace JEngine {
 
         void setUniformMat4f(const std::string& name, const JMatrix4f& mat);
 
-        const uint32_t setTextures(const std::string& name, const Texture* texture, const uint32_t position = 0);
+        uint32_t setTextures(const std::string& name, const Texture* texture, const uint32_t position = 0);
 
-        const bool serializeJson(json& jsonF) const override;
-        const bool deserializeJson(json& jsonF) override;
+        bool serializeJson(json& jsonF) const override;
+        bool deserializeJson(json& jsonF) override;
 
-        const bool serializeBinary(std::ostream& stream) const override;
-        const bool deserializeBinary(std::istream& stream, const size_t size) override;
+        bool serializeBinary(std::ostream& stream) const override;
+        bool deserializeBinary(std::istream& stream, const size_t size) override;
 
-        const uint64_t getBlendUnion() const;
+        uint64_t getBlendUnion() const;
 
         static bool tryFindShader(const char* name, ObjectRef<Shader>& shader);
         static Shader* findShader(const char* name);
 
         static void addShaderToLUT(const ObjectRef<Shader>& shader);
-        static const bool removeShaderFromLUT(const ObjectRef<Shader>& shader);
+        static bool removeShaderFromLUT(const ObjectRef<Shader>& shader);
 
     protected:
-        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
+        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
 
     private:
         typedef std::unordered_map<FAH16, ObjectRef<Shader>, std::hash<FAH16>> ShaderLUT;
@@ -103,10 +103,10 @@ namespace JEngine {
 
         ShaderSources parseShader(const std::string& filePath);
         ShaderSources parseShader(std::istream& stream);
-        const uint32_t compileShader(const uint32_t type, const char* shader);
-        const uint32_t createShader(const char* vertShader, const char* fragShader);
+        uint32_t compileShader(const uint32_t type, const char* shader);
+        uint32_t createShader(const char* vertShader, const char* fragShader);
 
-        const int32_t getUniformLocation(const std::string& name);
+        int32_t getUniformLocation(const std::string& name);
     };
 }
 

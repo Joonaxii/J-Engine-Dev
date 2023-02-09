@@ -2,14 +2,14 @@
 
 namespace JEngine::Helpers {
 
-	const int32_t strCmpNoCase(const char* a, const char* b) {
+	int32_t strCmpNoCase(const char* a, const char* b) {
 		for (;; a++, b++) {
 			const int32_t d = tolower((unsigned char)*a) - tolower((unsigned char)*b);
 			if (d != 0 || !*a) { return d; }
 		}
 	}
 
-	const bool equalsNoCase(const ConstSpan<char>& a, const ConstSpan<char>& b) {
+	bool equalsNoCase(const ConstSpan<char>& a, const ConstSpan<char>& b) {
 		const auto len = a.length();
 		if (len != b.length()) { return false; }
 		if (len == 0) { return true; }
@@ -21,11 +21,11 @@ namespace JEngine::Helpers {
 		return true;
 	}
 
-	const bool equalsNoCase(const Span<char>& a, const Span<char>& b) {
+	bool equalsNoCase(const Span<char>& a, const Span<char>& b) {
 		return equalsNoCase(reinterpret_cast<const ConstSpan<char>&>(a), reinterpret_cast<const ConstSpan<char>&>(b));
 	}
 
-	const int32_t findNotIndexOf(const std::string& str, const char c, size_t offset, size_t len) {
+	int32_t findNotIndexOf(const std::string& str, const char c, size_t offset, size_t len) {
 		for (size_t i = offset; i < offset + len; i++)
 		{
 			if (str[i] != c) { return int32_t(i); }
@@ -33,21 +33,21 @@ namespace JEngine::Helpers {
 		return -1;
 	}
 
-	const int32_t indexOf(const char* str, const size_t length, const char c) {
+	int32_t indexOf(const char* str, const size_t length, const char c) {
 		for (size_t i = 0; i < length; i++, str++) {
 			if (*str == c) { return int32_t(i); }
 		}
 		return -1;
 	}
 
-	const int32_t indexOf(const std::string& str, const char c) {
+	int32_t indexOf(const std::string& str, const char c) {
 		for (size_t i = 0; i < str.length(); i++) {
 			if (str[i] == c) { return int32_t(i); }
 		}
 		return -1;
 	}
 
-	const int32_t indexOf(const char* str, const size_t length, const std::string& search) {
+	int32_t indexOf(const char* str, const size_t length, const std::string& search) {
 		const size_t sSize = search.length();
 		int32_t index = -1;
 		for (size_t i = 0, j = 0; i < length; i++, str++) {
@@ -60,7 +60,7 @@ namespace JEngine::Helpers {
 		return index;
 	}
 
-	const int32_t indexOf(const std::string& str, const std::string& search) {
+	int32_t indexOf(const std::string& str, const std::string& search) {
 		const size_t sSize = search.length();
 		int32_t index = -1;
 		for (size_t i = 0, j = 0; i < str.length(); i++) {
@@ -73,18 +73,18 @@ namespace JEngine::Helpers {
 		return index;
 	}
 
-	const uint8_t hexToUI8(const char c) {
+	uint8_t hexToUI8(const char c) {
 		if (c >= '0' && c <= '9') { return (c - '0'); }
 		if (c >= 'A' && c <= 'F') { return (c - 'A') + 10; }
 		if (c >= 'a' && c <= 'f') { return (c - 'a') + 10; }
 		return 0;
 	}
 
-	const uint8_t hexToUI8(const char a, const char b) {
+	uint8_t hexToUI8(const char a, const char b) {
 		return hexToUI8(a) | (hexToUI8(b) << 4);
 	}
 
-	const uint32_t parseHexColorInt(const std::string& str, const int start, const int length) {
+	uint32_t parseHexColorInt(const std::string& str, const int start, const int length) {
 		int padding = 0;
 		int len = length;
 

@@ -1,6 +1,5 @@
 #include <JEngine/Assets/Graphics/Material/MaterialProperty.h>
 #include <JEngine/Cryptography/CRC32.h>
-#include <JEngine/IO/Serialization/Serialization.h>
 
 namespace JEngine {
     MaterialProperty::MaterialProperty() : _crc(), _name(""), _type(), _propData{} { }
@@ -26,81 +25,81 @@ namespace JEngine {
         applyChanges();
     }
 
-    MaterialProperty::MaterialProperty(const std::string& name, const ObjectRef<Texture2D>& value) :
-        _crc(0), _name(name), _type(Texture), _propData() {
-        asTexture2D() = value;
+    MaterialProperty::MaterialProperty(const std::string& name, const ObjectRef<Texture>& value) :
+        _crc(0), _name(name), _type(T_Texture), _propData() {
+        asTexture() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const uint32_t value) :
-        _crc(0), _name(name), _type(UInt), _propData() {
+        _crc(0), _name(name), _type(T_UInt), _propData() {
         asUInt() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const float value) :
-        _crc(0), _name(name), _type(Float), _propData() {
+        _crc(0), _name(name), _type(T_Float), _propData() {
         asFloat() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const JVector2f& value) :
-        _crc(0), _name(name), _type(Vector2f), _propData() {
+        _crc(0), _name(name), _type(T_Vector2f), _propData() {
         asVector2f() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const JVector2i& value) :
-        _crc(0), _name(name), _type(Vector2i), _propData() {
+        _crc(0), _name(name), _type(T_Vector2i), _propData() {
         asVector2i() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const JVector3f& value) :
-        _crc(0), _name(name), _type(Vector2f), _propData() {
+        _crc(0), _name(name), _type(T_Vector2f), _propData() {
         asVector3f() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const JVector3i& value) :
-        _crc(0), _name(name), _type(Vector2i), _propData() {
+        _crc(0), _name(name), _type(T_Vector2i), _propData() {
         asVector3i() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const JVector4f& value) :
-        _crc(0), _name(name), _type(Vector4f), _propData() {
+        _crc(0), _name(name), _type(T_Vector4f), _propData() {
         asVector4f() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const JVector4i& value) :
-        _crc(0), _name(name), _type(Vector4i), _propData() {
+        _crc(0), _name(name), _type(T_Vector4i), _propData() {
         asVector4i() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const JColor32& value) :
-        _crc(0), _name(name), _type(Color32), _propData() {
+        _crc(0), _name(name), _type(T_Color32), _propData() {
         asColor32() = value;
         applyChanges();
     }
 
 
     MaterialProperty::MaterialProperty(const std::string& name, const JColor24& value) :
-        _crc(0), _name(name), _type(Color24), _propData() {
+        _crc(0), _name(name), _type(T_Color24), _propData() {
         asColor24() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const JColor& value) :
-        _crc(0), _name(name), _type(Color), _propData() {
+        _crc(0), _name(name), _type(T_Color), _propData() {
         asColor() = value;
         applyChanges();
     }
 
     MaterialProperty::MaterialProperty(const std::string& name, const JMatrix4f& value) :
-        _crc(0), _name(name), _type(Matrix4f), _propData() {
+        _crc(0), _name(name), _type(T_Matrix4f), _propData() {
         asMatrix4f() = value;
         applyChanges();
     }
@@ -108,16 +107,16 @@ namespace JEngine {
     void MaterialProperty::setType(const PropertyType type) {
         _type = type;
     }
-    const MaterialProperty::PropertyType MaterialProperty::getType() const {
+    MaterialProperty::PropertyType MaterialProperty::getType() const {
         return _type;
     }
 
-    const bool MaterialProperty::operator==(const MaterialProperty& other) const {
+    bool MaterialProperty::operator==(const MaterialProperty& other) const {
         if (_crc != other._crc || _type != other._type || _name != other._name) { return false; }
         return memcmp(_propData, other._propData, getPropertySize(_type)) == 0;
     }
 
-    const bool MaterialProperty::operator!=(const MaterialProperty& other) const {
+    bool MaterialProperty::operator!=(const MaterialProperty& other) const {
         return !(*this == other);
     }
 
@@ -125,7 +124,7 @@ namespace JEngine {
         return _name;
     }
 
-    ObjectRef<Texture2D>& MaterialProperty::asTexture2D() { return reinterpret_cast<ObjectRef<Texture2D>&>(_propData); }
+    ObjectRef<Texture>& MaterialProperty::asTexture() { return reinterpret_cast<ObjectRef<Texture>&>(_propData); }
     uint32_t& MaterialProperty::asUInt() { return reinterpret_cast<uint32_t&>(_propData); }
     float& MaterialProperty::asFloat() { return reinterpret_cast<float&>(_propData); }
 
@@ -144,7 +143,7 @@ namespace JEngine {
 
     JMatrix4f& MaterialProperty::asMatrix4f() { return reinterpret_cast<JMatrix4f&>(_propData); }
 
-    const ObjectRef<Texture2D>& MaterialProperty::asTexture2D() const { return reinterpret_cast<const ObjectRef<Texture2D>&>(_propData); }
+    const ObjectRef<Texture>& MaterialProperty::asTexture() const { return reinterpret_cast<const ObjectRef<Texture>&>(_propData); }
     const uint32_t& MaterialProperty::asUInt() const { return reinterpret_cast<const uint32_t&>(_propData); }
     const float& MaterialProperty::asFloat() const { return reinterpret_cast<const float&>(_propData); }
 

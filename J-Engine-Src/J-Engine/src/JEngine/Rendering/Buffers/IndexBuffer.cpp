@@ -7,9 +7,7 @@ namespace JEngine {
         init(data, count, drawMode);
     }
 
-    IndexBuffer::~IndexBuffer() {
-        release();
-    }
+    IndexBuffer::~IndexBuffer() { release(); }
 
     void IndexBuffer::init(const uint32_t* data, const uint32_t count, const uint32_t drawMode) {
         _count = count;
@@ -42,4 +40,6 @@ namespace JEngine {
             GLCall(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, count * sizeof(uint32_t), data));
         }
     }
+
+    uint32_t IndexBuffer::getCount() const { return _count; }
 }

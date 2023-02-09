@@ -12,7 +12,7 @@ namespace JEngine {
         void release();
         void updateBuffer(const void* data, const size_t size);
 
-        const bool bind() const;
+        bool bind() const;
         void unbind() const;
 
     private:

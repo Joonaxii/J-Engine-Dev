@@ -1,5 +1,4 @@
 #include <JEngine/Rendering/ICamera.h>
-#include <JEngine/IO/Serialization/Serialization.h>
 
 namespace JEngine {
     const JColor32 ICamera::DEFAULT_CLEAR_COLOR = JColor32(26, 26, 26, 0);
@@ -12,7 +11,7 @@ namespace JEngine {
 
     ICamera::~ICamera() { unregisterCamera(this); }
 
-    const int32_t ICamera::compareTo(const ICamera& other) const {
+    int32_t ICamera::compareTo(const ICamera& other) const {
         if (_depth < other._depth) { return 1; }
         if (_depth > other._depth) { return -1; }
         return 0;
@@ -25,31 +24,31 @@ namespace JEngine {
     const JRectf& ICamera::getScreenRect() const { return _screenRect;  }
 
     void ICamera::setCameraDepth(const float depth) { _depth = depth; }
-    const float ICamera::getCameraDepth() const { return _depth; }
+    float ICamera::getCameraDepth() const { return _depth; }
 
     void ICamera::setCameraDisabled(const bool state) { _cameraFlags.setBit(DISABLE_CAMERA, state); }
-    const bool ICamera::isCameraDisabled() const { return bool(_cameraFlags & DISABLE_CAMERA); }
+    bool ICamera::isCameraDisabled() const { return bool(_cameraFlags & DISABLE_CAMERA); }
 
     void ICamera::setClearFlags(const ClearFlags flags) { _clearFlags = flags; }
-    const ICamera::ClearFlags ICamera::getClearFlags() const { return _clearFlags; }
+    ICamera::ClearFlags ICamera::getClearFlags() const { return _clearFlags; }
 
     void ICamera::setClearColor(const JColor32& color) { _clearColor = color; }
     const JColor32& ICamera::getClearColor() const { return _clearColor; }
 
     void ICamera::setManualRenderMode(const bool state) { _cameraFlags.setBit(AUTO_RENDER_CAMERA, !state); }
-    const bool ICamera::getManualRenderModeState() const { return !bool(_cameraFlags & AUTO_RENDER_CAMERA); }
+    bool ICamera::getManualRenderModeState() const { return !bool(_cameraFlags & AUTO_RENDER_CAMERA); }
 
     void ICamera::setCameraTint(const JColor32& color) { _tintColor = color; }
     const JColor32& ICamera::getCameraTint() const { return _tintColor; }
 
     void ICamera::setLayerMask(const LayerMask mask) { _layerMask = mask; }
-    const LayerMask ICamera::getLayerMask() const { return _layerMask; }
+    LayerMask ICamera::getLayerMask() const { return _layerMask; }
 
-    const bool ICamera::shouldRender() const { return !bool(_cameraFlags & DISABLE_CAMERA); }
+    bool ICamera::shouldRender() const { return !bool(_cameraFlags & DISABLE_CAMERA); }
 
     void ICamera::transformProjection(JMatrix4f& projection) const { projection *= getTransformMatrix().getInverse(); }
 
-    const bool ICamera::serializeJson(json& jsonF) const {
+    bool ICamera::serializeJson(json& jsonF) const {
         Serialization::serialize(_cameraFlags, jsonF["cameraFlags"]);
         Serialization::serialize(_depth, jsonF["depth"]);
 
@@ -66,7 +65,7 @@ namespace JEngine {
         return true;
     }
 
-    const bool ICamera::deserializeJson(json& jsonF) {
+    bool ICamera::deserializeJson(json& jsonF) {
         Serialization::deserialize(_cameraFlags, jsonF["cameraFlags"]);
         Serialization::deserialize(_depth, jsonF["depth"]);
 
@@ -84,7 +83,7 @@ namespace JEngine {
         return true;
     }
 
-    const bool ICamera::serializeBinary(std::ostream& stream) const {
+    bool ICamera::serializeBinary(std::ostream& stream) const {
         Serialization::serialize(_cameraFlags, stream);
         Serialization::serialize(_depth, stream);
 
@@ -101,7 +100,7 @@ namespace JEngine {
         return true;
     }
 
-    const bool ICamera::deserializeBinary(std::istream& stream)  {
+    bool ICamera::deserializeBinary(std::istream& stream)  {
         Serialization::deserialize(_cameraFlags, stream);
         Serialization::deserialize(_depth, stream);
 
@@ -120,8 +119,8 @@ namespace JEngine {
         return true;
     }
 
-    const bool ICamera::render() { return renderInternal(false); }
-    const bool ICamera::renderInternal(const bool isAuto) {
+    bool ICamera::render() { return renderInternal(false); }
+    bool ICamera::renderInternal(const bool isAuto) {
         if (!PREPARE_RENDER || !RENDER_OBJECTS || !WRITE_TO_BUFFER) {
             return false;
         }
@@ -130,6 +129,7 @@ namespace JEngine {
         auto& trMatrix = getTransformMatrix();
         CameraRenderData renderData;
 
+        renderData.doBlend = true;
         renderData.screenRect = _screenRect;
         renderData.viewRect = _viewRect;
 

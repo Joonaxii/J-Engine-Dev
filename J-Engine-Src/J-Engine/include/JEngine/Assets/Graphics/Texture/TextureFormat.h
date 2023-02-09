@@ -4,8 +4,7 @@
 
 namespace JEngine  
 {
-	enum class TextureFormat : uint8_t 
-	{
+	enum class TextureFormat : uint8_t  {
 		Indexed,
 		R8,
 		RGB24,
@@ -41,13 +40,13 @@ namespace JEngine
 
 #pragma region Serialization
 	 template<>
-	 inline const bool Serializable<TextureFormat>::deserializeJson(TextureFormat& itemRef, json& jsonF, const TextureFormat& defaultVal) {
+	 inline bool Serializable<TextureFormat>::deserializeJson(TextureFormat& itemRef, json& jsonF, const TextureFormat& defaultVal) {
 		 itemRef = jsonF.is_number() ? TextureFormat(jsonF.get<uint8_t>()) : defaultVal;
 		 return true;
 	 }
 
 	 template<>
-	 inline const bool Serializable<TextureFormat>::serializeJson(const TextureFormat& itemRef, json& jsonF) {
+	 inline bool Serializable<TextureFormat>::serializeJson(const TextureFormat& itemRef, json& jsonF) {
 		 jsonF.update(uint8_t(itemRef));
 		 return true;
 	 }

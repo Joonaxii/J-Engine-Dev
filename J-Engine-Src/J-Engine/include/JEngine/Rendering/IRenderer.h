@@ -9,7 +9,6 @@
 #include <JEngine/Math/Units/JMatrix.h>
 #include <JEngine/Math/Units/JRect.h>
 
-#include <JEngine/IO/Serialization/Serialization.h>
 #include <JEngine/Collections/ObjectRef.h>
 
 namespace JEngine {
@@ -21,55 +20,33 @@ namespace JEngine {
         IRenderer() : _color(255, 255, 255, 255), _material(nullptr), _layer(0, 0), _flags(REND_IS_VISIBLE), _bounds() {
             registerRenderer(this);
         }
-        ~IRenderer() {
-            unregisterRenderer(this);
-        }
+        ~IRenderer() { unregisterRenderer(this); }
 
-        void setMaterial(const ObjectRef<Material>& material) {
-            _material = material;
-        }
+        void setMaterial(const ObjectRef<Material>& material) { _material = material; }
 
         Material* getMaterial() { return _material.getPtr(); }
         const Material* getMaterial() const { return _material.getPtr(); }
 
-        void setSortingOrder(const int16_t order) {
-            _layer.setOrder(order);
-        }
-        void setSortingLayer(const std::string& layerName) {
-            _layer.setLayerByName(layerName);
-        }
+        void setSortingOrder(const int32_t order) { _layer.setOrder(order); }
 
-        void setSortingLayer(const uint16_t layer) {
-            _layer.setLayerByIndex(layer);
-        }
+        void setSortingLayer(const std::string& layerName) { _layer.setLayerByName(layerName); }
+        void setSortingLayer(const uint16_t layer) { _layer.setLayerByIndex(layer); }
+        void setSortingLayer(const SortingLayer& layer) { _layer = layer; }
 
-        void setSortingLayer(const SortingLayer& layer) {
-            _layer = layer;
-        }
+        SortingLayer getSortingLayer() const { return _layer; }
 
-        const SortingLayer getSortingLayer() const { return _layer; }
+        virtual bool canRender() const { return bool(_flags & REND_IS_VISIBLE); }
 
-        virtual const bool canRender() const {
-            return bool(_flags & REND_IS_VISIBLE);
-        }
-
-        void setVisible(const bool visible) {
-            _flags.setBit(REND_IS_VISIBLE)
-        }
-
-        const bool isVisible() const { return (_flags & uint8_t(REND_IS_VISIBLE | REND_IS_IN_VIEW)) == (REND_IS_VISIBLE | REND_IS_IN_VIEW); }
+        void setVisible(const bool visible) { _flags.setBit(REND_IS_VISIBLE); }
+        bool isVisible() const { return (_flags & uint8_t(REND_IS_VISIBLE | REND_IS_IN_VIEW)) == (REND_IS_VISIBLE | REND_IS_IN_VIEW); }
         
-        void markOutOfView() {
-            _flags &= ~REND_IS_IN_VIEW;
-        }
-        void markInView() {
-            _flags |= REND_IS_IN_VIEW;
-        }
+        void markOutOfView() { _flags &= ~REND_IS_IN_VIEW; }
+        void markInView() { _flags |= REND_IS_IN_VIEW; }
 
-        virtual const uint32_t getObjectLayer() const = 0;
+        virtual uint32_t getObjectLayer() const = 0;
 
-        virtual const int32_t getVertexCount() const = 0;
-        virtual const int32_t getIndexCount() const = 0;
+        virtual int32_t getVertexCount() const = 0;
+        virtual int32_t getIndexCount() const = 0;
 
         virtual const TVert* getVertices() const = 0;
         virtual const uint32_t* getIndices() const = 0;
@@ -83,11 +60,9 @@ namespace JEngine {
             auto& mat = getWorldMatrix();
             _bounds = mat.transformRect(getLocalBounds());
         }
-        virtual const JRectf& getBounds() const {
-            return _bounds;
-        }
+        virtual const JRectf& getBounds() const { return _bounds; }
 
-        virtual const bool deserializeJson(json& jsonFile) override {
+        virtual bool deserializeJson(json& jsonFile) override {
             const UUID uuid = _material.getPtr() ? _material.getPtr()->getUUID() : UUIDFactory::Empty;
             Serialization::deserialize(uuid, jsonFile["material"]);
             Serialization::deserialize(_color, jsonFile["color"], JColor32::White);
@@ -95,8 +70,8 @@ namespace JEngine {
             return true;
         }
 
-        virtual const bool serializeJson(json& jsonFile) const override {
-            UUID uuid;
+        virtual bool serializeJson(json& jsonFile) const override {
+            UUID uuid{};
 
             Serialization::serialize(uuid, jsonFile["material"]);
             Serialization::serialize(_color, jsonFile["color"]);
@@ -104,7 +79,7 @@ namespace JEngine {
             return true;
         }
 
-        virtual const bool deserializeBinary(std::istream& stream) override {
+        virtual bool deserializeBinary(std::istream& stream) override {
             UUID uuid{};
 
             Serialization::deserialize(uuid, stream);
@@ -113,7 +88,7 @@ namespace JEngine {
             return true;
         }
 
-        virtual const bool serializeBinary(std::ostream& stream) const override {
+        virtual bool serializeBinary(std::ostream& stream) const override {
             const Material* mat = _material.getPtr();
             const UUID uuid = mat ? mat->getUUID() : UUIDFactory::Empty;
      
@@ -145,7 +120,7 @@ namespace JEngine {
 
         virtual const JRectf& getLocalBounds() const = 0;
 
-        virtual const bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override {        
+        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override {
             return true;
         }
 

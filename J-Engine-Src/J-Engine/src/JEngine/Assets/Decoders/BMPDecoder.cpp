@@ -1,5 +1,5 @@
 #include <JEngine/Assets/Decoders/BMPDecoder.h>
-#include <JEngine/IO/Helpers/FileExtensions.h>
+#include <JEngine/IO/Helpers/IOHelpers.h>
 #include <JEngine/Utility/Span.h>
 #include <JEngine/Math/Graphics/JColor32.h>
 #include <JEngine/Math/Graphics/JColor24.h>
@@ -11,60 +11,6 @@ namespace JEngine {
     static const int32_t calcualtePadding(const int32_t width, const int32_t bpp) {
         const int32_t rem = (width * bpp) & 0x3;
         return rem ? 4 - rem : 0;
-    }
-
-    static void appendErrorString(std::string& strOut, const uint32_t flag, const char* breakChar = "\0") {
-        if (breakChar != "\0") { strOut.append(breakChar); }
-
-        switch (flag)
-        {
-            default:
-                strOut.append("Unknown error flag!");
-                break;
-            case BMP_ERR_INVALID_IDENTIFIER:
-                strOut.append("Invalid BMP identifier!");
-                break;       
-            case BMP_ERR_TOO_SMALL:
-                strOut.append("Stream doesn't have enough data to read BMP header!");
-                break;
-            case BMP_ERR_DATA_SIZE_MISMATCH:
-                strOut.append("Data size mismatch!");
-                break;
-            case BMP_ERR_RESERVED_BYTES_NOT_ZERO:
-                strOut.append("Reserved bytes not zero!");
-                break;
-
-            case BMP_ERR_UNSUPPORTED_BITDEPTH:
-                strOut.append("Unsupported bitdepth!");
-                break;   
-            case BMP_ERR_UNSUPPORTED_COMPRESSION:
-                strOut.append("Unsupported compression!");
-                break;
-
-
-            case FAILED_TO_ALLOCATE_BUFFER:
-                strOut.append("Failed to allocate a buffer!");
-                break;
-
-            case IO_ERROR:
-                strOut.append("File not found or couldn't be opened!");
-                break;
-        }
-    }
-
-    std::string& getBmpErrorString(std::string& strOut, const UI32Flags flags) {
-        if (!flags) {
-            strOut.append("Decode Ok!");
-            return strOut;
-        }
-
-        size_t count = 0;
-        for (uint32_t i = 0, j = 1; i < 32; i++, j <<= 1) {
-            if ((flags & j)) {
-                appendErrorString(strOut, j, count++ ? ", " : "\0");
-            }
-        }
-        return strOut;
     }
 
     DecoderResult decodeBmp(const std::string& filepath, const UI32Flags flags, const int64_t dataSize) {
@@ -98,9 +44,9 @@ namespace JEngine {
         Span<uint8_t> buf(buffer, 54);
         DecoderResult results = { nullptr, JVector2<uint16_t>(), TextureFormat::Unknown, DECODER_OK };
 
-        const uint16_t id = buf.read<uint16_t>();
-        const uint32_t size = buf.slice(2).read<uint32_t>();
-        const uint32_t reserved = buf.slice(6).read<uint32_t>();
+        const uint16_t id           = buf.read<uint16_t>();
+        const uint32_t size         = buf.slice(2 ).read<uint32_t>();
+        const uint32_t reserved     = buf.slice(6 ).read<uint32_t>();
         const uint32_t offsetToData = buf.slice(10).read<uint32_t>();
       
         if (id != 0x4D42U)    { results.errFlags |= BMP_ERR_INVALID_IDENTIFIER; }

@@ -21,7 +21,7 @@ namespace JEngine {
     }
 
     Sprite::Sprite(const Sprite& copy) : 
-        IAsset(copy._name, copy._id),
+        IAsset(copy._name, copy.getId()),
         _vertices{},
         _textureRect(0, 0, 0, 0),
         _ppu(copy._ppu),
@@ -98,11 +98,11 @@ namespace JEngine {
         return _ppu;
     }
 
-    const float Sprite::getPPU() const {
+    float Sprite::getPPU() const {
         return _ppu;
     }
 
-    const int32_t Sprite::writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex2f* verts) {
+    int32_t Sprite::writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex2f* verts) {
         flip *= 4;
         for (size_t i = 0; i < 4; i++) {
             auto vert = _vertices[flip + i];
@@ -120,21 +120,14 @@ namespace JEngine {
         return _pivot;
     }
 
-    const Texture* Sprite::getTexturePtr() const {
-        return _texture.getPtr();
-    }
+    Texture* Sprite::getTexturePtr() { return _texture.getPtr(); }
+    const Texture* Sprite::getTexturePtr() const { return _texture.getPtr(); }
 
-    const JRecti& Sprite::getTextureRect() const {
-        return _textureRect;
-    }
+    ObjectRef<Texture> Sprite::getTexture() { return _texture; }
+    const ObjectRef<Texture>& Sprite::getTexture() const { return _texture; }
 
-    const JColor32& Sprite::getColor() const {
-        return _vertices[0].color;
-    }
-
-    const JRectf& Sprite::getLocalBounds() const {
-        return _boundsLocal;
-    }
+    const JRecti& Sprite::getTextureRect() const { return _textureRect; }
+    const JRectf& Sprite::getLocalBounds() const { return _boundsLocal; }
 
     void Sprite::updateLocalBounds() {
         const auto size = _textureRect.getSize();
@@ -260,7 +253,7 @@ namespace JEngine {
         }
     }
 
-    const int32_t Sprite::getVertexCount() const {
+    int32_t Sprite::getVertexCount() const {
         return 4;
     }
 
@@ -268,7 +261,7 @@ namespace JEngine {
         return _vertices + (flip * 4);
     }
 
-    const int32_t Sprite::getIndexCount() const {
+    int32_t Sprite::getIndexCount() const {
         return 6;
     }
 
@@ -284,18 +277,18 @@ namespace JEngine {
         return _texure.getPtr();
     }*/
 
-    const bool Sprite::serializeJson(json& jsonF) const {
+    bool Sprite::serializeJson(json& jsonF) const {
         return false;
     }
 
-    const bool Sprite::deserializeJson(json& jsonF) {
+    bool Sprite::deserializeJson(json& jsonF) {
         return false;
     }
-    const bool Sprite::serializeBinary(std::ostream& stream) const
+    bool Sprite::serializeBinary(std::ostream& stream) const
     {
         return false;
     }
-    const bool Sprite::deserializeBinary(std::istream& stream, const size_t size)
+    bool Sprite::deserializeBinary(std::istream& stream, const size_t size)
     {
         return false;
     }

@@ -33,13 +33,13 @@ namespace JEngine {
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<AssetImporterType>::deserializeJson(AssetImporterType& itemRef, json& jsonF, const AssetImporterType& defaultValue) {
+    inline bool Serializable<AssetImporterType>::deserializeJson(AssetImporterType& itemRef, json& jsonF, const AssetImporterType& defaultValue) {
         itemRef = jsonF.is_number_integer() ? AssetImporterType(jsonF.get<uint32_t>()) : defaultValue;
         return true;
     }
 
     template<>
-    inline const bool Serializable<AssetImporterType>::serializeJson(const AssetImporterType& itemRef, json& jsonF) {
+    inline bool Serializable<AssetImporterType>::serializeJson(const AssetImporterType& itemRef, json& jsonF) {
         jsonF = uint32_t(itemRef);
         return true;
     }

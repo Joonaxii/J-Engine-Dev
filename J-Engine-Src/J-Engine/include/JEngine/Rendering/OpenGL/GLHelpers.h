@@ -5,17 +5,23 @@
 #include <JEngine/Assets/Graphics/Texture/FilterMode.h>
 #include <JEngine/Assets/Graphics/Texture/TextureFormat.h>
 
-#define ASSERT(x) if(!(x)) __debugbreak();
-#define GLCall(x) ASSERT(JEngine::GlLogWrite("[OpenGL Hang Error]", JEngine::GLClearError(), #x, __FILE__, __LINE__))\
+#define GLAssert(x) if(!(x)) __debugbreak();
+#define GLCall(x) GLAssert(JEngine::GlLogWrite("[OpenGL Hang Error]", JEngine::GLClearError(), #x, __FILE__, __LINE__))\
     x;\
-    ASSERT(JEngine::GLLogCall(#x, __FILE__, __LINE__))
+    GLAssert(JEngine::GLLogCall(#x, __FILE__, __LINE__))
 
 namespace JEngine {
-    const bool GlLogWrite(const char* type, const uint32_t error, const char* function, const char* file, int line);
-    const uint32_t GLClearError(uint32_t maxErrors = 1000);
-    const bool GLLogCall(const char* function, const char* file, int line);
+    bool GlLogWrite(const char* type, const uint32_t error, const char* function, const char* file, int line);
+    uint32_t GLClearError(uint32_t maxErrors = 1000);
+    bool GLLogCall(const char* function, const char* file, int line);
 
-    const uint32_t filterModeToGLFilter(const FilterMode filter);
+    constexpr uint32_t filterModeToGLFilter(const FilterMode filter) {
+        switch (filter)
+        {
+            default:                 return GL_NEAREST;
+            case FilterMode::Linear: return GL_LINEAR;
+        }
+    }
 
     constexpr uint32_t textureFormatToGLFormat(const TextureFormat& fmt, const bool isMain = true) {
         switch (fmt)
@@ -35,7 +41,6 @@ namespace JEngine {
             case TextureFormat::Indexed:
             case TextureFormat::R8:
             case TextureFormat::RGB24:  return 1;
-
         }
     }
 }

@@ -13,21 +13,21 @@ namespace JEngine {
         Texture();
         ~Texture();
 
-        virtual const bool create(const uint16_t width, const uint16_t height);
-        virtual const bool create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter);
-        virtual const bool create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter, uint8_t* pixelData, const bool keepData);
+        virtual bool create(const uint16_t width, const uint16_t height);
+        virtual bool create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter);
+        virtual bool create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter, uint8_t* pixelData, const bool keepData);
 
         void setPalette(const uint8_t* pixels, const size_t size, const TextureFormat format);
 
-        const JVector2i getSize() const;
+        const JVector2<uint16_t>& getSize() const;
 
-        virtual const bool serializeBinary(std::ostream& stream) const override = 0;
-        virtual const bool deserializeBinary(std::istream& stream, const size_t size) override = 0;
+        virtual bool serializeBinary(std::ostream& stream) const override = 0;
+        virtual bool deserializeBinary(std::istream& stream, const size_t size) override = 0;
 
-        virtual const bool serializeJson(json& jsonF) const override = 0;
-        virtual const bool deserializeJson(json& jsonF) override = 0;
+        virtual bool serializeJson(json& jsonF) const override = 0;
+        virtual bool deserializeJson(json& jsonF) override = 0;
 
-        static const uint32_t getMaximumSize();
+        static uint32_t getMaximumSize();
         uint8_t* getTextureData() const;
 
         const uint32_t getMainNativeHandle() const;
@@ -37,15 +37,15 @@ namespace JEngine {
         const TextureFormat getTextureFormat() const;
 
         void setFilterMode(const FilterMode& filter);
-        const FilterMode getFilterMode() const;
+        FilterMode getFilterMode() const;
 
         void setCompressionLevel(const int32_t level);
-        const int32_t getCompressionLevel() const;
+        int32_t getCompressionLevel() const;
 
-        static const uint32_t bindNull(const uint32_t slot = 0);
+        static uint32_t bindNull(const uint32_t slot = 0);
 
-        virtual const uint32_t bind(const uint32_t slot = 0) const;
-        virtual const uint32_t unbind(const uint32_t slot = 0) const;
+        virtual uint32_t bind(const uint32_t slot = 0) const;
+        virtual uint32_t unbind(const uint32_t slot = 0) const;
 
         virtual void update(const uint8_t* pixels, const TextureFormat format, const uint32_t width, const uint32_t height, TextureFormat toFormat, const FilterMode filter, const bool keepData);
         virtual void update(Texture& texture);
@@ -70,7 +70,7 @@ namespace JEngine {
         uint8_t* _pixelData;
 
         static void readPixel(const ConstSpan<uint8_t>& data, const TextureFormat format, const int32_t index, JColor32& color);
-        static const int32_t generatePaletteAndTexture(const uint8_t* inputData, const uint16_t width, const uint16_t height, const TextureFormat format, uint8_t* outputData, const bool validate = true);
+        static int32_t generatePaletteAndTexture(const uint8_t* inputData, const uint16_t width, const uint16_t height, const TextureFormat format, uint8_t* outputData, const bool validate = true);
 
         virtual void applyData(const uint8_t* pixels, const bool doFlush);
         virtual void applyPixels(const uint8_t* pixels, const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter);

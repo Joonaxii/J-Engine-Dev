@@ -30,9 +30,7 @@ namespace JEngine {
 		}
 	}
 
-	const uint64_t JTime::getFrameCount() const {
-		return _frameNum;
-	}
+	uint64_t JTime::getFrameCount() const { return _frameNum; }
 
 	JTime::TimeSpace& JTime::getTimeSpace(const uint8_t space) {
 		return _timeSpaces[space >= MAX_TIME_SPACES ? MAX_TIME_SPACES - 1 : space];

@@ -31,11 +31,11 @@ namespace JEngine {
             JVector2f position;
             JVector2f scroll;
 
-            const MouseData operator+(const MouseData& other) const {
+            MouseData operator+(const MouseData& other) const {
                 return { position + other.position, scroll + other.scroll };
             }
 
-            const MouseData operator-(const MouseData& other) const {
+            MouseData operator-(const MouseData& other) const {
                 return { position - other.position, scroll - other.scroll };
             }
 
@@ -62,6 +62,9 @@ namespace JEngine {
             DEV_Two = 0x4,
             DEV_Three = 0x8,
             DEV_Four = 0x10,
+
+            DEV_Controller = DEV_One | DEV_Three | DEV_Four,
+            DEV_Any        = DEV_Keyboard | DEV_One | DEV_Three | DEV_Four
         };
 
         enum InputCode : uint16_t {
@@ -304,21 +307,21 @@ namespace JEngine {
 
         struct Gamepad {
         public:
-            const uint16_t getButtons() const { return _buttons; }
+            uint16_t getButtons() const { return _buttons; }
 
-            const bool isConnected() const { return _isConnected; }
+            bool isConnected() const { return _isConnected; }
 
-            const bool isDown(const int16_t index) const {
+            bool isDown(const int16_t index) const {
                 if (index < 0 || index >= 0x8000) { return false; }
                 return bool(_buttons & index);
             }
 
-            const bool isDown(const InputCode code) const {
+            bool isDown(const InputCode code) const {
                 return isDown(int16_t(code - KEYBOARD_INPUTS));
             }
 
-            const float getTriggerL() const { return _trigger.x; }
-            const float getTriggerR() const { return _trigger.y; }
+            float getTriggerL() const { return _trigger.x; }
+            float getTriggerR() const { return _trigger.y; }
 
             const JVector2f& getStickL() const { return _stickL; }
             const JVector2f& getStickR() const { return _stickR; }
@@ -370,13 +373,13 @@ namespace JEngine {
                 _axisVal = 0;
             }
 
-            const float getAxisValue() const { return _axisVal; }
-            const uint64_t getTickDown() const { return _tick; }
+            float getAxisValue() const { return _axisVal; }
+            uint64_t getTickDown() const { return _tick; }
 
-            const inline bool isDown()     const { return bool(_flags & KEY_DOWN); }
-            const inline bool isHeld()     const { return bool(_flags & KEY_HELD); }
-            const inline bool isUp()       const { return bool(_flags & KEY_UP); }
-            const inline bool isToggled()  const { return bool(_flags & KEY_TOGGLE); }
+            inline bool isDown()     const { return bool(_flags & KEY_DOWN); }
+            inline bool isHeld()     const { return bool(_flags & KEY_HELD); }
+            inline bool isUp()       const { return bool(_flags & KEY_UP); }
+            inline bool isToggled()  const { return bool(_flags & KEY_TOGGLE); }
 
             void update(const bool state, const bool toggled, const float value, const uint64_t tick, const bool autoToggle = false) {
                 _axisVal = value;
@@ -416,7 +419,7 @@ namespace JEngine {
         static void update(const bool hasFocus);
         static void update(const MouseData& mouseData, const bool hasFocus);
 
-        static const InputState getInputState(const DeviceIndex device, const InputCode code);
+        static InputState getInputState(const DeviceIndex device, const InputCode code);
 
         static const JVector2f& getMousePosition();
         static const JVector2f& getMouseWheel();
@@ -424,17 +427,17 @@ namespace JEngine {
         static const JVector2f& getMousePositionDelta();
         static const JVector2f& getMouseWheelDelta();
 
-        static const uint64_t addDeviceConnectionCB(const Action<const DeviceIndex, const bool>::Func& func);
+        static uint64_t addDeviceConnectionCB(const Action<const DeviceIndex, const bool>::Func& func);
         static void removeDeviceConnectionCB(const uint64_t id);
 
-        static const Gamepad getGamepad(const DeviceIndex device);
-        static const Gamepad getGamepad(const int32_t device);
+        static Gamepad getGamepad(const DeviceIndex device);
+        static Gamepad getGamepad(const int32_t device);
         static void getGamepads(const DeviceIndex devices, Gamepad* pads);
 
         static void setDeadZone(const DeviceIndex devices, const float deadZone);
         static void setDeadZones(const DeviceIndex devices, const float* deadZones);
 
-        static const float getDeadZone(const DeviceIndex device);
+        static float getDeadZone(const DeviceIndex device);
         static void getDeadZones(const DeviceIndex devices, float* deadZones);
 
         static void vibrateDevices(const DeviceIndex devices, const double left, const double right);
@@ -443,18 +446,18 @@ namespace JEngine {
         static void vibrateDevice(const int32_t device, const double left, const double right);
         static void vibrateDevice(const int32_t device, const uint16_t left, const uint16_t right);
 
-        static const bool isDown(const DeviceIndex index, const InputCode code);
-        static const bool isHeld(const DeviceIndex index, const InputCode code);
-        static const bool isUp(const DeviceIndex index, const InputCode code);
-        static const bool isToggled(const DeviceIndex index, const InputCode code);
+        static bool isDown(const DeviceIndex index, const InputCode code);
+        static bool isHeld(const DeviceIndex index, const InputCode code);
+        static bool isUp(const DeviceIndex index, const InputCode code);
+        static bool isToggled(const DeviceIndex index, const InputCode code);
 
-        static const bool anyDown(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
-        static const bool anyHeld(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
-        static const bool anyUp(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
-        static const bool anyToggled(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
+        static bool anyDown(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
+        static bool anyHeld(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
+        static bool anyUp(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
+        static bool anyToggled(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
 
-        static const float getAxis(const DeviceIndex devices, const InputCode neg, const InputCode pos);
-        static const JVector2f getVector(const DeviceIndex devices,
+        static float getAxis(const DeviceIndex devices, const InputCode neg, const InputCode pos);
+        static JVector2f getVector(const DeviceIndex devices,
             const InputCode negX, const InputCode posX,
             const InputCode negY, const InputCode posY);
 
@@ -474,36 +477,36 @@ namespace JEngine {
 
         static Action<const DeviceIndex, const bool> _onDeviceConnectionChange;
 
-        static const bool isKeyDown(const InputCode code);
-        static const int32_t getInputStates(const InputCode code, const DeviceIndex devices, InputState* states);
+        static bool isKeyDown(const InputCode code);
+        static int32_t getInputStates(const InputCode code, const DeviceIndex devices, InputState* states);
 
         static void updateMouseData(const MouseData& mData);
 
-        static const bool any(const int32_t mode, const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
+        static bool any(const int32_t mode, const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
     };
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<Input::DeviceIndex>::deserializeJson(Input::DeviceIndex& itemRef, json& jsonF, const Input::DeviceIndex& defaultValue) {
+    inline bool Serializable<Input::DeviceIndex>::deserializeJson(Input::DeviceIndex& itemRef, json& jsonF, const Input::DeviceIndex& defaultValue) {
         itemRef = jsonF.is_number_integer() ? Input::DeviceIndex(jsonF.get<uint8_t>()) : defaultValue;
         return true;
     }
 
     template<>
-    inline const bool Serializable<Input::DeviceIndex>::serializeJson(const Input::DeviceIndex& itemRef, json& jsonF) {
+    inline bool Serializable<Input::DeviceIndex>::serializeJson(const Input::DeviceIndex& itemRef, json& jsonF) {
         jsonF.update(uint8_t(itemRef));
         return true;
     } 
     
 
     template<>
-    inline const bool Serializable<Input::InputCode>::deserializeJson(Input::InputCode& itemRef, json& jsonF, const Input::InputCode& defaultValue) {
+    inline bool Serializable<Input::InputCode>::deserializeJson(Input::InputCode& itemRef, json& jsonF, const Input::InputCode& defaultValue) {
         itemRef = jsonF.is_number_integer() ? Input::InputCode(jsonF.get<uint16_t>()) : defaultValue;
         return true;
     }
 
     template<>
-    inline const bool Serializable<Input::InputCode>::serializeJson(const Input::InputCode& itemRef, json& jsonF) {
+    inline bool Serializable<Input::InputCode>::serializeJson(const Input::InputCode& itemRef, json& jsonF) {
         jsonF.update(uint16_t(itemRef));
         return true;
     }

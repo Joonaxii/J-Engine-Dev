@@ -33,7 +33,7 @@ namespace JEngine {
 
 #pragma region Serialization
     template<>
-    inline const bool Serializable<AssetMetaData>::deserializeJson(AssetMetaData& itemRef, json& jsonF, const AssetMetaData& defaultVal) {
+    inline bool Serializable<AssetMetaData>::deserializeJson(AssetMetaData& itemRef, json& jsonF, const AssetMetaData& defaultVal) {
         Serialization::deserialize(itemRef._assetFlags,      jsonF["flags"], defaultVal._assetFlags);
         Serialization::deserialize(itemRef._uuid,            jsonF["uuid"], defaultVal._uuid);
         Serialization::deserialize(itemRef._assetDataFormat, jsonF["dataFormat"], defaultVal._assetDataFormat);
@@ -42,7 +42,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const bool Serializable<AssetMetaData>::serializeJson(const AssetMetaData& itemRef, json& jsonF) {
+    inline bool Serializable<AssetMetaData>::serializeJson(const AssetMetaData& itemRef, json& jsonF) {
         Serialization::serialize(itemRef._assetFlags, jsonF["flags"]);
         Serialization::serialize(itemRef._uuid, jsonF["uuid"]);
         Serialization::serialize(itemRef._assetDataFormat, jsonF["dataFormat"]);
@@ -51,7 +51,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const bool Serializable<AssetMetaData>::deserializeBinary(AssetMetaData& itemRef, std::istream& stream) {
+    inline bool Serializable<AssetMetaData>::deserializeBinary(AssetMetaData& itemRef, std::istream& stream) {
         Serialization::deserialize(itemRef._assetFlags, stream);
         Serialization::deserialize(itemRef._uuid, stream);
         Serialization::deserialize(itemRef._assetDataFormat, stream);
@@ -60,7 +60,7 @@ namespace JEngine {
     }
 
     template<>
-    inline const bool Serializable<AssetMetaData>::serializeBinary(const AssetMetaData& itemRef, std::ostream& stream) {
+    inline bool Serializable<AssetMetaData>::serializeBinary(const AssetMetaData& itemRef, std::ostream& stream) {
         Serialization::serialize(itemRef._assetFlags, stream);
         Serialization::serialize(itemRef._uuid, stream);
         Serialization::serialize(itemRef._assetDataFormat, stream);

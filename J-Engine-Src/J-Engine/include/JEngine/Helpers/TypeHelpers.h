@@ -3,81 +3,100 @@
 #include <JEngine/Cryptography/FAH16.h>
 #include <typeindex>
 #include <vector>
-#include <string>
-#define NAMEOF(name) #name
 
 namespace JEngine {
-    struct Type {
-        std::string name;
-        size_t size;
-        FAH16 hash;
+    struct HashPair {
+        FAH16 hash{};
+        const char* typeName = nullptr;
 
-        Type() : name(""), hash(), size(-1) {}
+        HashPair(): hash(), typeName(nullptr) {}
+        HashPair(const FAH16& hash, const char* typeName) : hash(hash), typeName(typeName){}
+    };
+
+    struct TypeData {
+        const HashPair hashData;
+        const int32_t size;
+
+        TypeData(const HashPair& hash, const int32_t size) : hashData(hash), size(size) {}
+
+        const char* getName() const { return hashData.typeName; }
     };
 
     class TypeHelpers {
-    public:
-        template<typename T> static Type* getType();
-        static std::vector<Type*>& TypeHelpers::getTypes();
+    private:
+        static std::unordered_map<FAH16, const char*, std::hash<FAH16>> HashLUT;
 
-        const static std::pair<const FAH16, const std::string> getTypePair(const std::type_index& indx) {
-            std::string tname = indx.name();
-            int ind = Helpers::indexOf(tname, ' ');
-            if (ind > -1) {
-                tname.erase(0, ind + 1);
-            }
+    public:
+        template<typename T> static TypeData* getType();
+        static std::vector<TypeData>& TypeHelpers::getTypes();
+
+        static int32_t indexOfHash(const FAH16& hash);
+
+        static void getTypePair(const std::type_index& indx, HashPair& pair) {
+            ConstSpan<char> inputName(indx.name(), strlen(indx.name()));
+            int32_t ind = inputName.indexOf(' ');
+            inputName = ind > -1 ? inputName.slice(ind) : inputName;
 
             FAH16 hash;
-            hash.computeHash(tname.c_str(), tname.length());
-            return std::pair<const FAH16, const std::string>(hash, tname);
+            hash.computeHash(inputName);
+            auto& find = HashLUT.find(hash);
+
+            pair.hash = hash;
+            if (find == HashLUT.end()) {
+                char* str = reinterpret_cast<char*>(malloc(inputName.length() + 1));
+                str[inputName.length()] = 0;
+                inputName.copyTo(str);
+
+                HashLUT.insert(std::make_pair(hash, str));
+                pair.typeName = str;
+                return;
+            }
+            pair.typeName = find->second;
         }
 
-        const static Type* getTypeByHash(const FAH16& hash) {
+        static const TypeData* getTypeByHash(const FAH16& hash) {
             auto& types = getTypes();
             for (size_t i = 0; i < types.size(); i++) {
-                if (types[i]->hash == hash) { return types[i]; }
+                if (types[i].hashData.hash  == hash) { return &types[i]; }
             }
             return nullptr;
         }
 
-        const static std::string getTypeName(const FAH16& id) {
-            auto type = getTypeByHash(id);
-            return type ? type->name : "";
+        template<typename T>
+        static const char* getTypeName() {
+            TypeData* type = JEngine::getType<T>();
+            return type ? type->getName() : "";
         }
 
         template<typename T>
-        const static std::string getTypeName() {
-            Type* type = JEngine::getType<T>();
-            return type ? type->name : "";
-        }
-
-        template<typename T>
-        const static std::string getTypeName(const T& obj) {
+        static const char* getTypeName(const T& obj) {
             const std::type_index& typeInf = typeid(obj);
             return getTypePair(typeInf).second;
         }
 
         template<typename T>
-        const static FAH16 getTypeHash() {
-            Type* type = JEngine::getType<T>();
-            return type ? type->hash : FAH16();
+        static FAH16 getTypeHash() {
+            TypeData* type = JEngine::getType<T>();
+            return type ? type->hashData : FAH16();
         }
 
         template<typename T>
-        const static FAH16 getTypeHash(const T& obj) {
+        static FAH16 getTypeHash(const T& obj) {
             const std::type_index& typeInf = typeid(obj);
             auto pair = getTypePair(typeInf);
             return pair.first;
         }
 
-        static void addType(Type& type, const size_t size, const std::pair<const FAH16, const std::string>& data);
+        static void addType(const HashPair& data, const int32_t size);
     };
 }
 
 #define DEFINE_TYPE(TYPE) \
 template<> \
-inline JEngine::Type* JEngine::TypeHelpers::getType<TYPE>() { \
-    static JEngine::Type type; \
-    JEngine::TypeHelpers::addType(type, sizeof(TYPE), JEngine::TypeHelpers::getTypePair(typeid(TYPE)));\
+inline JEngine::TypeData* JEngine::TypeHelpers::getType<TYPE>() { \
+    static JEngine::TypeData type; \
+    JEngine::HashPair pair;\
+    JEngine::TypeHelpers::getTypePair(typeid(TYPE), pair);\
+    JEngine::TypeHelpers::addType(pair, int32_t(sizeof(TYPE)));\
     return &type;\
 }\

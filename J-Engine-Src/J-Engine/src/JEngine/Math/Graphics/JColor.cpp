@@ -9,12 +9,19 @@ namespace JEngine {
     JColor::JColor(const float r, const float g, const float b) : r(r), g(g), b(b), a(1.0f) { }
     JColor::JColor(const float r, const float g, const float b, const float a) : r(r), g(g), b(b), a(a) { }
 
-    JColor::JColor(const JColor24& rgb) : 
+    JColor::JColor(const JColor24& rgb) :
         r(Math::uintToScalar<uint8_t, float>(rgb.r)),
         g(Math::uintToScalar<uint8_t, float>(rgb.g)),
         b(Math::uintToScalar<uint8_t, float>(rgb.b)),
         a(1.0f) {
     }
+
+    JColor::JColor(const JColor24& rgb, const float alpha) :
+        r(Math::uintToScalar<uint8_t, float>(rgb.r)),
+        g(Math::uintToScalar<uint8_t, float>(rgb.g)),
+        b(Math::uintToScalar<uint8_t, float>(rgb.b)),
+        a(alpha) { }
+
 
     JColor::JColor(const JColor32& rgba) :
         r(Math::uintToScalar<uint8_t, float>(rgba.r)),
@@ -23,11 +30,11 @@ namespace JEngine {
         a(Math::uintToScalar<uint8_t, float>(rgba.a)) {
     }
 
-    const bool JColor::operator==(const JColor& other) const {
+    bool JColor::operator==(const JColor& other) const {
         return r == other.r && g == other.g && b == other.b && a == other.a;
     }
 
-    const bool JColor::operator!=(const JColor& other) const {
+    bool JColor::operator!=(const JColor& other) const {
         return !(*this == other);
     }
 
@@ -44,6 +51,32 @@ namespace JEngine {
             Math::scalarToUInt<uint8_t, float>(r),
             Math::scalarToUInt<uint8_t, float>(g),
             Math::scalarToUInt<uint8_t, float>(b));
+    }
+
+    void JColor::set(const JColor32& rgba) {
+        r = Math::uintToScalar<uint8_t, float>(rgba.r);
+        g = Math::uintToScalar<uint8_t, float>(rgba.g);
+        b = Math::uintToScalar<uint8_t, float>(rgba.b);
+        a = Math::uintToScalar<uint8_t, float>(rgba.a);
+    }
+
+    void JColor::set(const JColor24& rgb) {
+        r = Math::uintToScalar<uint8_t, float>(rgb.r);
+        g = Math::uintToScalar<uint8_t, float>(rgb.g);
+        b = Math::uintToScalar<uint8_t, float>(rgb.b);
+    }
+
+    void JColor::set(const float r, const float g, const float b) {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+    }
+
+    void JColor::set(const float r, const float g, const float b, const float a) {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+        this->a = a;
     }
 
     JColor JColor::operator-(const JColor& other) const {
@@ -117,7 +150,6 @@ namespace JEngine {
         g *= other.g;
         b *= other.b;
         a *= other.a;
-
         return *this;
     }
 }

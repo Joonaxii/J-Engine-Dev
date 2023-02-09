@@ -5,12 +5,72 @@
 #include <iostream>
 
 namespace JEngine::ZLib {
-    const int deflateData(std::istream& streamIn, std::ostream& target, const int level) {
-        int ret, flush;
+    int32_t deflateData(char* dataIn, const size_t lenIn, char* dataOut, const size_t lenOut, const int32_t level) {
+        return 0;
+    }
+
+    int32_t inflateData(char* dataIn, const size_t lenIn, char* dataOut, const size_t lenOut) {
+        z_stream zInfo = { 0 };
+        zInfo.total_in = zInfo.avail_in = lenIn;
+        zInfo.total_out = zInfo.avail_out = lenOut;
+        zInfo.next_in = reinterpret_cast<uint8_t*>(dataIn);
+        zInfo.next_out = reinterpret_cast<uint8_t*>(dataOut);
+
+        int32_t nErr, nRet = -1;
+        nErr = inflateInit(&zInfo);               
+        if (nErr == Z_OK) {
+            nErr = inflate(&zInfo, Z_FINISH);     
+            if (nErr == Z_STREAM_END) {
+                nRet = zInfo.total_out;
+            }
+        }
+        inflateEnd(&zInfo);
+        return(nRet);
+    }
+
+    int32_t inflateBegin(ZLibContext& context, char* dataOut, const size_t lenOut) {
+        context.init(nullptr, 0, dataOut, lenOut);
+
+        int32_t nErr;
+        nErr = inflateInit(&context.stream);
+
+        if (nErr == Z_OK) {
+            return nErr;
+        }
+        inflateEnd(&context.stream);
+        return nErr;
+    }
+
+    int32_t inflateSegment(ZLibContext& context, char* dataIn, const size_t lenIn, int32_t& dataOut, const bool isLast) {
+        int32_t nErr, nRet = -1;
+
+        context.refreshNext(dataIn, lenIn);
+        nErr = inflate(&context.stream, Z_NO_FLUSH);
+        if (nErr == Z_STREAM_END) {
+            dataOut = context.stream.total_out;
+            return inflateEnd(context, dataOut);
+        } else if (nErr == Z_OK) {
+            dataOut = context.stream.total_out;
+        }
+        return nErr;
+    }
+
+    int32_t inflateEnd(ZLibContext& context, int32_t& dataOut) {
+        if (!context.initialized) { return Z_OK; }
+        dataOut = context.stream.total_out;
+
+        inflate(&context.stream, Z_FINISH);
+        int32_t ret = inflateEnd(&context.stream);
+        context.initialized = false;
+        return ret;
+    }
+
+    int32_t deflateData(std::istream& streamIn, std::ostream& target, const int32_t level) {
+        int ret, flush{};
         unsigned have;
-        z_stream strm;
-        unsigned char in[CHUNK];
-        unsigned char out[CHUNK];
+        z_stream strm{};
+        uint8_t in[CHUNK]{};
+        uint8_t out[CHUNK]{};
 
         strm.zalloc = Z_NULL;
         strm.zfree = Z_NULL;
@@ -19,18 +79,13 @@ namespace JEngine::ZLib {
         ret = deflateInit(&strm, level);
         if (ret != Z_OK) { return ret; }
 
-        auto start = streamIn.tellg();
-        streamIn.seekg(0, std::ios::end);
-        auto end = streamIn.tellg();
-        streamIn.seekg(start, std::ios::beg);
-
         do {
             strm.avail_in = uInt(streamIn.readsome(reinterpret_cast<char*>(in), CHUNK));
             if (streamIn.bad()) {
                 (void)deflateEnd(&strm);
                 return Z_ERRNO;
             }
-            flush = (streamIn.tellg() == end) ? Z_FINISH : Z_NO_FLUSH;
+            flush = streamIn.eof() ? Z_FINISH : Z_NO_FLUSH;
             strm.next_in = in;
 
             do {
@@ -50,12 +105,12 @@ namespace JEngine::ZLib {
         return Z_OK;
     }
 
-    const int inflateData(std::istream& streamIn, std::ostream& target) {
+    int32_t inflateData(std::istream& streamIn, std::ostream& target) {
         int ret;
         unsigned have;
-        z_stream strm;
-        unsigned char in[CHUNK];
-        unsigned char out[CHUNK];
+        z_stream strm{};
+        uint8_t in[CHUNK]{};
+        uint8_t out[CHUNK]{};
 
         strm.zalloc = Z_NULL;
         strm.zfree = Z_NULL;
@@ -68,7 +123,7 @@ namespace JEngine::ZLib {
 
         do {
             strm.avail_in = uInt(streamIn.readsome(reinterpret_cast<char*>(in), CHUNK));
-            if (streamIn.bad() || streamIn.fail()) {
+            if (streamIn.bad()) {
                 (void)inflateEnd(&strm);
                 return Z_ERRNO;
             }
@@ -97,7 +152,7 @@ namespace JEngine::ZLib {
                 auto before = target.tellp();
                 target.write(reinterpret_cast<char*>(out), have);
 
-                if (target.fail() || target.bad()) {
+                if (target.bad()) {
                     (void)inflateEnd(&strm);
                     return Z_ERRNO;
                 }
@@ -108,23 +163,4 @@ namespace JEngine::ZLib {
         return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
     }
 
-    const void zerr(const int ret) {
-        switch (ret) {
-            case Z_ERRNO:
-                std::cout << "ZLib error!\n";
-                break;
-            case Z_STREAM_ERROR:
-                std::cout << "ZStream error! (Possibly invalid compression level)\n";
-                break;
-            case Z_DATA_ERROR:
-                std::cout << "Invalid or incomplete deflate data!\n";
-                break;
-            case Z_MEM_ERROR:
-                std::cout << "ZLib out of memory!\n";
-                break;
-            case Z_VERSION_ERROR:
-                std::cout << "ZLib version mismatch!\n";
-                break;
-        }
-    }
 }

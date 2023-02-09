@@ -1,3 +1,14 @@
+struct TestStruct {
+    float floatVal;
+    int intVal;
+    uint uintVal;
+    vec2 vec2Val;
+    dvec2 dvec2Val;
+    ivec2 ivec2Val;
+    uvec2 uvec2Val;
+
+};
+
 #Clamp
 float clamp01(float v) {
     return v > 1.0 ? 1.0 : v < 0.0 ? 0.0 : v;
@@ -40,3 +51,10 @@ vec3 invlerp(vec3 a, vec3 b, vec3 y) {
 vec4 invlerp(vec4 a, vec4 b, vec4 y) {
     return (v - a) / (b - a);
 }
+
+#TestA -> InvLerp
+void testA() { }
+
+
+#TestB -> [TestA, Clamp]
+void testB() { }

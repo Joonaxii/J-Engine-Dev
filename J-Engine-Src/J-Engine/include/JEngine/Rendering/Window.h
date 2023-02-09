@@ -6,6 +6,7 @@
 #include <JEngine/Math/Graphics/JColor32.h>
 #include <JEngine/Rendering/FrameBuffer.h>
 #include <GL/glew.h>
+#include <map>
 
 struct GLFWwindow;
 namespace JEngine { 
@@ -16,16 +17,17 @@ namespace JEngine {
         Window();
         ~Window();
 
-        const bool init(const char* title, const int32_t width, const int32_t height);
-        const bool tick();
+        bool isInitialized() const;
 
-        const size_t getWidth() const;
-        const size_t getHeight() const;
+        bool init(const char* title, const int32_t width, const int32_t height);
+        bool tick();
+
+        size_t getWidth() const;
+        size_t getHeight() const;
 
         const JRectf& getWorldRect() const;
         const JMatrix4f& getWorldProjectionMatrix() const;
         const JMatrix4f& getScreenProjectionMatrix() const;
-        const bool isInitialized() const;
 
         void clear(const JColor32& clearColor, const uint32_t clearFlags = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         void finalizeFrame();
@@ -39,14 +41,16 @@ namespace JEngine {
         GLFWwindow* getWindowPtr();
         const GLFWwindow* getWindowPtr() const;
 
+        bool isMinimized() const { return _minimized; };
+
         void resetViewport();
         void updateViewport(const JVector2i& viewRect, const JVector2i& viewSize, const uint8_t flags = 0x3);
 
-        const uint64_t addOnWindowResizeCB(const ResizeEvent::Func& cb);
-        const bool removeOnWindowResizeCB(const uint64_t id);
+        uint64_t addOnWindowResizeCB(const ResizeEvent::Func& cb);
+        bool removeOnWindowResizeCB(const uint64_t id);
 
     private:
-        static std::unordered_map<GLFWwindow*, Window*> _glWindowToWindow;
+        static std::map<GLFWwindow*, Window*> _glWindowToWindow;
 
         JRectf _worldRect;
         JMatrix4f _worldProjection;
@@ -56,8 +60,9 @@ namespace JEngine {
         ResizeEvent _onResize;
         FrameBuffer _screenBuffer;
 
-        void onWindowResize(const int32_t width, const int32_t height);
+        bool _minimized;
 
+        void onWindowResize(const int32_t width, const int32_t height);
         static void windowResizeCallback(GLFWwindow* window, const int32_t width, const int32_t height);
     };
 }
