@@ -1,9 +1,6 @@
 [submodule "J-Engine-Src/J-Engine/ext/zlib"]
 	path = J-Engine-Src/J-Engine/ext/zlib
-	url = https://github.com/madler/zlib/tree/v1.2.13
+	url = https://github.com/madler/zlib
 [submodule "J-Engine-Src/J-Engine/ext/nlohmann/json"]
 	path = J-Engine-Src/J-Engine/ext/nlohmann/json
-	url = https://github.com/nlohmann/json/tree/v3.11.2
-[submodule "J-Engine-Src/J-Engine/ext/YAML"]
-	path = J-Engine-Src/J-Engine/ext/YAML
-	url = https://github.com/jbeder/yaml-cpp/tree/release-0.5.3
+	url = https://github.com/nlohmann/json
