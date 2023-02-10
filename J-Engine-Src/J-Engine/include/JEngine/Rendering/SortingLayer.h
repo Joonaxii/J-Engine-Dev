@@ -44,9 +44,37 @@ namespace JEngine {
         uint16_t _order;
         uint16_t _layer;
     };
-
+}
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::SortingLayer& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << itemRef.getLayerIndex() << itemRef.getOrder() << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::SortingLayer> {
+        static Node encode(const JEngine::SortingLayer& rhs) {
+            Node node;
+            node.push_back(rhs.getLayerIndex());
+            node.push_back(rhs.getOrder());
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::SortingLayer& rhs) {
+            if (!node.IsSequence() || node.size() < 2) { return false; }
+            rhs.setLayerByIndex(node[0].as<uint16_t>());
+            rhs.setOrder(node[1].as<int32_t>());
+            return true;
+        }
+    };
+}
+
+//JSON
+namespace JEngine {
     template<>
     inline bool Serializable<SortingLayer>::deserializeJson(SortingLayer& itemRef, json& jsonF, const SortingLayer& defaultValue) {
         Serialization::deserialize(itemRef._order, jsonF["order"], defaultValue._order);
@@ -61,5 +89,5 @@ namespace JEngine {
         jsonF["layer"] = itemRef._layer;
         return true;
     }
-#pragma endregion
 }
+#pragma endregion

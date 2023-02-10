@@ -20,6 +20,9 @@ namespace JEngine {
         static void setLayerName(const uint64_t layer, const std::string& name);
         static void setLayerNames(const std::string* names, size_t count);
 
+        void setValue(const uint64_t value) { _value = value; }
+        uint64_t getValue() const { return _value; }
+
     private:
         static std::string GIZMO_LAYER_NAMES[64];
 
@@ -28,9 +31,33 @@ namespace JEngine {
 
         static int32_t indexOfLayer(const std::string& name);
     };
-
+}
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::GizmoLayer& itemRef) {
+        yamlOut << YAML::Hex << itemRef.getValue();
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::GizmoLayer> {
+        static Node encode(const JEngine::GizmoLayer& rhs) {
+            Node node;
+            node.push_back(rhs.getValue());
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::GizmoLayer& rhs) {
+            rhs.setValue(node[0].as<uint64_t>());
+            return true;
+        }
+    };
+}
+
+//JSON
+namespace JEngine {
     template<>
     inline bool Serializable<GizmoLayer>::deserializeJson(GizmoLayer& itemRef, json& jsonF, const GizmoLayer& defaultValue) {
         if (jsonF.is_string()) {
@@ -47,5 +74,5 @@ namespace JEngine {
         jsonF = itemRef._value;
         return true;
     }
-#pragma endregion
 }
+#pragma endregion

@@ -1,11 +1,16 @@
 #pragma once
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <yaml-cpp/yaml.h>
 using json = nlohmann::ordered_json;
+using yamlOut = YAML::Emitter;
+using yamlIn  = YAML::Node;
 
 namespace JEngine {
-    namespace Serialization {
+    static constexpr char* YAML_SERIALIZATION_VERSION = "V1.0";
+    static constexpr char* YAML_SERIALIZATION_TAG = "J-Engine,2023";
 
+    namespace Serialization {
         static inline void serializeWCStringBinary(std::ostream& stream, const wchar_t* str) {
             const uint64_t len = wcslen(str);
             stream.write(reinterpret_cast<const char*>(&len), sizeof(int32_t));
@@ -96,6 +101,9 @@ namespace JEngine {
     class ISerializable {
         virtual bool deserializeJson(json& jsonF) { return false; }
         virtual bool serializeJson(json& jsonF) const { return false; }
+
+        virtual bool deserializeYaml(const yamlIn& yamlIn) { return false; }
+        virtual bool serializeYaml(yamlIn& yamlOut) const { return false; }
 
         virtual bool deserializeBinary(std::istream& stream) { return false; }
         virtual bool serializeBinary(std::ostream& stream) const { return false; }
@@ -325,8 +333,28 @@ namespace JEngine {
         }
 
         template<typename T>
+        static bool serialize(const T& itemRef, yamlOut& yamlOut) {
+            yamlOut << itemRef;
+            return true;
+        }
+
+        template<typename T>
         static bool deserialize(T& itemRef, json& jsonF, const T& defaultVal = T()) {
             return Serializable<T>::deserializeJson(itemRef, jsonF, defaultVal);
+        }
+
+        template<typename T>
+        static bool deserialize(T& itemRef, const json& jsonF, const T& defaultVal = T()) {
+            return Serializable<T>::deserializeJson(itemRef, jsonF, defaultVal);
+        }
+
+        template<typename T>
+        static bool deserialize(T& itemRef, const yamlIn& yamlIn, const T& defaultVal = T()) {
+            if (!YAML::convert<T>::decode(yamlIn, itemRef)) {
+                itemRef = defaultVal;
+                return false;
+            }
+            return true;
         }
 
         template<typename T>
@@ -335,9 +363,16 @@ namespace JEngine {
         }
 
         template<typename T>
-        static bool jsonToBinary(json& jsonF, std::ostream& stream) {
+        static bool jsonToBinary(const json& jsonF, std::ostream& stream) {
             T temp{};
             deserialize(temp, jsonF);
+            return serialize(temp, stream);
+        }
+
+        template<typename T>
+        static bool yamlToBinary(const yamlIn& yamlIn, std::ostream& stream) {
+            T temp{};
+            deserialize(temp, yamlIn);
             return serialize(temp, stream);
         }
     }

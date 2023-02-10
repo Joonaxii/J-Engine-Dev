@@ -156,13 +156,13 @@ namespace JEngine {
 
         P sqrMagnitude() const;
         P magnitude() const;
-        
+
         P dot(const JVector3<T, P>& other) const;
         JVector3<T, P> cross(const JVector3<T, P>& other) const;
-        
+
         P angle(const JVector3<T, P>& other) const;
         P signedAngle(const JVector3<T, P>& other) const;
-        
+
         JVector3<T, P> getNormalized() const;
         JVector3<T, P>& normalize();
 
@@ -887,8 +887,38 @@ namespace JEngine {
         return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
     }
 #pragma endregion
+}
 
 #pragma region JVector2 Serialization
+//YAML
+namespace YAML {
+    template<typename T>
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JVector2<T>& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << itemRef.x << itemRef.y << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<typename T>
+    struct convert<JEngine::JVector2<T>> {
+        static Node encode(const JEngine::JVector2<T>& rhs) {
+            Node node;
+            node.push_back(rhs.x);
+            node.push_back(rhs.y);
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::JVector2<T>& rhs) {
+            if (!node.IsSequence() || node.size() < 2) { return false; }
+            rhs.x = node[0].as<T>();
+            rhs.y = node[1].as<T>();
+            return true;
+        }
+    };
+}
+
+//JSON and Binary
+namespace JEngine {
     template<typename T, typename P>
     struct Serializable<JVector2<T, P>> {
         static bool deserializeJson(JVector2<T, P>& itemRef, json& jsonF, const JVector2<T, P>& defaultVal);
@@ -924,10 +954,42 @@ namespace JEngine {
         Serialization::serialize(itemRef.y, stream);
         return true;
     }
+}
 #pragma endregion
 
 
 #pragma region JVector3 Serialization
+//YAML
+namespace YAML {
+    template<typename T>
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JVector3<T>& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << itemRef.x << itemRef.y << itemRef.z << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<typename T>
+    struct convert<JEngine::JVector3<T>> {
+        static Node encode(const JEngine::JVector3<T>& rhs) {
+            Node node;
+            node.push_back(rhs.x);
+            node.push_back(rhs.y);
+            node.push_back(rhs.z);
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::JVector3<T>& rhs) {
+            if (!node.IsSequence() || node.size() < 3) { return false; }
+            rhs.x = node[0].as<T>();
+            rhs.y = node[1].as<T>();
+            rhs.z = node[2].as<T>();
+            return true;
+        }
+    };
+}
+
+//JSON and Binary
+namespace JEngine {
     template<typename T, typename P>
     struct Serializable<JVector3<T, P>> {
         static bool deserializeJson(JVector3<T, P>& itemRef, json& jsonF, const JVector3<T, P>& defaultVal);
@@ -967,9 +1029,43 @@ namespace JEngine {
         Serialization::serialize(itemRef.z, stream);
         return true;
     }
+}
 #pragma endregion
 
 #pragma region JVector4 Serialization
+//YAML
+namespace YAML {
+    template<typename T>
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JVector4<T>& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << itemRef.x << itemRef.y << itemRef.z << itemRef.w << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<typename T>
+    struct convert<JEngine::JVector4<T>> {
+        static Node encode(const JEngine::JVector4<T>& rhs) {
+            Node node;
+            node.push_back(rhs.x);
+            node.push_back(rhs.y);
+            node.push_back(rhs.z);
+            node.push_back(rhs.w);
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::JVector4<T>& rhs) {
+            if (!node.IsSequence() || node.size() < 4) { return false; }
+            rhs.x = node[0].as<T>();
+            rhs.y = node[1].as<T>();
+            rhs.z = node[2].as<T>();
+            rhs.w = node[3].as<T>();
+            return true;
+        }
+    };
+}
+
+//JSON and Binary
+namespace JEngine {
     template<typename T, typename P>
     struct Serializable<JVector4<T, P>> {
         static bool deserializeJson(JVector4<T, P>& itemRef, json& jsonF, const JVector4<T, P>& defaultVal);
@@ -1013,9 +1109,8 @@ namespace JEngine {
         Serialization::serialize(itemRef.w, stream);
         return true;
     }
-#pragma endregion
-
 }
+#pragma endregion
 
 typedef JEngine::JVector2<int32_t> JVector2i;
 typedef JEngine::JVector3<int32_t> JVector3i;

@@ -20,7 +20,40 @@ namespace JEngine {
     template<typename T>
     inline JVertex<T>::JVertex(const T& position, const JColor32& color, const JVector2f& uv) : position(position), color(color), uv(uv) { }
 
+}
+
 #pragma region Serialization
+//YAML
+namespace YAML {
+    template<typename T>
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JVertex<T>& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << itemRef.position << itemRef.color << itemRef.uv << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<typename T>
+    struct convert<JEngine::JVertex<T>> {
+        static Node encode(const JEngine::JVertex<T>& rhs) {
+            Node node;
+            node.push_back(rhs.position);
+            node.push_back(rhs.color);
+            node.push_back(rhs.uv);
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::JVertex<T>& rhs) {
+            if (!node.IsSequence() || node.size() < 3) { return false; }
+            rhs.position = node[0].as<T>();
+            rhs.color = node[0].as<JEngine::JColor32>();
+            rhs.uv = node[0].as<JVector2f>();
+            return true;
+        }
+    };
+}
+
+//JSON/Binary
+namespace JEngine {
     template<typename T>
     struct Serializable<JVertex<T>> {
         static bool deserializeJson(JVertex<T>& itemRef, json& jsonF, const JVertex<T>& defaultValue);
@@ -61,8 +94,8 @@ namespace JEngine {
         Serialization::serialize(itemRef.uv, stream);
         return true;
     }
-#pragma endregion
 }
+#pragma endregion
 
 typedef JEngine::JVertex<JVector2f> JVertex2f;
 typedef JEngine::JVertex<JVector3f> JVertex3f;

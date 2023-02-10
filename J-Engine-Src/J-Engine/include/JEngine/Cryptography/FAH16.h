@@ -53,7 +53,34 @@ namespace JEngine {
         static const uint32_t compute(ConstSpan<uint8_t>& span, uint32_t crc);
     };
 
+}
+
+
 #pragma region Serialization
+//YAML
+namespace YAML {
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::FAH16& itemRef) {
+        yamlOut << YAML::Hex << itemRef.getValue();
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::FAH16> {
+        static Node encode(const JEngine::FAH16& rhs) {
+            Node node;
+            node.push_back(rhs.getValue());
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::FAH16& rhs) {
+            rhs.setValue(node[0].as<uint64_t>());
+            return true;
+        }
+    };
+}
+
+//JSON
+namespace JEngine {
     template<>
     inline bool Serializable<FAH16>::deserializeJson(FAH16& itemRef, json& jsonF, const FAH16& defaultValue) {
         itemRef = jsonF.is_string() ? itemRef.parse(jsonF.get<std::string>(), defaultValue) : defaultValue;
@@ -65,9 +92,9 @@ namespace JEngine {
         jsonF.update(itemRef.toString());
         return true;
     }
+}
 #pragma endregion
 
-}
 
 template<>
 struct std::hash<JEngine::FAH16> {

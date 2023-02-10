@@ -70,6 +70,7 @@ namespace JEngine {
 
     private:
         friend struct Serializable<JMatrix4f>;
+        friend struct YAML::convert<JMatrix4f>;
         float _mat[16];
     };
 
@@ -81,7 +82,46 @@ namespace JEngine {
     const JMatrix4f operator *(const JMatrix4f& lhs, const JMatrix4f& rhs);
     JMatrix4f& operator *=(JMatrix4f& lhs, const JMatrix4f& rhs);
 
+}
+
+
 #pragma region Serialization
+//YAML
+namespace YAML {
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JMatrix4f& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq;
+
+        const float* mat = reinterpret_cast<const float*>(&itemRef);
+        for (size_t i = 0; i < 16; i++) {
+            yamlOut << mat[i];
+        }
+        yamlOut << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::JMatrix4f> {
+        static Node encode(const JEngine::JMatrix4f& rhs) {
+            Node node;
+            for (size_t i = 0; i < 16; i++) {
+                node.push_back(rhs._mat[i]);
+            }
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::JMatrix4f& rhs) {
+            if (!node.IsSequence() || node.size() < 16) { return false; }
+            for (size_t i = 0; i < 16; i++) {
+                rhs._mat[i] = node[i].as<float>();
+            }
+            return true;
+        }
+    };
+}
+
+//JSON
+namespace JEngine {
     template<>
     inline bool Serializable<JMatrix4f>::deserializeJson(JMatrix4f& itemRef, json& jsonF, const JMatrix4f& defaultValue) {
         itemRef = defaultValue;
@@ -101,5 +141,5 @@ namespace JEngine {
         }
         return true;
     }
-#pragma endregion
 }
+#pragma endregion

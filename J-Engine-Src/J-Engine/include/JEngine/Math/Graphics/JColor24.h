@@ -67,8 +67,52 @@ namespace JEngine {
     inline const JColor24 JColor24::Magenta = JColor24(0xFF, 0x00, 0xFF);
     inline const JColor24 JColor24::Yellow = JColor24(0xFF, 0xFF, 0x00);
     inline const JColor24 JColor24::Cyan = JColor24(0x00, 0xFF, 0xFF);
+}
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JColor24& itemRef) {
+        yamlOut << YAML::Flow << YAML::Hex;
+        yamlOut << YAML::BeginSeq << itemRef.r << itemRef.g << itemRef.b << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::JColor24> {
+        static Node encode(const JEngine::JColor24& rhs) {
+            Node node;
+            node.push_back(rhs.r);
+            node.push_back(rhs.g);
+            node.push_back(rhs.b);
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::JColor24& rhs) {
+            if (!node.IsSequence() || node.size() < 1) { return false; }
+
+            uint8_t r = node[0].as<uint8_t>();
+            uint8_t g = r;
+            uint8_t b = r;
+            switch (node.size()) {
+                case 1:     //Grayscale, same as init values
+                    break;
+                case 2:     //RG
+                    g = node[1].as<uint8_t>();
+                    break;
+                default:    //RGB
+                    g = node[1].as<uint8_t>();
+                    b = node[2].as<uint8_t>();
+                    break;
+            }
+            rhs.set(r, g, b);
+            return true;
+        }
+    };
+}
+
+//JSON
+namespace JEngine {
     template<>
     inline bool Serializable<JColor24>::deserializeJson(JColor24& itemRef, json& jsonF, const JColor24& defaultValue) {
         Serialization::deserialize(itemRef.r, jsonF["r"], defaultValue.r);
@@ -84,5 +128,5 @@ namespace JEngine {
         Serialization::serialize(itemRef.b, jsonF["b"]);
         return true;
     }
-#pragma endregion
 }
+#pragma endregion

@@ -31,6 +31,7 @@ namespace JEngine {
 
     private:
         friend struct Serializable<JRect<T>>;
+        friend struct YAML::convert<JRect<T>>;
         JVector2<T> _min;
         JVector2<T> _max;
     };
@@ -51,7 +52,7 @@ namespace JEngine {
     }
 
     template<typename T>
-    inline JRect<T>& JRect<T>::setMinMax(const JVector2<T>& min, const JVector2<T>& max)  {
+    inline JRect<T>& JRect<T>::setMinMax(const JVector2<T>& min, const JVector2<T>& max) {
         _min = min;
         _max = max;
         return *this;
@@ -75,8 +76,38 @@ namespace JEngine {
     inline bool JEngine::JRect<T>::intersects(const JRect<T>& rect) const {
         return !(_min.x > rect._max.x || _min.y > rect._max.y || _max.x < rect._min.x || _max.y < rect._min.y);
     }
+}
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    template<typename T>
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JRect<T>& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << itemRef.getMin() << itemRef.getMax() << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<typename T>
+    struct convert<JEngine::JRect<T>> {
+        static Node encode(const JEngine::JRect<T>& rhs) {
+            Node node;
+            node.push_back(rhs._min);
+            node.push_back(rhs._max);
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::JRect<T>& rhs) {
+            if (!node.IsSequence() || node.size() < 2) { return false; }
+            rhs._min = node[0].as<JEngine::JRect<T>>();
+            rhs._max = node[1].as<JEngine::JRect<T>>();
+            return true;
+        }
+    };
+}
+
+//JSON and Binary
+namespace JEngine {
     template<typename T>
     struct Serializable<JRect<T>> {
         static bool deserializeJson(JRect<T>& itemRef, json& jsonF, const JRect<T>& defaultValue);
@@ -113,8 +144,8 @@ namespace JEngine {
         Serialization::serialize(itemRef._max, stream);
         return true;
     }
-#pragma endregion
 }
+#pragma endregion
 
 typedef JEngine::JRect<int> JRecti;
 typedef JEngine::JRect<float> JRectf;

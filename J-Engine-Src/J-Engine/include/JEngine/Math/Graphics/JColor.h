@@ -74,8 +74,59 @@ namespace JEngine {
     inline const JColor JColor::Magenta = JColor(1.0f, 0.0f, 1.0f, 1.0f);
     inline const JColor JColor::Yellow = JColor(1.0f, 1.0f, 0.0f, 1.0f);
     inline const JColor JColor::Cyan = JColor(0.0f, 1.0f, 1.0f, 1.0f);
+}
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JColor& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << itemRef.r << itemRef.g << itemRef.b << itemRef.a << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::JColor> {
+        static Node encode(const JEngine::JColor& rhs) {
+            Node node;
+            node.push_back(rhs.r);
+            node.push_back(rhs.g);
+            node.push_back(rhs.b);
+            node.push_back(rhs.a);
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::JColor& rhs) {
+            if (!node.IsSequence() || node.size() < 1) { return false; }
+
+            float r = node[0].as<float>();
+            float g = r;
+            float b = r;
+            float a = 1.0f;
+            switch (node.size()) {
+                case 1:     //Grayscale, same as init values
+                    break;
+                case 2:     //RG
+                    g = node[1].as<float>();
+                    break;
+                case 3:     //RGB
+                    g = node[1].as<float>();
+                    b = node[2].as<float>();
+                    break;
+                default:     //RGBA
+                    g = node[1].as<float>();
+                    b = node[2].as<float>();
+                    a = node[3].as<float>();
+                    break;
+            }
+            rhs.set(r, g, b, a);
+            return true;
+        }
+    };
+}
+
+//JSON
+namespace JEngine {
     template<>
     inline bool Serializable<JColor>::deserializeJson(JColor& itemRef, json& jsonF, const JColor& defaultValue) {
         Serialization::deserialize(itemRef.r, jsonF["r"], defaultValue.r);
@@ -93,5 +144,5 @@ namespace JEngine {
         Serialization::serialize(itemRef.a, jsonF["a"]);
         return true;
     }
-#pragma endregion
 }
+#pragma endregion

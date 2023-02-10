@@ -8,9 +8,13 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory("ext/imgui")
+add_subdirectory("ext/YAML")
 add_subdirectory("ext/glfw-3.3.8")
 add_subdirectory("ext/zlib")
 add_subdirectory("ext/nlohmann/json")
+
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 
 add_compile_definitions(NOMINMAX)
 add_compile_definitions(GLEW_STATIC)
@@ -344,11 +348,12 @@ list(APPEND JENGINE_SOURCES ${JENGINE_INPUT_SRC})
 add_library(J-Engine STATIC ${JENGINE_SOURCES})
 
 find_package(OpenGL REQUIRED)
-target_link_libraries(J-Engine XInput OpenGL::GL glfw ImGUI zlibstatic nlohmann_json)
+target_link_libraries(J-Engine XInput OpenGL::GL glfw ImGUI zlibstatic YAML_CPP nlohmann_json)
 
 include_directories("include")
 include_directories("ext/include")
 include_directories("ext/imgui")
+include_directories("ext/YAML/include")
 include_directories("include/JEngine")
 include_directories("ext/nlohmann/json/include")
 include_directories("ext/zlib")

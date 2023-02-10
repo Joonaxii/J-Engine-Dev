@@ -2,30 +2,47 @@
 #include <JEngine/IO/Serialization/Serializable.h>
 
 namespace JEngine {
-	template<typename TWeight>
+    template<typename TWeight>
     class IWeighted {
-	public:
-		IWeighted() : _weight(0) {}
-		IWeighted(const TWeight weight) : _weight(weight) {}
+    public:
+        IWeighted() : _weight(0) {}
+        IWeighted(const TWeight weight) : _weight(weight) {}
 
-		TWeight getWeight() const { return _weight; }
-		void setWeight(const TWeight weight) const { _weight = weight; }
-
-		const bool serializeJSON(json& jsonF) const {
-			jsonF["weight"] = _weight;
-			return true;
-		}
-
-		const bool deserializeJSON(json& jsonF) {
-			_weight = jsonF.value("weight", 0);
-			return true;
-		}
-	protected:
+        const TWeight& getWeight() const { return _weight; }
+        void setWeight(const TWeight weight) const { _weight = weight; }
+    protected:
         friend struct Serializable<IWeighted<TWeight>>;
-		TWeight _weight;
+        TWeight _weight;
     };
+}
+
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    template<typename TWeight>
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::IWeighted<TWeight>& itemRef) {
+        yamlOut << itemRef.getWeight();
+        return yamlOut;
+    }
+
+    template<typename TWeight>
+    struct convert<JEngine::IWeighted<TWeight>> {
+        static Node encode(const JEngine::IWeighted<TWeight>& rhs) {
+            Node node;
+            node.push_back(rhs.getWeight());
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::IWeighted<TWeight>& rhs) {
+            rhs.setWeight(node.as<TWeight>());
+            return true;
+        }
+    };
+}
+
+//JSON and Binary
+namespace JEngine {
     template<typename TWeight>
     struct Serializable<IWeighted<TWeight>> {
         static bool deserializeJson(IWeighted<TWeight>& itemRef, json& jsonF, const IWeighted<TWeight>& defaultValue);
@@ -37,12 +54,12 @@ namespace JEngine {
 
     template<typename TWeight>
     inline bool Serializable<IWeighted<TWeight>>::deserializeJson(IWeighted<TWeight>& itemRef, json& jsonF, const IWeighted<TWeight>& defaultValue) {
-        return Serialization::deserialize(itemRef._weight, jsonF, defaultValue._weight);
+        return Serialization::deserialize(itemRef._weight, jsonF["weight"], defaultValue._weight);
     }
 
     template<typename TWeight>
     inline bool Serializable<IWeighted<TWeight>>::serializeJson(const IWeighted<TWeight>& itemRef, json& jsonF) {
-        return Serialization::serialize(itemRef._weight, jsonF);
+        return Serialization::serialize(itemRef._weight, jsonF["weight"]);
     }
 
     template<typename TWeight>
@@ -54,5 +71,5 @@ namespace JEngine {
     inline bool Serializable<IWeighted<TWeight>>::serializeBinary(const IWeighted<TWeight>& itemRef, std::ostream& stream) {
         return Serialization::serialize(itemRef._weight, stream);
     }
-#pragma endregion
 }
+#pragma endregion

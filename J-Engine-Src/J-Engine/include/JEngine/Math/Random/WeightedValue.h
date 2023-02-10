@@ -15,10 +15,41 @@ namespace JEngine {
 
     private:
         friend struct Serializable<WeightedValue<TValue, TWeight>>;
+        friend struct YAML::convert<WeightedValue<TValue, TWeight>>;
         TValue _value;
     };
+}
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    template<typename TValue, typename TWeight>
+    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::WeightedValue<TValue, TWeight>& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << itemRef.getWeight() << itemRef.getValue() << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    template<typename TValue, typename TWeight>
+    struct convert<JEngine::WeightedValue<TValue, TWeight>> {
+        static Node encode(const JEngine::WeightedValue<TValue, TWeight>& rhs) {
+            Node node;
+            node.push_back(rhs.getWeight());
+            node.push_back(rhs.getValue());
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::WeightedValue<TValue, TWeight>& rhs) {
+            if (!node.IsSequence() || node.size() < 2) { return false; }
+            rhs._weight = node[0].as<TWeight>();
+            rhs._value  = node[1].as<TValue>();
+            return true;
+        }
+    };
+}
+
+//JSON and Binary
+namespace JEngine {
     template<typename TValue, typename TWeight>
     struct Serializable<WeightedValue<TValue, TWeight>> {
         static bool deserializeJson(WeightedValue<TValue, TWeight>& itemRef, json& jsonF, const WeightedValue<TValue, TWeight>& defaultValue);
@@ -55,5 +86,5 @@ namespace JEngine {
         Serialization::serialize(itemRef._value, stream);
         return true;
     }
-#pragma endregion
 }
+#pragma endregion
