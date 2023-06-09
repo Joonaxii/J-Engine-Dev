@@ -21,7 +21,14 @@ namespace JEngine {
     const std::string& IAsset::getName() const { return _name; }
 
     const AssetMetaData& IAsset::getMetadata() const { return _meta; }
-    const UUID& IAsset::getUUID() const { return _meta.getUUID(); }
+
+    bool IAsset::serializeMetaYAML(yamlEmit& emit) const {
+        return false;
+    }
+    bool IAsset::deserializeMetaYAML(yamlNode& node) {
+        return false;
+    }
+    const UUID8& IAsset::getUUID() const { return _meta.getUUID(); }
 
    bool IAsset::serializeMetaJson(json& jsonF) const {
        Serialization::serialize(_name, jsonF["name"]);
@@ -31,7 +38,9 @@ namespace JEngine {
    }
 
    bool IAsset::deserializeMetaJson(json& jsonF) {
-
+       Serialization::deserialize(_name, jsonF["name"]);
+       Serialization::deserialize(_flags, jsonF["assetFlags"]);
+       Serialization::deserialize(_meta, jsonF["meta"]);
        return true;
    }
 

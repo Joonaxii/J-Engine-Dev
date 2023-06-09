@@ -1,6 +1,9 @@
 #include <JEngine/Math/Graphics/JColor24.h>
 #include <JEngine/Math/Graphics/JColor.h>
 #include <JEngine/Math/Graphics/JColor32.h>
+#include <JEngine/Math/Graphics/JColor555.h>
+#include <JEngine/Math/Graphics/JColor565.h>
+#include <JEngine/IO/ImageUtils.h>
 #include <JEngine/Math/Math.h>
 #include <algorithm>
 
@@ -9,6 +12,7 @@ namespace JEngine {
     JColor24::JColor24() : r(0), g(0), b(0) { }
     JColor24::JColor24(const uint8_t r, const uint8_t g, const uint8_t b) : r(r), g(g), b(b) { }
 
+
     JColor24::JColor24(const JColor& rgba) :
         r(Math::scalarToUInt<uint8_t, float>(rgba.r)),
         g(Math::scalarToUInt<uint8_t, float>(rgba.g)),
@@ -16,16 +20,29 @@ namespace JEngine {
     }
 
     JColor24::JColor24(const JColor32& rgba) :
-        r(Math::scalarToUInt<uint8_t, float>(rgba.r)),
-        g(Math::scalarToUInt<uint8_t, float>(rgba.g)),
-        b(Math::scalarToUInt<uint8_t, float>(rgba.b)) {
+        r(rgba.r),
+        g(rgba.g),
+        b(rgba.b) {
     }
 
-    JColor24::operator JColor32() {
+    JColor24::JColor24(const JColor555& rgb) {
+        unpackRGB555(rgb.data, r, g, b);
+    }
+
+    JColor24::JColor24(const JColor565& rgb) {
+        unpackRGB565(rgb.data, r, g, b);
+    }
+
+
+    JColor24::operator uint32_t() const {
+        return uint32_t(r) | (g << 8) | (b << 16);
+    }
+
+    JColor24::operator JColor32() const {
         return JColor32(r, g, b);
     }
 
-    JColor24::operator JColor() {
+    JColor24::operator JColor() const {
         return JColor(
             Math::uintToScalar<uint8_t, float>(r),
             Math::uintToScalar<uint8_t, float>(g),
@@ -114,15 +131,15 @@ namespace JEngine {
 
     JColor24 JColor24::operator*(const JColor24& other) const {
         return JColor24(
-            Math::multiplyBytes(r, other.r),
-            Math::multiplyBytes(g, other.g),
-            Math::multiplyBytes(b, other.b));
+            Math::multByte(r, other.r),
+            Math::multByte(g, other.g),
+            Math::multByte(b, other.b));
     }
 
     JColor24& JColor24::operator*=(const JColor24& other) {
-        r = Math::multiplyBytes(r, other.r);
-        g = Math::multiplyBytes(g, other.g);
-        b = Math::multiplyBytes(b, other.b);
+        r = Math::multByte(r, other.r);
+        g = Math::multByte(g, other.g);
+        b = Math::multByte(b, other.b);
         return *this;
     }
 }

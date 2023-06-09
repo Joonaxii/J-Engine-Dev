@@ -2,8 +2,7 @@
 #include <string>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <JEngine/Assets/Graphics/Texture/FilterMode.h>
-#include <JEngine/Assets/Graphics/Texture/TextureFormat.h>
+#include <JEngine/IO/ImageUtils.h>
 
 #define GLAssert(x) if(!(x)) __debugbreak();
 #define GLCall(x) GLAssert(JEngine::GlLogWrite("[OpenGL Hang Error]", JEngine::GLClearError(), #x, __FILE__, __LINE__))\
@@ -26,10 +25,11 @@ namespace JEngine {
     constexpr uint32_t textureFormatToGLFormat(const TextureFormat& fmt, const bool isMain = true) {
         switch (fmt)
         {
-            default:                    return isMain ? GL_RGBA8 : GL_RGBA;
-            case TextureFormat::RGB24:  return isMain ? GL_RGB8 : GL_RGB;
-            case TextureFormat::Indexed:
-            case TextureFormat::R8:     return isMain ? GL_R8 : GL_RED;
+            default:                            return isMain ? GL_RGBA8 : GL_RGBA;
+            case TextureFormat::RGB24:          return isMain ? GL_RGB8 : GL_RGB;
+            case TextureFormat::Indexed8:
+            case TextureFormat::R8:             return isMain ? GL_R8 : GL_RED;
+            case TextureFormat::Indexed16:      return isMain ? GL_RG16 : GL_RG;
         }
     }
 
@@ -38,7 +38,8 @@ namespace JEngine {
         {
             default:                    return 4;
 
-            case TextureFormat::Indexed:
+            case TextureFormat::Indexed16:
+            case TextureFormat::Indexed8:
             case TextureFormat::R8:
             case TextureFormat::RGB24:  return 1;
         }

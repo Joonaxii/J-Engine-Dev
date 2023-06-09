@@ -58,8 +58,8 @@ namespace JEngine {
 
         static void draw(const VertexArray& va, const IndexBuffer& ib, Material& shader);
 
-        const Window& getWindow() const;
-        Window& getWindow();
+        //const Window& getWindow() const;
+        //Window& getWindow();
 
     private:
         static Renderer* _instance;
@@ -88,7 +88,7 @@ namespace JEngine {
         uint64_t _tick;
         RenderInfoGroup _renderStats;
 
-        Window _window;
+       // Window _window;
 
         std::set<IRenderer<JVertex2f>*> _renderers;
         std::vector<IRenderer<JVertex2f>*> _activeRenderers[33];

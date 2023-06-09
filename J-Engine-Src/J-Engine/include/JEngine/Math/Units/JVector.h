@@ -1,5 +1,6 @@
 #pragma once
 #include <JEngine/IO/Serialization/Serializable.h>
+#include <JEngine/Math/Math.h>
 
 namespace JEngine {
     template<typename T, typename P> struct JVector3;
@@ -84,6 +85,16 @@ namespace JEngine {
 
     template<typename T, typename P> inline std::ostream& operator<<(std::ostream& os, const JVector2<T, P>& vec) {
         os << "XY: (" << vec.x << ", " << vec.y << ")";
+        return os;
+    }
+
+    template<typename P> inline std::ostream& operator<<(std::ostream& os, const JVector2<int8_t, P>& vec) {
+        os << "XY: (" << int16_t(vec.x) << ", " << int16_t(vec.y) << ")";
+        return os;
+    }
+
+    template<typename P> inline std::ostream& operator<<(std::ostream& os, const JVector2<uint8_t, P>& vec) {
+        os << "XY: (" << uint16_t(vec.x) << ", " << uint16_t(vec.y) << ")";
         return os;
     }
 
@@ -174,6 +185,16 @@ namespace JEngine {
         return os;
     }
 
+    template<typename P> inline std::ostream& operator<<(std::ostream& os, const JVector3<int8_t, P>& vec) {
+        os << "XYZ: (" << int16_t(vec.x) << ", " << int16_t(vec.y) << ", " << int16_t(vec.z) << ")";
+        return os;
+    }
+
+    template<typename P> inline std::ostream& operator<<(std::ostream& os, const JVector3<uint8_t, P>& vec) {
+        os << "XYZ: (" << uint16_t(vec.x) << ", " << uint16_t(vec.y) << ", " << uint16_t(vec.z) << ")";
+        return os;
+    }
+
     template<typename T, typename P> struct JVector2;
     template<typename T, typename P> struct JVector3;
     template<typename T, typename P = float>
@@ -256,6 +277,16 @@ namespace JEngine {
 
     template<typename T, typename P> inline std::ostream& operator<<(std::ostream& os, const JVector4<T, P>& vec) {
         os << "XYZW: (" << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w << ")";
+        return os;
+    }
+
+    template<typename P> inline std::ostream& operator<<(std::ostream& os, const JVector4<int8_t, P>& vec) {
+        os << "XYZW: (" << int16_t(vec.x) << ", " << int16_t(vec.y) << ", " << int16_t(vec.z) << ", " << int16_t(vec.w) << ")";
+        return os;
+    }
+
+    template<typename P> inline std::ostream& operator<<(std::ostream& os, const JVector4<uint8_t, P>& vec) {
+        os << "XYZW: (" << uint16_t(vec.x) << ", " << uint16_t(vec.y) << ", " << uint16_t(vec.z) << ", " << int16_t(vec.w) << ")";
         return os;
     }
 
@@ -352,13 +383,13 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline JVector2<T, P>& JVector2<T, P>::operator/=(const JVector2<T, P>& value) {
-        x /= other.x;
-        y /= other.y;
+        x /= value.x;
+        y /= value.y;
         return *this;
     }
     template<typename T, typename P> inline JVector2<T, P>& JVector2<T, P>::operator*=(const JVector2<T, P>& value) {
-        x *= other.x;
-        y *= other.y;
+        x *= value.x;
+        y *= value.y;
         return *this;
     }
 
@@ -370,13 +401,13 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline JVector2<T, P>& JVector2<T, P>::operator/=(const JVector3<T, P>& value) {
-        x /= other.x;
-        y /= other.y;
+        x /= value.x;
+        y /= value.y;
         return *this;
     }
     template<typename T, typename P> inline JVector2<T, P>& JVector2<T, P>::operator*=(const JVector3<T, P>& value) {
-        x *= other.x;
-        y *= other.y;
+        x *= value.x;
+        y *= value.y;
         return *this;
     }
 
@@ -388,13 +419,13 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline JVector2<T, P>& JVector2<T, P>::operator/=(const JVector4<T, P>& value) {
-        x /= other.x;
-        y /= other.y;
+        x /= value.x;
+        y /= value.y;
         return *this;
     }
     template<typename T, typename P> inline JVector2<T, P>& JVector2<T, P>::operator*=(const JVector4<T, P>& value) {
-        x *= other.x;
-        y *= other.y;
+        x *= value.x;
+        y *= value.y;
         return *this;
     }
 
@@ -560,13 +591,13 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline JVector3<T, P>& JVector3<T, P>::operator/=(const JVector2<T, P>& value) {
-        x /= other.x;
-        y /= other.y;
+        x /= value.x;
+        y /= value.y;
         return *this;
     }
     template<typename T, typename P> inline JVector3<T, P>& JVector3<T, P>::operator*=(const JVector2<T, P>& value) {
-        x *= other.x;
-        y *= other.y;
+        x *= value.x;
+        y *= value.y;
         return *this;
     }
 
@@ -578,15 +609,15 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline JVector3<T, P>& JVector3<T, P>::operator/=(const JVector3<T, P>& value) {
-        x /= other.x;
-        y /= other.y;
-        z /= other.z;
+        x /= value.x;
+        y /= value.y;
+        z /= value.z;
         return *this;
     }
     template<typename T, typename P> inline JVector3<T, P>& JVector3<T, P>::operator*=(const JVector3<T, P>& value) {
-        x *= other.x;
-        y *= other.y;
-        z *= other.z;
+        x *= value.x;
+        y *= value.y;
+        z *= value.z;
         return *this;
     }
 
@@ -598,15 +629,15 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline JVector3<T, P>& JVector3<T, P>::operator/=(const JVector4<T, P>& value) {
-        x /= other.x;
-        y /= other.y;
-        z /= other.z;
+        x /= value.x;
+        y /= value.y;
+        z /= value.z;
         return *this;
     }
     template<typename T, typename P> inline JVector3<T, P>& JVector3<T, P>::operator*=(const JVector4<T, P>& value) {
-        x *= other.x;
-        y *= other.y;
-        z *= other.z;
+        x *= value.x;
+        y *= value.y;
+        z *= value.z;
         return *this;
     }
 
@@ -780,13 +811,13 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline JVector4<T, P>& JVector4<T, P>::operator/=(const JVector2<T, P>& value) {
-        x /= other.x;
-        y /= other.y;
+        x /= value.x;
+        y /= value.y;
         return *this;
     }
     template<typename T, typename P> inline JVector4<T, P>& JVector4<T, P>::operator*=(const JVector2<T, P>& value) {
-        x *= other.x;
-        y *= other.y;
+        x *= value.x;
+        y *= value.y;
         return *this;
     }
 
@@ -798,15 +829,15 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline JVector4<T, P>& JVector4<T, P>::operator/=(const JVector3<T, P>& value) {
-        x /= other.x;
-        y /= other.y;
-        z /= other.z;
+        x /= value.x;
+        y /= value.y;
+        z /= value.z;
         return *this;
     }
     template<typename T, typename P> inline JVector4<T, P>& JVector4<T, P>::operator*=(const JVector3<T, P>& value) {
-        x *= other.x;
-        y *= other.y;
-        z *= other.z;
+        x *= value.x;
+        y *= value.y;
+        z *= value.z;
         return *this;
     }
 
@@ -818,17 +849,17 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline JVector4<T, P>& JVector4<T, P>::operator/=(const JVector4<T, P>& value) {
-        x /= other.x;
-        y /= other.y;
-        z /= other.z;
-        w /= other.w;
+        x /= value.x;
+        y /= value.y;
+        z /= value.z;
+        w /= value.w;
         return *this;
     }
     template<typename T, typename P> inline JVector4<T, P>& JVector4<T, P>::operator*=(const JVector4<T, P>& value) {
-        x *= other.x;
-        y *= other.y;
-        z *= other.z;
-        w *= other.w;
+        x *= value.x;
+        y *= value.y;
+        z *= value.z;
+        w *= value.w;
         return *this;
     }
 
@@ -893,9 +924,15 @@ namespace JEngine {
 //YAML
 namespace YAML {
     template<typename T>
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JVector2<T>& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JVector2<T>& itemRef) {
         yamlOut << YAML::Flow;
         yamlOut << YAML::BeginSeq << itemRef.x << itemRef.y << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JVector2<uint8_t>& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << uint16_t(itemRef.x) << uint16_t(itemRef.y) << YAML::EndSeq;
         return yamlOut;
     }
 
@@ -962,9 +999,15 @@ namespace JEngine {
 //YAML
 namespace YAML {
     template<typename T>
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JVector3<T>& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JVector3<T>& itemRef) {
         yamlOut << YAML::Flow;
         yamlOut << YAML::BeginSeq << itemRef.x << itemRef.y << itemRef.z << YAML::EndSeq;
+        return yamlOut;
+    }    
+
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JVector3<uint8_t>& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << uint16_t(itemRef.x) << uint16_t(itemRef.y) << uint16_t(itemRef.z) << YAML::EndSeq;
         return yamlOut;
     }
 
@@ -1036,9 +1079,15 @@ namespace JEngine {
 //YAML
 namespace YAML {
     template<typename T>
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JVector4<T>& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JVector4<T>& itemRef) {
         yamlOut << YAML::Flow;
         yamlOut << YAML::BeginSeq << itemRef.x << itemRef.y << itemRef.z << itemRef.w << YAML::EndSeq;
+        return yamlOut;
+    }
+
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JVector4<uint8_t>& itemRef) {
+        yamlOut << YAML::Flow;
+        yamlOut << YAML::BeginSeq << uint16_t(itemRef.x) << uint16_t(itemRef.y) << uint16_t(itemRef.z) << uint16_t(itemRef.w) << YAML::EndSeq;
         return yamlOut;
     }
 

@@ -5,6 +5,8 @@
 namespace JEngine {
     struct JColor;
     struct JColor24;
+    struct JColor555;
+    struct JColor565;
     struct JColor32 {
         static const JColor32 White;
         static const JColor32 Black;
@@ -30,8 +32,15 @@ namespace JEngine {
         JColor32(const JColor24& rgba);
         JColor32(const JColor24& rgb, const uint8_t alpha);
 
-        operator JColor24();
-        operator JColor();
+        JColor32(const JColor555& rgb);
+        JColor32(const JColor555& rgb, const uint8_t alpha);
+        JColor32(const JColor565& rgb);
+        JColor32(const JColor565& rgb, const uint8_t alpha);
+
+        operator uint32_t() const { return *reinterpret_cast<const uint32_t*>(this); }
+
+        operator JColor24() const;
+        operator JColor() const;
 
         void set(const JColor& rgba);
         void set(const JColor24& rgb);
@@ -55,6 +64,21 @@ namespace JEngine {
 
         JColor32 operator*(const JColor32& other) const;
         JColor32& operator*=(const JColor32& other);
+
+        bool operator==(const JColor24& other) const;
+        bool operator!=(const JColor24& other) const;
+
+        bool operator<(const JColor32& other) const {
+            return static_cast<const uint32_t>(*this) < static_cast<const uint32_t>(other);
+        };
+        bool operator>(const JColor32& other) const {
+            return static_cast<const uint32_t>(*this) > static_cast<const uint32_t>(other);
+        };
+
+        bool operator<(const JColor24& other) const;
+        bool operator>(const JColor24& other) const;
+
+        void flipRB();
     };
 
     inline std::ostream& operator<<(std::ostream& os, const JColor32& rgba) {
@@ -79,9 +103,9 @@ namespace JEngine {
 #pragma region Serialization
 //YAML
 namespace YAML {
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JColor32& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JColor32& itemRef) {
         yamlOut << YAML::Flow << YAML::Hex;
-        yamlOut << YAML::BeginSeq << itemRef.r << itemRef.g << itemRef.b << itemRef.a << YAML::EndSeq;
+        yamlOut << YAML::BeginSeq << uint16_t(itemRef.r) << uint16_t(itemRef.g) << uint16_t(itemRef.b) << uint16_t(itemRef.a) << YAML::EndSeq;
         return yamlOut;
     }
 
@@ -89,10 +113,10 @@ namespace YAML {
     struct convert<JEngine::JColor32> {
         static Node encode(const JEngine::JColor32& rhs) {
             Node node;
-            node.push_back(rhs.r);
-            node.push_back(rhs.g);
-            node.push_back(rhs.b);
-            node.push_back(rhs.a);
+            node.push_back(uint16_t(rhs.r));
+            node.push_back(uint16_t(rhs.g));
+            node.push_back(uint16_t(rhs.b));
+            node.push_back(uint16_t(rhs.a));
             return node;
         }
 

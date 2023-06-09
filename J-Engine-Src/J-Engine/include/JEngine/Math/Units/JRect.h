@@ -59,7 +59,7 @@ namespace JEngine {
     }
 
     template<typename T> inline JVector2<T> JEngine::JRect<T>::getSize() const { return JVector2<T>((_max.x - _min.x), (_max.y - _min.y)); }
-    template<typename T> inline JVector2<T> JEngine::JRect<T>::getCenter() const { return T(_min.x + (_max.x - _min.x) / static_cast<TB>(2), _min.y + (_max.y - _min.y) / static_cast<TB>(2)); }
+    template<typename T> inline JVector2<T> JEngine::JRect<T>::getCenter() const { return T(_min.x + (_max.x - _min.x) / T(2), _min.y + (_max.y - _min.y) / T(2)); }
 
     template<typename T> inline JVector2<T>& JEngine::JRect<T>::getMin() { return _min; }
     template<typename T> inline JVector2<T>& JEngine::JRect<T>::getMax() { return _max; }
@@ -82,7 +82,7 @@ namespace JEngine {
 //YAML
 namespace YAML {
     template<typename T>
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JRect<T>& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JRect<T>& itemRef) {
         yamlOut << YAML::Flow;
         yamlOut << YAML::BeginSeq << itemRef.getMin() << itemRef.getMax() << YAML::EndSeq;
         return yamlOut;

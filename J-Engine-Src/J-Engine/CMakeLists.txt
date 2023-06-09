@@ -1,4 +1,4 @@
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project ("J-Engine")
@@ -11,13 +11,26 @@ add_subdirectory("ext/imgui")
 add_subdirectory("ext/YAML")
 add_subdirectory("ext/glfw-3.3.8")
 add_subdirectory("ext/zlib")
+add_subdirectory("ext/spdlog")
 add_subdirectory("ext/nlohmann/json")
 
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-add_compile_definitions(NOMINMAX)
 add_compile_definitions(GLEW_STATIC)
+add_compile_definitions(YAML_CPP_STATIC_DEFINE)
+add_compile_definitions(SPDLOG_USE_STD_FORMAT)
+
+# Platform stuff
+IF (WIN32)
+	add_compile_definitions(WIN32_LEAN_AND_MEAN)
+	add_compile_definitions(NOMINMAX)
+	add_compile_definitions(JENGINE_PLATFORM_WINDOWS)
+ELSE()
+  # other platforms?
+ENDIF(WIN32)
+
 
 set(JENGINE_SOURCES )
 
@@ -33,9 +46,9 @@ list(APPEND JENGINE_SOURCES ${GLEW_SRC})
 # OpenGL files
 set(OPENGL_RENDERING_SRC
 	"include/JEngine/Rendering/OpenGL/GLHelpers.h"
-	"src/JEngine/Rendering/OpenGL/GLHelpers.cpp"
+	"src/JEngine/Rendering/OpenGL/GLHelpers.cpp"	
 )
-source_group("JEngine/Rendering/OpenGL" FILES ${OPENGL_RENDERING_SRC})
+source_group("JEngine/OpenGL" FILES ${OPENGL_RENDERING_SRC})
 list(APPEND JENGINE_SOURCES ${OPENGL_RENDERING_SRC})
 
 # OpenGL files
@@ -56,12 +69,22 @@ set(JENGINE_UTILITY_SRC
 	 "include/JEngine/Utility/Version.h"
 
      "include/JEngine/Utility/Flags.h"
+     "include/JEngine/Utility/EnumUtils.h"
 
      "include/JEngine/Utility/Action.h"
      "include/JEngine/Utility/Span.h"
-     "include/JEngine/Utility/ConstSpan.h"
      "include/JEngine/Utility/JTime.h"
      "src/JEngine/Utility/JTime.cpp"
+	 
+     "include/JEngine/Utility/DataUtilities.h"
+     "include/JEngine/Utility/IComparable.h"
+     "include/JEngine/Utility/HeapVector.h"
+	 
+     "include/JEngine/Utility/DataFormatUtils.h"
+     "src/JEngine/Utility/DataFormatUtils.cpp"
+	 
+     "include/JEngine/Utility/StringHelpers.h"
+     "src/JEngine/Utility/StringHelpers.cpp"
 )
 source_group("JEngine/Utility" FILES ${JENGINE_UTILITY_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_UTILITY_SRC})
@@ -109,6 +132,12 @@ set(JENGINE_MATH_GFX_SRC
 	
 	"include/JEngine/Math/Graphics/JColor24.h"
 	"src/JEngine/Math/Graphics/JColor24.cpp"
+	
+	"include/JEngine/Math/Graphics/JColor555.h"
+	"src/JEngine/Math/Graphics/JColor555.cpp"
+	
+	"include/JEngine/Math/Graphics/JColor565.h"
+	"src/JEngine/Math/Graphics/JColor565.cpp"
 )
 source_group("JEngine/Math/Graphics" FILES ${JENGINE_MATH_GFX_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_MATH_GFX_SRC})
@@ -159,8 +188,6 @@ source_group("JEngine/Assets/Scene" FILES ${JENGINE_SCENE_ASSETS_SRC})
 
 # JEngine Texture Assets files
 set(JENGINE_TEXTURE_ASSETS_SRC 
-	 "include/JEngine/Assets/Graphics/Texture/FilterMode.h"
-	 "include/JEngine/Assets/Graphics/Texture/TextureFormat.h"
 	 "include/JEngine/Assets/Graphics/Texture/Texture2D.h"
      "src/JEngine/Assets/Graphics/Texture/Texture.cpp"
 	 "include/JEngine/Assets/Graphics/Texture/Texture.h"
@@ -191,7 +218,7 @@ set(JENGINE_SHADER_ASSETS_SRC
 source_group("JEngine/Assets/Graphics/Shader" FILES ${JENGINE_SHADER_ASSETS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_SHADER_ASSETS_SRC})
 
-# JEngine Material Assets files
+# JEngine Graphics Assets files
 set(JENGINE_GRAPHICS_ASSETS_SRC 
 	 "include/JEngine/Assets/Graphics/Sprite.h"
      "src/JEngine/Assets/Graphics/Sprite.cpp"
@@ -199,23 +226,10 @@ set(JENGINE_GRAPHICS_ASSETS_SRC
 source_group("JEngine/Assets/Graphics" FILES ${JENGINE_GRAPHICS_ASSETS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_GRAPHICS_ASSETS_SRC})
 
-# JEngine Decoder files
-set(JENGINE_GFX_ASSETS_SRC  
-	 "include/JEngine/Assets/Decoders/DecoderResult.h"
-
-	 "include/JEngine/Assets/Decoders/BMPDecoder.h"
-     "src/JEngine/Assets/Decoders/BMPDecoder.cpp"
-
-	 "include/JEngine/Assets/Decoders/PNGDecoder.h"
-     "src/JEngine/Assets/Decoders/PNGDecoder.cpp"
-)
-source_group("JEngine/Assets/Decoders" FILES ${JENGINE_GFX_ASSETS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_GFX_ASSETS_SRC})
-
 # JEngine Compression files
 set(JENGINE_COMPRESSION_SRC
-	 "include/JEngine/IO/Compression/ZLibStream.h"
-     "src/JEngine/IO/Compression/ZLibStream.cpp"
+	 "include/JEngine/IO/Compression/ZLib.h"
+     "src/JEngine/IO/Compression/ZLib.cpp"
 )
 source_group("JEngine/IO/Compression" FILES ${JENGINE_COMPRESSION_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_COMPRESSION_SRC})
@@ -236,9 +250,38 @@ list(APPEND JENGINE_SOURCES ${JENGINE_VFS_SRC})
 set(JENGINE_IO_HELPERS_SRC
 	 "include/JEngine/IO/Helpers/IOHelpers.h"
      "src/JEngine/IO/Helpers/IOHelpers.cpp"
+	 
+	 "include/JEngine/IO/Helpers/IOUtils.h"
+     "src/JEngine/IO/Helpers/IOUtils.cpp"
 )
 source_group("JEngine/IO/Helpers" FILES ${JENGINE_IO_HELPERS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_IO_HELPERS_SRC})
+
+# JEngine IO Helper files
+set(JENGINE_IO_SRC
+	 "include/JEngine/IO/Base64.h"
+     "src/JEngine/IO/Base64.cpp"
+	 
+	 "include/JEngine/IO/Stream.h"
+
+	 "include/JEngine/IO/FileStream.h"
+     "src/JEngine/IO/FileStream.cpp"
+	 
+	 "include/JEngine/IO/MemoryStream.h"
+     "src/JEngine/IO/MemoryStream.cpp"
+
+	 "include/JEngine/IO/BitStream.h"
+     "src/JEngine/IO/BitStream.cpp"
+	 
+	 "include/JEngine/IO/Image.h"
+     "src/JEngine/IO/Image.cpp"
+	 
+	 "include/JEngine/IO/ImageUtils.h"
+     "src/JEngine/IO/ImageUtils.cpp"
+)
+source_group("JEngine/IO" FILES ${JENGINE_IO_SRC})
+list(APPEND JENGINE_SOURCES ${JENGINE_IO_SRC})
+
 
 # JEngine Serialization files
 set(JENGINE_SERIALZIATION_SRC
@@ -250,18 +293,13 @@ list(APPEND JENGINE_SOURCES ${JENGINE_SERIALZIATION_SRC})
 # JEngine Cryptography files
 set(JENGINE_CRYPTOGRAPHY_SRC
      "include/JEngine/Cryptography/CRC32.h"
-     "include/JEngine/Cryptography/FAH16.h"
-     "src/JEngine/Cryptography/FAH16.cpp"
+     "include/JEngine/Cryptography/UUIDFactory.h"
+     "src/JEngine/Cryptography/UUIDFactory.cpp"
+     "include/JEngine/Cryptography/UUID.h"
+     "src/JEngine/Cryptography/UUID.cpp"
 )
 source_group("JEngine/Cryptography" FILES ${JENGINE_CRYPTOGRAPHY_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_CRYPTOGRAPHY_SRC})
-
-# JEngine Object files
-set(JENGINE_GLOBAL_SRC
-     "include/JEngine/Global/UUIDFactory.h"
-)
-source_group("JEngine/Global" FILES ${JENGINE_GLOBAL_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_GLOBAL_SRC})
 
 # JEngine ImGui files
 set(JENGINE_IMGUI_SRC
@@ -276,8 +314,6 @@ set(JENGINE_HELPERS_SRC
      "include/JEngine/Helpers/Helpers.h"
      "src/JEngine/Helpers/Helpers.cpp"
      "include/JEngine/Helpers/StringConsts.h"
-     "include/JEngine/Helpers/StringExtensions.h"
-     "src/JEngine/Helpers/StringExtensions.cpp"
      "include/JEngine/Helpers/TypeHelpers.h"
      "src/JEngine/Helpers/TypeHelpers.cpp"
      "include/JEngine/Helpers/NoCopy.h"
@@ -285,10 +321,27 @@ set(JENGINE_HELPERS_SRC
 source_group("JEngine/Helpers" FILES ${JENGINE_HELPERS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_HELPERS_SRC})
 
+# JEngine files
+set(JENGINE_MAIN_SRC
+	 "include/JEngine.h" 	 
+	 "include/JEngine/Core.h"
+)
+source_group("JEngine" FILES ${JENGINE_MAIN_SRC})
+list(APPEND JENGINE_SOURCES ${JENGINE_MAIN_SRC})
+
 # JEngine Core files
 set(JENGINE_CORE_SRC
 	 "include/JEngine/Core/LayerMask.h"
 	 "src/JEngine/Core/LayerMask.cpp"
+	 
+	 "include/JEngine/Core/Application.h"
+	 "src/JEngine/Core/Application.cpp"
+	 "include/JEngine/Core/EntryPoint.h"
+	 
+	 "include/JEngine/Core/Log.h"
+	 "include/JEngine/Core/Assert.h"
+	 
+	 "src/JEngine/Core/Log.cpp"
 )
 source_group("JEngine/Core" FILES ${JENGINE_CORE_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_CORE_SRC})
@@ -318,6 +371,12 @@ set(JENGINE_RENDERING_CORE_SRC
 	 
 	 "include/JEngine/Rendering/FrameBuffer.h"
 	 "src/JEngine/Rendering/FrameBuffer.cpp"
+	 
+	 "include/JEngine/Rendering/RenderContext.h"
+	 "src/JEngine/Rendering/RenderContext.cpp"
+	 
+	 "include/JEngine/Rendering/RenderAPI.h"
+	 "src/JEngine/Rendering/RenderAPI.cpp"
 )
 source_group("JEngine/Rendering" FILES ${JENGINE_RENDERING_CORE_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_RENDERING_CORE_SRC})
@@ -348,7 +407,8 @@ list(APPEND JENGINE_SOURCES ${JENGINE_INPUT_SRC})
 add_library(J-Engine STATIC ${JENGINE_SOURCES})
 
 find_package(OpenGL REQUIRED)
-target_link_libraries(J-Engine XInput OpenGL::GL glfw ImGUI zlibstatic YAML_CPP nlohmann_json)
+target_link_libraries(J-Engine spdlog XInput OpenGL::GL glfw ImGUI zlibstatic yaml-cpp nlohmann_json)
+
 
 include_directories("include")
 include_directories("ext/include")
@@ -357,4 +417,5 @@ include_directories("ext/YAML/include")
 include_directories("include/JEngine")
 include_directories("ext/nlohmann/json/include")
 include_directories("ext/zlib")
+include_directories("ext/spdlog/include")
 include_directories(BEFORE "${CMAKE_CURRENT_BINARY_DIR}/ext/zlib")

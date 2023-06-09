@@ -1,82 +1,84 @@
 #pragma once 
 #include <JEngine/Assets/IAsset.h>
-#include <JEngine/Assets/Graphics/Texture/TextureFormat.h>
-#include <JEngine/Assets/Graphics/Texture/FilterMode.h>
 #include <JEngine/Math/Graphics/JColor32.h>
-#include <JEngine/Utility/ConstSpan.h>
+#include <JEngine/Utility/Span.h>
 #include <JEngine/Utility/Flags.h>
+#include <JEngine/Math/Units/JVector.h>
+#include <JEngine/IO/ImageUtils.h>
 
 namespace JEngine {
     class Texture : public IAsset {
     public:
-
         Texture();
-        ~Texture();
+        Texture(Texture&& other) noexcept;
+        ~Texture() noexcept;
 
-        virtual bool create(const uint16_t width, const uint16_t height);
-        virtual bool create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter);
-        virtual bool create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter, uint8_t* pixelData, const bool keepData);
+        TextureFormat getFormat() const { return _format; }
+        FilterMode getFilter() const { return _filter; }
 
-        void setPalette(const uint8_t* pixels, const size_t size, const TextureFormat format);
+        bool create(const uint8_t* input, TextureFormat format, int32_t paletteSize, int32_t width, int32_t height, FilterMode filter, uint8_t flags);
+        bool isValid() const { return bool(_textureId) && _valid; }
 
-        const JVector2<uint16_t>& getSize() const;
+        int32_t getWidth() const { return _width; }
+        int32_t getHeight() const { return _height; }
 
-        virtual bool serializeBinary(std::ostream& stream) const override = 0;
-        virtual bool deserializeBinary(std::istream& stream, const size_t size) override = 0;
+        uint32_t getTextureId() const { return _textureId; }
+        uint32_t getPaletteId() const { return _paletteId; }
 
-        virtual bool serializeJson(json& jsonF) const override = 0;
-        virtual bool deserializeJson(json& jsonF) override = 0;
+        int32_t getPaletteSize() const { return _paletteSize; }
 
-        static uint32_t getMaximumSize();
-        uint8_t* getTextureData() const;
+        uint8_t* getPixels() const;
+        uint8_t* getPixels(uint8_t* buffer) const;
 
-        const uint32_t getMainNativeHandle() const;
-        const uint32_t getPaletteNativeHandle() const;
+        uint32_t bind(uint32_t slot) const;
+        uint32_t unBind(uint32_t slot) const;
 
-        void setTextureFormat(const TextureFormat& format);
-        const TextureFormat getTextureFormat() const;
+        uint32_t getHash() const { return _crcTex; }
+        uint8_t getFlags() const { return _flags; }
 
-        void setFilterMode(const FilterMode& filter);
-        FilterMode getFilterMode() const;
+        virtual bool serializeBinary(const Stream& stream) const override;
+        virtual bool deserializeBinary(const Stream& stream, const size_t size);
 
-        void setCompressionLevel(const int32_t level);
-        int32_t getCompressionLevel() const;
+        static uint32_t bindNull(uint32_t slot);
 
-        static uint32_t bindNull(const uint32_t slot = 0);
-
-        virtual uint32_t bind(const uint32_t slot = 0) const;
-        virtual uint32_t unbind(const uint32_t slot = 0) const;
-
-        virtual void update(const uint8_t* pixels, const TextureFormat format, const uint32_t width, const uint32_t height, TextureFormat toFormat, const FilterMode filter, const bool keepData);
-        virtual void update(Texture& texture);
-        virtual void update(Texture& texture, const TextureFormat toFormat);
-        virtual void update(Texture& texture, const TextureFormat toFormat, const FilterMode filter);
-
+        void invalidate() {
+            _valid = false;
+        }
+        void release();
     protected:
-        static constexpr uint16_t FLAG_IS_REPEATED = 0x0001U;
-        static constexpr uint16_t FLAG_FLIPPED = 0x0002U;
-        static constexpr uint16_t FLAG_KEEP_DATA = 0x0004U;
+        static constexpr uint8_t VALUE_COMPRESSION = 0xF;
+        uint32_t _textureId;
+        uint32_t _paletteId;
 
-        static constexpr uint16_t VALUE_COMPRESSION = 0xF000U;
+        uint32_t _crcTex;
 
-        UI16Flags _texFlags;
-        JVector2<uint16_t> _size;
-
+        int32_t _paletteSize;
+        int32_t _width;
+        int32_t _height;
         TextureFormat _format;
         FilterMode _filter;
-        uint32_t _texId;
-        uint32_t _palId;
+        UI8Flags _flags;
+        bool _valid{ false };
 
-        uint8_t* _pixelData;
-
-        static void readPixel(const ConstSpan<uint8_t>& data, const TextureFormat format, const int32_t index, JColor32& color);
-        static int32_t generatePaletteAndTexture(const uint8_t* inputData, const uint16_t width, const uint16_t height, const TextureFormat format, uint8_t* outputData, const bool validate = true);
-
-        virtual void applyData(const uint8_t* pixels, const bool doFlush);
-        virtual void applyPixels(const uint8_t* pixels, const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter);
-        virtual void applyPalette(const uint8_t* palette);
-
-        virtual void freeTexture();
-        virtual void freePalette();
+        void releaseTexture();
+        void releasePalette();
     };
+
+    enum : uint8_t {
+        TEX_GEN_IDLE,
+        TEX_GEN_WAIT,
+        TEX_GEN_PROCESSING,
+    };
+
+    struct TextureGenState {
+        std::shared_ptr<Texture>* texture{};
+        ImageData data{};
+        uint8_t state{ TEX_GEN_IDLE };
+    };
+
+
+    bool waitForTexGen();
+
+    void setupTexGen(std::shared_ptr<Texture>& texture, const ImageData& data);
+    void updateTexGen();
 }

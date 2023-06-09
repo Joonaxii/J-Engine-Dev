@@ -1,14 +1,14 @@
 #include <JEngine/Helpers/TypeHelpers.h>
 
 namespace JEngine {
-	std::unordered_map<FAH16, const char*, std::hash<FAH16>> TypeHelpers::HashLUT{};
+	std::unordered_map<UUID8, const char*, std::hash<UUID8>> TypeHelpers::HashLUT;
 
 	std::vector<TypeData>& TypeHelpers::getTypes() {
 		static std::vector<TypeData> _types;
 		return _types;
 	}
 
-	int32_t TypeHelpers::indexOfHash(const FAH16& hash) {
+	int32_t TypeHelpers::indexOfHash(const UUID8& hash) {
 		const auto& types = getTypes();
 		for (int32_t i = 0; i < types.size(); i++) {
 			if (types[i].hashData.hash == hash) { return i; }

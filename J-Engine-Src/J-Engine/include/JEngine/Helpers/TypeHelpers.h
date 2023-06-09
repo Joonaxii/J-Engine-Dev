@@ -1,16 +1,16 @@
 #pragma once
 #include <JEngine/Helpers/StringExtensions.h>
-#include <JEngine/Cryptography/FAH16.h>
+#include <JEngine/Cryptography/UUID.h>
 #include <typeindex>
 #include <vector>
 
 namespace JEngine {
     struct HashPair {
-        FAH16 hash{};
+        UUID8 hash{};
         const char* typeName = nullptr;
 
         HashPair(): hash(), typeName(nullptr) {}
-        HashPair(const FAH16& hash, const char* typeName) : hash(hash), typeName(typeName){}
+        HashPair(const UUID8& hash, const char* typeName) : hash(hash), typeName(typeName){}
     };
 
     struct TypeData {
@@ -24,22 +24,22 @@ namespace JEngine {
 
     class TypeHelpers {
     private:
-        static std::unordered_map<FAH16, const char*, std::hash<FAH16>> HashLUT;
+        static std::unordered_map<UUID8, const char*, std::hash<UUID8>> HashLUT;
 
     public:
         template<typename T> static TypeData* getType();
-        static std::vector<TypeData>& TypeHelpers::getTypes();
+        static std::vector<TypeData>& getTypes();
 
-        static int32_t indexOfHash(const FAH16& hash);
+        static int32_t indexOfHash(const UUID8& hash);
 
         static void getTypePair(const std::type_index& indx, HashPair& pair) {
             ConstSpan<char> inputName(indx.name(), strlen(indx.name()));
             int32_t ind = inputName.indexOf(' ');
             inputName = ind > -1 ? inputName.slice(ind) : inputName;
 
-            FAH16 hash;
+            UUID8 hash{};
             hash.computeHash(inputName);
-            auto& find = HashLUT.find(hash);
+            auto find = HashLUT.find(hash);
 
             pair.hash = hash;
             if (find == HashLUT.end()) {
@@ -54,7 +54,7 @@ namespace JEngine {
             pair.typeName = find->second;
         }
 
-        static const TypeData* getTypeByHash(const FAH16& hash) {
+        static const TypeData* getTypeByHash(const UUID8& hash) {
             auto& types = getTypes();
             for (size_t i = 0; i < types.size(); i++) {
                 if (types[i].hashData.hash  == hash) { return &types[i]; }
@@ -64,7 +64,7 @@ namespace JEngine {
 
         template<typename T>
         static const char* getTypeName() {
-            TypeData* type = JEngine::getType<T>();
+            TypeData* type = JEngine::TypeHelpers::getType<T>();
             return type ? type->getName() : "";
         }
 
@@ -75,13 +75,13 @@ namespace JEngine {
         }
 
         template<typename T>
-        static FAH16 getTypeHash() {
-            TypeData* type = JEngine::getType<T>();
-            return type ? type->hashData : FAH16();
+        static UUID8 getTypeHash() {
+            TypeData* type = JEngine::TypeHelpers::getType<T>();
+            return type ? type->hashData : UUID8();
         }
 
         template<typename T>
-        static FAH16 getTypeHash(const T& obj) {
+        static UUID8 getTypeHash(const T& obj) {
             const std::type_index& typeInf = typeid(obj);
             auto pair = getTypePair(typeInf);
             return pair.first;

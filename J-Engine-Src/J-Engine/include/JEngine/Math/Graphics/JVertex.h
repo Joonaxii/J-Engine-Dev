@@ -26,7 +26,7 @@ namespace JEngine {
 //YAML
 namespace YAML {
     template<typename T>
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JVertex<T>& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JVertex<T>& itemRef) {
         yamlOut << YAML::Flow;
         yamlOut << YAML::BeginSeq << itemRef.position << itemRef.color << itemRef.uv << YAML::EndSeq;
         return yamlOut;

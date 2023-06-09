@@ -30,79 +30,24 @@ namespace JEngine::Math {
         return log2(val);
     }
 
-    float dot(const JVector2f& lhs, const JVector2f& rhs) { return lhs.x * rhs.x + lhs.y * rhs.y; }
+    float easeInOutQuart(float t) {
+        if (t <= 0) { return 0; }
+        if (t >= 1) { return 1; }
 
-    float sqrMagnitude(const JVector2f& vec) { return vec.x * vec.x + vec.y * vec.y; }
-    float magnitude(const JVector2f& vec) { return sqrtf(sqrMagnitude(vec)); }
-
-    JVector2f smoothDamp(const JVector2f& current, const JVector2f& target, JVector2f& velocity, const float smoothTime, const float delta) {
-        if (delta <= 0) { return current; }
-
-        const float sTime = smoothTime < 0.00001f ? 0.00001f : smoothTime;
-        const float omega = 2.0f / sTime;
-
-        float x = omega * delta;
-        float exp = 1.0f / (1.0f + x + 0.48f * x * x + 0.235f * x * x * x);
-
-        float cX = current.x - target.x;
-        float cY = current.y - target.y;
-
-        JVector2f to = target;
-
-        to.x = current.x - cX;
-        to.y = current.y - cY;
-
-        float tmpX = (velocity.x + omega * cX) * delta;
-        float tmpY = (velocity.y + omega * cY) * delta;
-
-        velocity.x = (velocity.x - omega * tmpX) * exp;
-        velocity.y = (velocity.y - omega * tmpY) * exp;
-
-        float oX = target.x + (cX + tmpX) * exp;
-        float oY = target.y + (cY + tmpY) * exp;
-
-        float origX = target.x - current.x;
-        float origY = target.y - current.y;
-
-        float outMinX = oX - target.x;
-        float outMinY = oY - target.y;
-
-        if (origX * outMinX + origY * outMinY > 0) {
-            oX = target.x;
-            oY = target.y;
-
-            velocity.x = (oX - target.x) / delta;
-            velocity.y = (oY - target.y) / delta;
+        if (t < 0.5f) {
+            return powf(2.0f, 20.0f * t - 10.0f) * 0.5f;
         }
-        return JVector2f(oX, oY);
+        return (2.0f - powf(2.0f, -20.0f * t + 10.0f)) * 0.5f;
     }
 
-    JVector2f rotateDeg(const JVector2f& lhs, const float deg) { return rotateRad(lhs, deg * DEG_2_RAD); }
-    JVector2f rotateRad(const JVector2f& lhs, const float rad) {
-        const float sin = sinf(rad);
-        const float cos = cosf(rad);
-        return JVector2f(lhs.x * cos - lhs.y * sin, lhs.x * sin + lhs.y * cos);
+    float easeInOutCubic(float t) {
+        if (t < 0.5f) {
+            return (4 * t * t * t);
+        }
+        return 1.0f - powf(-2 * t + 2, 3) * 0.5f;
     }
 
-    float angle(const JVector2f& lhs, const JVector2f& rhs) {
-        float den = sqrtf(sqrMagnitude(lhs) * sqrMagnitude(rhs));
-        if (den < 0.000001f) { return 0.0f; }
-
-        float dotP = clamp(dot(lhs, rhs) / den, -1.0f, 1.0f);
-        return acosf(dotP) * RAD_2_DEG;
-    }
-
-    float signedAngle(const JVector2f& lhs, const JVector2f& rhs) {
-        const float uAngle = angle(lhs, rhs);
-        float signF = sign(lhs.x * rhs.y - lhs.y * rhs.x);
-        return uAngle * signF;
-    }
-
-    float invLerp(const JVector2f& a, const JVector2f& b, const JVector2f& v) {
-        JVector2f ab = b - a;
-        JVector2f av = v - a;
-
-        float dotB = dot(ab, ab);
-        return dotB == 0.0f ? 0.0f : dot(av, ab) / dotB;
+    float easeOutCubic(float t) {
+        return 1.0f - powf(1.0f - t, 3);
     }
 }

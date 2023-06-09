@@ -36,7 +36,7 @@ namespace JEngine {
 #pragma region Serialization
 //YAML
 namespace YAML {
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::GizmoLayer& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::GizmoLayer& itemRef) {
         yamlOut << YAML::Hex << itemRef.getValue();
         return yamlOut;
     }

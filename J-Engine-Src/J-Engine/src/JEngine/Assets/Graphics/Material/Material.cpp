@@ -127,8 +127,8 @@ namespace JEngine {
     }
 
     bool Material::serializeJson(json& jsonF) const {
-        const UUID shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUIDFactory::Empty;
-        const UUID mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUIDFactory::Empty;
+        const UUID8 shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUID8::Empty;
+        const UUID8 mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUID8::Empty;
 
         Serialization::serialize(shaderUUID, jsonF["shader"]);
         Serialization::serialize(mainTexUUID, jsonF["mainTexture"]);
@@ -146,8 +146,8 @@ namespace JEngine {
     bool Material::deserializeJson(json& jsonF) {
         _properties.clear();
 
-        UUID shaderUUID = UUIDFactory::Empty;
-        UUID mainTexUUID = UUIDFactory::Empty;
+        UUID8 shaderUUID = UUID8::Empty;
+        UUID8 mainTexUUID = UUID8::Empty;
 
         Serialization::deserialize(shaderUUID, jsonF["shader"]);
         Serialization::deserialize(mainTexUUID, jsonF["mainTexture"]);
@@ -163,9 +163,30 @@ namespace JEngine {
         return true;
     }
 
-    bool Material::serializeBinary(std::ostream& stream) const {
-        const UUID shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUIDFactory::Empty;
-        const UUID mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUIDFactory::Empty;
+    bool Material::deserializeYaml(const yamlNode& yamlIn) {
+        UUID8 shaderUUID = UUID8::Empty;
+        UUID8 mainTexUUID = UUID8::Empty;
+
+        Serialization::deserialize("shader", shaderUUID, yamlIn);
+        Serialization::deserialize("mainTexture", mainTexUUID, yamlIn);
+        Serialization::deserialize("properties", _properties, yamlIn);
+        return true;
+    }
+
+    bool Material::serializeYaml(yamlEmit& yamlOut) const {
+        const UUID8 shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUID8::Empty;
+        const UUID8 mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUID8::Empty;
+        yamlOut << YAML::BeginMap;
+        Serialization::serialize("shader", shaderUUID, yamlOut);
+        Serialization::serialize("mainTexture", mainTexUUID, yamlOut);
+        Serialization::serialize("properties", _properties.data(), _properties.size(), yamlOut);
+        yamlOut << YAML::EndMap;
+        return true;
+    }
+
+    bool Material::serializeBinary(const Stream& stream) const {
+        const UUID8 shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUID8::Empty;
+        const UUID8 mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUID8::Empty;
 
         Serialization::serialize(shaderUUID, stream);
         Serialization::serialize(mainTexUUID, stream);
@@ -179,9 +200,9 @@ namespace JEngine {
         return true;
     }
 
-    bool Material::deserializeBinary(std::istream& stream, const size_t size) {
-        UUID shaderUUID = UUIDFactory::Empty;
-        UUID mainTexUUID = UUIDFactory::Empty;
+    bool Material::deserializeBinary(const Stream& stream, const size_t size) {
+        UUID8 shaderUUID = UUID8::Empty;
+        UUID8 mainTexUUID = UUID8::Empty;
 
         Serialization::deserialize(shaderUUID, stream);
         Serialization::deserialize(mainTexUUID, stream);

@@ -67,20 +67,49 @@ namespace JEngine {
 
         void clear() { _value = 0; }
 
+        friend yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::Flags<T>& itemRef);
     private:
         friend struct Serializable<Flags<T>>;
+        friend struct YAML::convert<Flags<T>>;
         T _value;
 
     };
+}
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    template<typename T>
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::Flags<T>& itemRef) {
+        yamlOut << YAML::Hex << uint64_t(itemRef._value);
+        return yamlOut;
+    }   
+
+    template<typename T>
+    struct convert<JEngine::Flags<T>> {
+        static Node encode(const JEngine::Flags<T>& rhs) {
+            Node node;
+            node.push_back(YAML::Hex);
+            node.push_back(uint64_t(rhs._value));
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::Flags<T>& rhs) {
+            rhs._value = T(node.as<uint64_t>());
+            return true;
+        }
+    };  
+}
+
+//JSON and Binary
+namespace JEngine {
     template<typename T>
     struct Serializable<Flags<T>> {
         static bool deserializeJson(Flags<T>& itemRef, json& jsonF, const Flags<T>& defaultValue);
         static bool serializeJson(const Flags<T>& itemRef, json& jsonF);
 
-        static bool deserializeBinary(Flags<T>& itemRef, std::istream& stream);
-        static bool serializeBinary(const Flags<T>& itemRef, std::ostream& stream);
+        static bool deserializeBinary(Flags<T>& itemRef, const Stream& stream);
+        static bool serializeBinary(const Flags<T>& itemRef, const Stream& stream);
     };
 
     template<typename T>
@@ -94,16 +123,16 @@ namespace JEngine {
     }
 
     template<typename T>
-    inline bool Serializable<Flags<T>>::deserializeBinary(Flags<T>& itemRef, std::istream& stream) {
+    inline bool Serializable<Flags<T>>::deserializeBinary(Flags<T>& itemRef, const Stream& stream) {
         return Serialization::deserialize(itemRef._value, stream);
     }
 
     template<typename T>
-    inline bool Serializable<Flags<T>>::serializeBinary(const Flags<T>& itemRef, std::ostream& stream)  {
+    inline bool Serializable<Flags<T>>::serializeBinary(const Flags<T>& itemRef, const Stream& stream) {
         return Serialization::serialize(itemRef._value, stream);
     }
-#pragma endregion
 }
+#pragma endregion
 
 typedef JEngine::Flags<uint8_t> UI8Flags;
 typedef JEngine::Flags<uint16_t> UI16Flags;

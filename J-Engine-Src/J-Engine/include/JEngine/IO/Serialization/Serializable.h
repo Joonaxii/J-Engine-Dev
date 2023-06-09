@@ -1,83 +1,80 @@
 #pragma once
-#include <iostream>
 #include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>
+#include <JEngine/IO/Stream.h>
 using json = nlohmann::ordered_json;
-using yamlOut = YAML::Emitter;
-using yamlIn  = YAML::Node;
+using yamlEmit  = YAML::Emitter;
+using yamlNode  = YAML::Node;
 
 namespace JEngine {
-    static constexpr char* YAML_SERIALIZATION_VERSION = "V1.0";
-    static constexpr char* YAML_SERIALIZATION_TAG = "J-Engine,2023";
-
     namespace Serialization {
-        static inline void serializeWCStringBinary(std::ostream& stream, const wchar_t* str) {
-            const uint64_t len = wcslen(str);
-            stream.write(reinterpret_cast<const char*>(&len), sizeof(int32_t));
+        static inline void serializeWCStringBinary(const Stream& stream, const wchar_t* str) {
+            const uint32_t len = wcslen(str);
+            stream.writeValue(len);
             stream.write(reinterpret_cast<const char*>(str), len * sizeof(wchar_t));
         }
-        static inline wchar_t* deserializeWCStringBinary(std::istream& stream) {
-            int32_t len = 0;
-            stream.read(reinterpret_cast<char*>(&len), sizeof(int32_t));
-            if (len < 1) { return L""; }
+        static inline wchar_t* deserializeWCStringBinary(const Stream& stream) {
+            uint32_t len = 0;
+            stream.readValue(len, false);
+            if (len < 1) { return nullptr; }
 
             char* buf = reinterpret_cast<char*>(malloc(len * sizeof(wchar_t) + 1));
             buf[len * sizeof(wchar_t)] = 0;
 
-            stream.read(buf, len * sizeof(wchar_t));
+            stream.read(buf, len * sizeof(wchar_t), false);
             return reinterpret_cast<wchar_t*>(buf);
         }
                       
-        static inline void serializeCStringBinary(std::ostream& stream, const char* str) {
-            const uint64_t len = strlen(str);
-            stream.write(reinterpret_cast<const char*>(&len), sizeof(int32_t));
-            stream.write(reinterpret_cast<const char*>(str), len * sizeof(char));
+        static inline void serializeCStringBinary(const Stream& stream, const char* str) {
+            const uint32_t len = strlen(str);
+            stream.writeValue(len);
+            stream.write(str, len * sizeof(char));
         }
-        static inline char* deserializeCStringBinary(std::istream& stream) {
+        static inline char* deserializeCStringBinary(const Stream& stream) {
             int32_t len = 0;
-            stream.read(reinterpret_cast<char*>(&len), sizeof(int32_t));
-            if (len < 1) { return ""; }
+            stream.readValue(len, false);
+            if (len < 1) { return nullptr; }
 
             char* buf = reinterpret_cast<char*>(malloc(len + 1));
             buf[len] = 0;
 
-            stream.read(buf, len * sizeof(wchar_t));
+            stream.read(buf, len * sizeof(wchar_t), false);
             return buf;
         }
-                      
-        static inline void serializeWStringBinary(std::ostream& stream, const std::wstring& str) {
-            const uint64_t len = str.length();
-            stream.write(reinterpret_cast<const char*>(&len), sizeof(int32_t));
-            stream.write(reinterpret_cast<const char*>(str.c_str()), len * sizeof(wchar_t));
+
+        static inline void serializeWStringBinary(const Stream& stream, const std::wstring& str) {
+            const uint32_t len = str.length();
+            stream.writeValue(len);
+            stream.write(str.c_str(), len * sizeof(wchar_t));
         }
-        static inline std::wstring deserializeWStringBinary(std::istream& stream) {
-            int len = 0;
-            stream.read(reinterpret_cast<char*>(&len), sizeof(int));
+        static inline std::wstring deserializeWStringBinary(const Stream& stream) {
+            uint32_t len = 0;
+            stream.readValue(len, false);;
             if (len < 1) { return L""; }
 
             char* buf = reinterpret_cast<char*>(_malloca(len * sizeof(wchar_t)));
-            stream.read(buf, len * sizeof(wchar_t));
+            stream.read(buf, len * sizeof(wchar_t), false);
             std::wstring str = std::wstring(reinterpret_cast<wchar_t*>(buf), len);
             _freea(buf);
             return str;
         }
-                      
-        static inline void serializeStringBinary(std::ostream& stream, const std::string& str) {
-            uint64_t len = str.length();
-            stream.write(reinterpret_cast<char*>(&len), sizeof(int32_t));
+
+        static inline void serializeStringBinary(const Stream& stream, const std::string& str) {
+            uint32_t len = str.length();
+            stream.writeValue(len);
             if (len < 1) { return; }
             stream.write(str.c_str(), len);
         }
-        static inline std::string deserializeStringBinary(std::istream& stream) {
-            uint64_t len = 0;
-            stream.read(reinterpret_cast<char*>(&len), sizeof(int32_t));
+        static inline std::string deserializeStringBinary(const Stream& stream) {
+            uint32_t len = 0;
+            stream.readValue(len, false);
             if (len < 1) { return ""; }
 
             char* buf = reinterpret_cast<char*>(_malloca(len));
 
             std::string str("");
             if (buf) {
-                stream.read(buf, len);
+                stream.read(buf, len, false);
                 str = std::string(buf, len);
             }
             _freea(buf);
@@ -85,15 +82,21 @@ namespace JEngine {
         }
 
         template<typename T>
-        const void serializeBinary(const T& ref, std::ostream& stream) {
-            static constexpr int offset = std::is_polymorphic<T>::value ? sizeof(size_t) : 0;
-            stream.write(reinterpret_cast<const char*>(&ref) + offset, sizeof(T) - offset);
+        const void serializeBinary(const T& ref, const Stream& stream) {
+            if (std::is_polymorphic<T>::value) {
+                stream.write(reinterpret_cast<char*>(&ref) + 8, sizeof(T) - 8);
+                return;
+            }
+            stream.writeValue(ref, false);
         }
 
         template<typename T>
-        const void deserializeBinary(T& ref, std::istream& stream) {
-            static constexpr int offset = std::is_polymorphic<T>::value ? sizeof(size_t) : 0;
-            stream.read(reinterpret_cast<char*>(&ref) + offset, sizeof(T) - offset);
+        const void deserializeBinary(T& ref, const Stream& stream) {
+            if (std::is_polymorphic<T>::value) {
+                stream.read(reinterpret_cast<char*>(&ref) + 8, sizeof(T) - 8);
+                return;
+            }
+            stream.readValue(ref, false);
         }
     }
 
@@ -102,16 +105,16 @@ namespace JEngine {
         virtual bool deserializeJson(json& jsonF) { return false; }
         virtual bool serializeJson(json& jsonF) const { return false; }
 
-        virtual bool deserializeYaml(const yamlIn& yamlIn) { return false; }
-        virtual bool serializeYaml(yamlIn& yamlOut) const { return false; }
+        virtual bool deserializeYaml(const yamlNode& yamlIn) { return false; }
+        virtual bool serializeYaml(yamlEmit& yamlOut) const { return false; }
 
-        virtual bool deserializeBinary(std::istream& stream) { return false; }
-        virtual bool serializeBinary(std::ostream& stream) const { return false; }
+        virtual bool deserializeBinary(const Stream& stream) { return false; }
+        virtual bool serializeBinary(const Stream& stream) const { return false; }
 
-        static bool jsonToBinary(json& jsonF, std::ostream& stream) { return jsonToBinaryImpl(jsonF, stream); }
+        static bool jsonToBinary(json& jsonF, const Stream& stream) { return jsonToBinaryImpl(jsonF, stream); }
 
     protected:
-        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const = 0;
+        virtual bool jsonToBinaryImpl(json& jsonF, const Stream& stream) const = 0;
     };
 
     template<typename T>
@@ -126,12 +129,12 @@ namespace JEngine {
             return false;
         }
 
-        static bool deserializeBinary(T& itemRef, std::istream& stream) {
+        static bool deserializeBinary(T& itemRef, const Stream& stream) {
             Serialization::deserializeBinary(itemRef, stream);
             return true;
         }
 
-        static bool serializeBinary(const T& itemRef, std::ostream& stream) {
+        static bool serializeBinary(const T& itemRef, const Stream& stream) {
             Serialization::serializeBinary(itemRef, stream);
             return true;
         }
@@ -284,13 +287,13 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<std::string>::deserializeBinary(std::string& itemRef, std::istream& stream)  {
+    inline bool Serializable<std::string>::deserializeBinary(std::string& itemRef, const Stream& stream) {
         itemRef = Serialization::deserializeStringBinary(stream);
         return true;
     }
 
     template<>
-    inline bool Serializable<std::string>::serializeBinary(const std::string& itemRef, std::ostream& stream) {
+    inline bool Serializable<std::string>::serializeBinary(const std::string& itemRef, const Stream& stream) {
         Serialization::serializeStringBinary(stream, itemRef);
         return true;
     }
@@ -308,13 +311,13 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<std::wstring>::deserializeBinary(std::wstring& itemRef, std::istream& stream) {
+    inline bool Serializable<std::wstring>::deserializeBinary(std::wstring& itemRef, const Stream& stream) {
         itemRef = Serialization::deserializeWStringBinary(stream);
         return true;
     }
 
     template<>
-    inline bool Serializable<std::wstring>::serializeBinary(const std::wstring& itemRef, std::ostream& stream) {
+    inline bool Serializable<std::wstring>::serializeBinary(const std::wstring& itemRef, const Stream& stream) {
         Serialization::serializeWStringBinary(stream, itemRef);
         return true;
     }
@@ -323,33 +326,55 @@ namespace JEngine {
     namespace Serialization {
 
         template<typename T>
-        static bool serialize(const T& itemRef, json& jsonF) {
+        bool serialize(const T& itemRef, json& jsonF) {
             return Serializable<T>::serializeJson(itemRef, jsonF);
         }
 
         template<typename T>
-        static bool serialize(const T& itemRef, std::ostream& stream) {
+        bool serialize(const T& itemRef, const Stream& stream) {
             return Serializable<T>::serializeBinary(itemRef, stream);
         }
 
         template<typename T>
-        static bool serialize(const T& itemRef, yamlOut& yamlOut) {
+        bool serialize(const T& itemRef, yamlEmit& yamlOut) {
             yamlOut << itemRef;
             return true;
         }
 
         template<typename T>
-        static bool deserialize(T& itemRef, json& jsonF, const T& defaultVal = T()) {
+        bool serialize(const char* key, const T& itemRef, yamlEmit& yamlOut) {
+            yamlOut << YAML::Key << key << YAML::Value << itemRef;
+            return true;
+        }
+
+        template<typename T>
+        bool serialize(const T* itemRef, const size_t count, yamlEmit& yamlOut) {
+            yamlOut << YAML::BeginSeq;
+            for (size_t i = 0; i < count; i++) {
+                yamlOut << itemRef[i];
+            }
+            yamlOut << YAML::EndSeq;
+            return true;
+        }
+
+        template<typename T>
+        bool serialize(const char* key, const T* itemRef, const size_t count, yamlEmit& yamlOut) {
+            yamlOut << YAML::Key << key << YAML::Value;
+            return serialize<T>(itemRef, count, yamlOut);
+        }
+
+        template<typename T>
+        bool deserialize(T& itemRef, json& jsonF, const T& defaultVal = T()) {
             return Serializable<T>::deserializeJson(itemRef, jsonF, defaultVal);
         }
 
         template<typename T>
-        static bool deserialize(T& itemRef, const json& jsonF, const T& defaultVal = T()) {
+        bool deserialize(T& itemRef, const json& jsonF, const T& defaultVal = T()) {
             return Serializable<T>::deserializeJson(itemRef, jsonF, defaultVal);
         }
 
         template<typename T>
-        static bool deserialize(T& itemRef, const yamlIn& yamlIn, const T& defaultVal = T()) {
+        bool deserialize(T& itemRef, const yamlNode& yamlIn, const T& defaultVal = T()) {
             if (!YAML::convert<T>::decode(yamlIn, itemRef)) {
                 itemRef = defaultVal;
                 return false;
@@ -358,19 +383,51 @@ namespace JEngine {
         }
 
         template<typename T>
-        static bool deserialize(T& itemRef, std::istream& stream) {
+        bool deserialize(std::vector<T>& itemRefs, const yamlNode& yamlInp, const T& defaultVal = T()) {
+            if (yamlInp.IsSequence()) {
+                size_t len = itemRefs.size();
+                for (const yamlNode& obj : yamlInp) {
+                    itemRefs.push_back(T());
+                    deserialize<T>(itemRefs[len++], yamlInp, defaultVal);
+                }
+            }
+            return true;
+        }
+
+        template<typename T>
+        bool deserialize(const char* key, T& itemRef, const yamlNode& yamlIn, const T& defaultVal = T()) {
+            auto& node = yamlIn[key];
+            if (!node) {
+                itemRef = defaultVal;
+                return false;
+            }
+            return deserialize<T>(itemRef, node, defaultVal);
+        }
+
+        template<typename T>
+        bool deserialize(const char* key, std::vector<T>& itemRefs, const yamlNode& yamlIn, const T& defaultVal = T()) {
+            auto& node = yamlIn[key];
+            if (node) {
+                deserialize<T>(itemRefs, node, defaultVal);
+                return true;
+            }
+            return false;
+        }
+
+        template<typename T>
+        bool deserialize(T& itemRef, const Stream& stream) {
             return Serializable<T>::deserializeBinary(itemRef, stream);
         }
 
         template<typename T>
-        static bool jsonToBinary(const json& jsonF, std::ostream& stream) {
+        bool jsonToBinary(const json& jsonF, const Stream& stream) {
             T temp{};
             deserialize(temp, jsonF);
             return serialize(temp, stream);
         }
 
         template<typename T>
-        static bool yamlToBinary(const yamlIn& yamlIn, std::ostream& stream) {
+        bool yamlToBinary(const yamlNode& yamlIn, const Stream& stream) {
             T temp{};
             deserialize(temp, yamlIn);
             return serialize(temp, stream);

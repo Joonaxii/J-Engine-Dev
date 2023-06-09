@@ -65,7 +65,7 @@ namespace JEngine {
         const Texture* texRef = texture.getPtr();
 
         if (resetRect || (!texRef && (_textureRect == JRecti()))) {
-            setTextureRect(JRecti(0, 0, texRef->getSize().x, texRef->getSize().y));
+            setTextureRect(JRecti(0, 0, texRef->getWidth(), texRef->getHeight()));
         }
 
         //_texure = Game::getAssetManager().getAtlasByTexture(texture);
@@ -233,8 +233,8 @@ namespace JEngine {
         auto tex = _texture.getPtr();
         
         if (tex) {
-            const float w = float(tex->getSize().x);
-            const float h = float(tex->getSize().y);
+            const float w = float(tex->getWidth());
+            const float h = float(tex->getHeight());
 
             const auto& min = _textureRect.getMin();
             const auto& max = _textureRect.getMax();
@@ -284,11 +284,11 @@ namespace JEngine {
     bool Sprite::deserializeJson(json& jsonF) {
         return false;
     }
-    bool Sprite::serializeBinary(std::ostream& stream) const
+    bool Sprite::serializeBinary(const Stream& stream) const
     {
         return false;
     }
-    bool Sprite::deserializeBinary(std::istream& stream, const size_t size)
+    bool Sprite::deserializeBinary(const Stream& stream, const size_t size)
     {
         return false;
     }

@@ -2,7 +2,6 @@
 #include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Math/Units/JRect.h>
 #include <JEngine/Utility/Span.h>
-#include <JEngine/Utility/ConstSpan.h>
 #include <JEngine/Math/Units/JVector.h>
 #include <array>
 
@@ -88,7 +87,7 @@ namespace JEngine {
 #pragma region Serialization
 //YAML
 namespace YAML {
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JMatrix4f& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JMatrix4f& itemRef) {
         yamlOut << YAML::Flow;
         yamlOut << YAML::BeginSeq;
 

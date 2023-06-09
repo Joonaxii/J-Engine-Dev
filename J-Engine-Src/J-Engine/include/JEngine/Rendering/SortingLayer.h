@@ -49,7 +49,7 @@ namespace JEngine {
 #pragma region Serialization
 //YAML
 namespace YAML {
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::SortingLayer& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::SortingLayer& itemRef) {
         yamlOut << YAML::Flow;
         yamlOut << YAML::BeginSeq << itemRef.getLayerIndex() << itemRef.getOrder() << YAML::EndSeq;
         return yamlOut;

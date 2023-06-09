@@ -3,44 +3,6 @@
 #include <sys/stat.h>
 
 namespace JEngine::IO {
-    AssetDataFormat checkFileType(std::istream& stream) {
-        //Check if a known binary format
-        char hdr[5] { 0, 0, 0, 0, 0 };
-        stream.read(hdr, 4);
-        stream.seekg(0, std::ios::beg);
-
-        AssetDataFormat fmt = headerToAssetFormat(hdr);
-        if (fmt != AssetDataFormat::Unknown) { return fmt; }
-
-        //Check for JSON
-        {
-            char c = '\0';
-            while (!stream.eof()) {
-                stream.read(&c, 1);
-                if (c == '{') { break; }
-                if (!std::isspace(c)) { break; }
-            }
-
-            if (c == '{') {
-                int off = 1;
-                stream.seekg(-1, std::ios::end);
-                auto len = stream.tellg();
-                while (!stream.eof()) {
-                    stream.read(&c, 1);
-
-                    if (c == '}') { break; }
-                    if (!std::isspace(c)) { break; }
-
-                    off++;
-                    stream.seekg(-off, std::ios::end);
-                }
-
-                stream.seekg(0, std::ios::beg);
-                if (c == '}') { return AssetDataFormat::JSON; }
-            }
-        }
-        return AssetDataFormat::Unknown;
-    }
 
     void enumerateFiles(const std::string& path, const std::string& extension, std::function<const void(const std::string&)> callback, const bool fixPath, const bool reverse) {
         if (!dirExists(path)) {
@@ -67,7 +29,7 @@ namespace JEngine::IO {
 
             const bool run = reverse ? !isSame : isSame;
             if (run) {
-                auto& str = entry.path().string();
+                std::string str = entry.path().string();
                 if (fixPath) {
                     for (size_t i = 0; i < str.length(); i++) {
                         auto c = str[i];
@@ -101,7 +63,7 @@ namespace JEngine::IO {
 
             const bool run = reverse ? !isSame : isSame;
             if (run) {
-                auto& str = entry.path().string();
+                std::string str = entry.path().string();
                 if (fixPath) {
                     for (size_t i = 0; i < str.length(); i++) {
                         auto c = str[i];

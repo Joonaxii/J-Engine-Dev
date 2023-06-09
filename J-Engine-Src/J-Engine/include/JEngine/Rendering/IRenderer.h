@@ -63,7 +63,7 @@ namespace JEngine {
         virtual const JRectf& getBounds() const { return _bounds; }
 
         virtual bool deserializeJson(json& jsonFile) override {
-            const UUID uuid = _material.getPtr() ? _material.getPtr()->getUUID() : UUIDFactory::Empty;
+            const UUID8 uuid = _material.getPtr() ? _material.getPtr()->getUUID() : UUID8::Empty;
             Serialization::deserialize(uuid, jsonFile["material"]);
             Serialization::deserialize(_color, jsonFile["color"], JColor32::White);
             Serialization::deserialize(_layer, jsonFile["layer"]);
@@ -71,7 +71,7 @@ namespace JEngine {
         }
 
         virtual bool serializeJson(json& jsonFile) const override {
-            UUID uuid{};
+            UUID8 uuid{};
 
             Serialization::serialize(uuid, jsonFile["material"]);
             Serialization::serialize(_color, jsonFile["color"]);
@@ -80,7 +80,7 @@ namespace JEngine {
         }
 
         virtual bool deserializeBinary(std::istream& stream) override {
-            UUID uuid{};
+            UUID8 uuid{};
 
             Serialization::deserialize(uuid, stream);
             Serialization::deserialize(_color, stream);
@@ -90,7 +90,7 @@ namespace JEngine {
 
         virtual bool serializeBinary(std::ostream& stream) const override {
             const Material* mat = _material.getPtr();
-            const UUID uuid = mat ? mat->getUUID() : UUIDFactory::Empty;
+            const UUID8 uuid = mat ? mat->getUUID() : UUID8::Empty;
      
             Serialization::serialize(uuid, stream);
             Serialization::serialize(_color, stream);

@@ -8,7 +8,7 @@
 #include <JEngine/Utility/Flags.h>
 #include <JEngine/Math/Units/JRect.h>
 #include <JEngine/Math/Units/JMatrix.h>
-#include <JEngine/Global/UUIDFactory.h>
+#include <JEngine/Cryptography/UUIDFactory.h>
 #include <JEngine/Collections/ObjectRef.h>
 #include <JEngine/Assets/Graphics/Material/Material.h>
 #include <JEngine/Rendering/FrameBuffer.h>

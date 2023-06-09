@@ -1,20 +1,25 @@
 #pragma once
-#include <JEngine/Math/Units/JVector.h>
+#include <cstdint>
 #include <limits>
 
-constexpr float PI = 3.14159265359f;
-constexpr float DEG_2_RAD = PI / 180.0f;
-constexpr float RAD_2_DEG = 180.0f / PI;
-constexpr float UINT8_TO_FLOAT = 1.0f / float(UINT8_MAX);
+static constexpr int32_t PAL_SIZE = 256;
+
+constexpr float PI              = 3.14159265359f;
+constexpr float DEG_2_RAD       = PI / 180.0f;
+constexpr float RAD_2_DEG       = 180.0f / PI;
+constexpr float UINT8_TO_FLOAT  = 1.0f / float(UINT8_MAX);
 constexpr float UINT16_TO_FLOAT = 1.0f / float(UINT16_MAX);
 constexpr float UINT32_TO_FLOAT = 1.0f / float(UINT32_MAX);
 constexpr float UINT64_TO_FLOAT = 1.0f / float(UINT64_MAX);
 
 namespace JEngine::Math {
-
-    inline constexpr uint8_t multiplyBytes(const uint8_t a, const uint8_t b) {
-        return static_cast<uint8_t>((static_cast<uint16_t>(a) * static_cast<uint16_t>(b) + 0xFFU) >> 8);
+    inline constexpr uint8_t multByte(uint8_t a, uint8_t b) {
+        return uint8_t((uint32_t(a) * b * 0x10101U + 0x800000U) >> 24);
     }
+
+    float easeInOutQuart(float t);
+    float easeInOutCubic(float t);
+    float easeOutCubic(float t);
 
     int32_t log2(uint64_t value);
     int32_t findFirstLSB(const uint64_t value);
@@ -27,6 +32,11 @@ namespace JEngine::Math {
     constexpr int32_t bytesRequired(const int32_t bits) {
         const int32_t bitsShft = bits >> 3;
         return ((bitsShft << 3) == bits) ? bitsShft : bitsShft + 1;
+    }
+
+    template<typename T, size_t size>
+    constexpr inline T nextDivByPowOf2(const T input) {
+        return (input + (size - 1)) & ~(size - 1);
     }
 
 #undef max
@@ -61,11 +71,6 @@ namespace JEngine::Math {
     }
 
     template<typename T>
-    JVector2<T> clamp01(const JVector2<T>& value) {
-        return JVector2<T>(clamp01<T>(value.x), clamp01<T>(value.y));
-    }
-
-    template<typename T>
     constexpr T clamp(const T value, const T min, const T max) {
         return T(value < min ? min : value > max ? max : value);
     }
@@ -87,21 +92,8 @@ namespace JEngine::Math {
 
     template<>
     inline float repeat(const float t, const float length) {
-        return clamp<float>(t - floor(t / length) * length, 0.0f, length);
+        return clamp<float>(t - floorf(t / length) * length, 0.0f, length);
     }
-
-    float dot(const JVector2f& lhs, const JVector2f& rhs);
-
-    float sqrMagnitude(const JVector2f& vec);
-    float magnitude(const JVector2f& vec);
-
-    JVector2f smoothDamp(const JVector2f& current, const JVector2f& target, JVector2f& velocity, const float smoothTime, const float delta);
-
-    JVector2f rotateDeg(const JVector2f& lhs, const float deg);
-    JVector2f rotateRad(const JVector2f& lhs, const float rad);
-
-    float angle(const JVector2f& lhs, const JVector2f& rhs);
-    float signedAngle(const JVector2f& lhs, const JVector2f& rhs);
 
     template<typename T>
     T lerp(const T& a, const T& b, const double t) {
@@ -128,8 +120,6 @@ namespace JEngine::Math {
         return T(value < 0 ? (value * -std::numeric_limits<T>::min()) : (value * std::numeric_limits<T>::max()));
     }
 
-    float invLerp(const  JVector2f& a, const JVector2f& b, const  JVector2f& v);
-
     template<typename T, typename P = double>
     inline constexpr T scalarToUInt(const P input) {
         return T(clamp01<P>(input) * std::numeric_limits<T>::max());
@@ -138,5 +128,23 @@ namespace JEngine::Math {
     template<typename T, typename P = double>
     inline constexpr P uintToScalar(const T input) {
         return P(input) * (P(1.0) / P(std::numeric_limits<T>::max()));
+    }
+
+    static constexpr int32_t alignToPalette(const int32_t size) {
+        return size <= PAL_SIZE ? size : size >= PAL_SIZE * PAL_SIZE ? PAL_SIZE * PAL_SIZE : (size + PAL_SIZE - 1) & -PAL_SIZE;
+    }
+
+    static constexpr bool isAlignedToPalette(const int32_t size) {
+        return size <= PAL_SIZE || (size & (PAL_SIZE - 1)) == 0;
+    }
+
+    template<typename T>
+    bool isInRangeExc(const T input, const T min, const T max) {
+        return input >= min && input < max;
+    }
+
+    template<typename T>
+    bool isInRangeInc(const T input, const T min, const T max) {
+        return input >= min && input <= max;
     }
 }

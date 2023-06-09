@@ -45,7 +45,7 @@ namespace JEngine {
         return entry;
     }
 
-    IAsset* FileEntry::findAssetByUUID(const UUID& uuid) {
+    IAsset* FileEntry::findAssetByUUID(const UUID8& uuid) {
         for (size_t i = 0; i < _items.size(); i++) {
             auto& item = _items[i];
             if (item._data.getAsset && (uuid == item._metadata.getUUID())) { return item._data.getAsset(); }
@@ -302,8 +302,8 @@ namespace JEngine {
             getPath(path);
             Serialization::serialize(path, stream);
             Serialization::serialize(_data, stream);
-            UUID uuid = _metadata.getUUID();
-            if (uuid == UUIDFactory::Empty) {
+            UUID8 uuid = _metadata.getUUID();
+            if (uuid == UUID8::Empty) {
                 UUIDFactory::generateUUID<IAsset>(uuid);
                 _metadata.setUUID(uuid);
             }
@@ -352,7 +352,7 @@ namespace JEngine {
 
             if (valid) {
                 strm.seekg(0, std::ios::beg);
-                json& jsonF = json::parse(strm);
+                json jsonF = json::parse(strm);
                 Serialization::deserialize(_metadata, jsonF);
                 strm.close();
                 UUIDFactory::addUUID<IAsset>(_metadata.getUUID());

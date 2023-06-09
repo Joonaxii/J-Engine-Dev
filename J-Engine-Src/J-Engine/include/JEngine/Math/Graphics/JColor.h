@@ -31,8 +31,8 @@ namespace JEngine {
         bool operator==(const JColor& other) const;
         bool operator!=(const JColor& other) const;
 
-        operator JColor32();
-        operator JColor24();
+        operator JColor32() const;
+        operator JColor24() const;
 
         void set(const JColor32& rgba);
         void set(const JColor24& rgb);
@@ -79,7 +79,7 @@ namespace JEngine {
 #pragma region Serialization
 //YAML
 namespace YAML {
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JColor& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JColor& itemRef) {
         yamlOut << YAML::Flow;
         yamlOut << YAML::BeginSeq << itemRef.r << itemRef.g << itemRef.b << itemRef.a << YAML::EndSeq;
         return yamlOut;

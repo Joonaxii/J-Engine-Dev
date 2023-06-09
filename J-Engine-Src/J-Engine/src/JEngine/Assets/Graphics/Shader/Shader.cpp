@@ -59,8 +59,8 @@ namespace JEngine {
         return isSrc ? GL_SRC_ALPHA : GL_ONE_MINUS_SRC_ALPHA;
     }
 
-    Shader::Shader() : _shaderID(0), _blendingModes {GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA} { }
-    Shader::Shader(const std::string& fileath) : _shaderID(0), _blendingModes { GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA } {
+    Shader::Shader() : _shaderID(0), _blendingModes {GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD} { }
+    Shader::Shader(const std::string& fileath) : _shaderID(0), _blendingModes { GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD } {
         ShaderSources source = parseShader(fileath);
 
         _blendingModes[0] = source.blendSrc;
@@ -135,9 +135,9 @@ namespace JEngine {
     }
 
     bool Shader::tryFindShader(const char* name, ObjectRef<Shader>& shader) {
-        FAH16 hash(name);
+        UUID16 hash(name);
 
-        auto& find = SHADER_LUT.find(hash);
+        auto find = SHADER_LUT.find(hash);
         if (find == SHADER_LUT.end()) { return false; }
 
         shader = find->second;
@@ -145,7 +145,7 @@ namespace JEngine {
     }
 
     Shader* Shader::findShader(const char* name) {
-        FAH16 hash(name);
+        UUID16 hash(name);
         auto find = SHADER_LUT.find(hash);
 
         if (find == SHADER_LUT.end()) { return nullptr; }
@@ -156,7 +156,7 @@ namespace JEngine {
         const Shader* shaderPtr = shader.getPtr();
 
         if (shaderPtr) {
-            FAH16 hash(shaderPtr->getName().c_str());
+            UUID16 hash(shaderPtr->getName().c_str());
             SHADER_LUT.insert(std::make_pair(hash, ObjectRef<Shader>(shader)));
         }
     }
@@ -165,7 +165,7 @@ namespace JEngine {
         const Shader* shaderPtr = shader.getPtr();
 
         if (shaderPtr) {
-            FAH16 hash(shaderPtr->getName().c_str());
+            UUID16 hash(shaderPtr->getName().c_str());
             auto find = SHADER_LUT.find(hash);
 
             if (find == SHADER_LUT.end()) { return false; }
@@ -284,7 +284,8 @@ namespace JEngine {
 
         GLCall(int32_t location = glGetUniformLocation(_shaderID, name.c_str()));
         if (location == -1) {
-            std::cout << "[JEngine - Shader] Warning: uniform '" << name << "' doesn't exist!" << std::endl;
+
+            JENGINE_CORE_WARN("Shader", "Warning: Uniform", name, "doesn't exist");
         }
         _uniformCache[name] = location;
         return location;

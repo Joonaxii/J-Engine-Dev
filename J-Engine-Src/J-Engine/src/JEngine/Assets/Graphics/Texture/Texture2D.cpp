@@ -3,14 +3,14 @@
 #include <JEngine/Utility/ConstSpan.h>
 #include <JEngine/Math/Graphics/JColor24.h>
 #include <JEngine/IO/Helpers/IOHelpers.h>
-
+#include <JEngine/Assets/AssetDataType.h>
 #include <fstream>
 
 namespace JEngine {
     Texture2D::Texture2D() : Texture() { }
 
     bool Texture2D::serializeBinary(std::ostream& stream) const {
-        stream.write(JTEX_HEADER, 4);
+        stream.write(toHeaderStr(AssetDataFormat::JTEX), 4);
  
         Serialization::serialize(_texFlags, stream);
         Serialization::serialize(_size, stream);
@@ -82,7 +82,7 @@ namespace JEngine {
         char hdr[5]{ 0 };
         stream.read(hdr, 4);
 
-        if (strcmp(hdr, JTEX_HEADER) == 0) {
+        if (strcmp(hdr, toHeaderStr(AssetDataFormat::JTEX)) == 0) {
             Serialization::deserialize(_texFlags, stream);
             Serialization::deserialize(_size, stream);
 

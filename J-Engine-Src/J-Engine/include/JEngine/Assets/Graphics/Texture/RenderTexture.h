@@ -6,8 +6,6 @@
 namespace JEngine {
     class RenderTexture : public Texture, public RenderTarget {
     public:
-        static constexpr char* JRTX_HEADER = "JRTX";
-
         RenderTexture();
         ~RenderTexture();
 
@@ -16,8 +14,8 @@ namespace JEngine {
 
         uint8_t getDepth() const;
 
-        bool serializeBinary(std::ostream& stream) const override;
-        bool deserializeBinary(std::istream& stream, const size_t size) override;
+        bool serializeBinary(const Stream& stream) const override;
+        bool deserializeBinary(const Stream& stream, const size_t size) override;
 
         bool serializeJson(json& jsonF) const override;
         bool deserializeJson(json& jsonF) override;

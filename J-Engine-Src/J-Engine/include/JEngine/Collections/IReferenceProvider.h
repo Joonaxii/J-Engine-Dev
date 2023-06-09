@@ -1,6 +1,6 @@
 #pragma once
 #include <JEngine/Algorithm/BinarySearch.h>
-#include <stdint.h>
+#include <cstdint>
 
 namespace JEngine {
     static constexpr uint32_t UINT_20_MAX = 0xFFFFFU;

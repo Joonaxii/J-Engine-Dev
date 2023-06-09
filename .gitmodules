@@ -7,3 +7,6 @@
 [submodule "J-Engine-Src/J-Engine/ext/YAML"]
 	path = J-Engine-Src/J-Engine/ext/YAML
 	url = https://github.com/jbeder/yaml-cpp
+[submodule "J-Engine-Src/J-Engine/ext/spdlog"]
+	path = J-Engine-Src/J-Engine/ext/spdlog
+	url = https://github.com/gabime/spdlog

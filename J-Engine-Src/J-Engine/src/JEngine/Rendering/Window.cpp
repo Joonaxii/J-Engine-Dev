@@ -4,6 +4,12 @@
 #include <JEngine/Math/Math.h>
 
 namespace JEngine {
+    Window* Window::create(const WindowProps& props) {
+        return nullptr;
+    }
+}
+
+namespace JEngine {
     std::map<GLFWwindow*, Window*> Window::_glWindowToWindow{};
 
     Window::Window() : _screenBuffer(GL_RGBA32F), _minimized(true), _window(nullptr), _size(), _worldRect(), _worldProjection(), _onResize() { }

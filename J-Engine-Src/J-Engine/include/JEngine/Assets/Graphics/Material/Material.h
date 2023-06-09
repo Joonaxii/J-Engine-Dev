@@ -35,8 +35,11 @@ namespace JEngine {
         bool serializeJson(json& jsonF) const override;
         bool deserializeJson(json& jsonF) override;
 
-        bool serializeBinary(std::ostream& stream) const override;
-        bool deserializeBinary(std::istream& stream, const size_t size) override;
+        bool deserializeYaml(const yamlNode& yamlIn) override;
+        bool serializeYaml(yamlEmit& yamlOut) const override;
+
+        bool serializeBinary(const Stream& stream) const override;
+        bool deserializeBinary(const Stream& stream, const size_t size) override;
 
         const Shader* getShaderPtr() const;
         Shader* getShaderPtr();
@@ -54,7 +57,7 @@ namespace JEngine {
         void unbind() const;
 
     protected:
-        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override;
+        virtual bool jsonToBinaryImpl(json& jsonF, const Stream& stream) const override;
 
     private:
         ObjectRef<Shader> _shader;

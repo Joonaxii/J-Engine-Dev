@@ -30,11 +30,34 @@ namespace JEngine {
 
         END_OF_BUILT_IN = 0x1000U,
     };
-
+}
 #pragma region Serialization
+//YAML
+namespace YAML {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::AssetImporterType& itemRef) {
+        yamlOut << YAML::Dec << static_cast<const uint32_t>(itemRef);
+        return yamlOut;
+    }
+
     template<>
-    inline bool Serializable<AssetImporterType>::deserializeJson(AssetImporterType& itemRef, json& jsonF, const AssetImporterType& defaultValue) {
-        itemRef = jsonF.is_number_integer() ? AssetImporterType(jsonF.get<uint32_t>()) : defaultValue;
+    struct convert<JEngine::AssetImporterType> {
+        static Node encode(const JEngine::AssetImporterType& rhs) {
+            Node node;
+            node.push_back(static_cast<const uint32_t>(rhs));
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::AssetImporterType& rhs) {
+            rhs = JEngine::AssetImporterType(node.as<uint32_t>());
+            return true;
+        }
+    };
+}
+//JSON
+namespace JEngine {
+    template<>
+    inline bool Serializable<AssetImporterType>::deserializeJson(AssetImporterType& itemRef, json& jsonF, const AssetImporterType& defaultVal) {
+        itemRef = jsonF.is_number() ? AssetImporterType(jsonF.get<uint32_t>()) : defaultVal;
         return true;
     }
 
@@ -43,5 +66,5 @@ namespace JEngine {
         jsonF = uint32_t(itemRef);
         return true;
     }
-#pragma endregion
 }
+#pragma endregion

@@ -8,7 +8,7 @@ namespace JEngine {
         ShaderLib();
 
         void parse(const std::string& filepath);
-        void parse(std::istream& stream);
+        void parse(const Stream& stream);
 
         void clear();
 

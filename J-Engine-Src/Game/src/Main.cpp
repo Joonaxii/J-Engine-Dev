@@ -11,7 +11,7 @@
 #include <JEngine/Math/Math.h>
 
 #include <JEngine/Assets/Graphics/Texture/Texture2D.h>
-#include <JEngine/Assets/Decoders/BMPDecoder.h>
+#include <JEngine/IO/Image.h>
 
 #include <JEngine/Rendering/Renderer.h>
 #include <JEngine/Rendering/Window.h>
@@ -60,20 +60,24 @@ int main() {
     {
         JTime time;
 
-        auto bmpRes = decodeBmp(TEXTURE_PATH + "Simba.bmp");
-        Texture2D texA;
-        texA.create(bmpRes.resolution.x, bmpRes.resolution.y, bmpRes.format, FilterMode::Nearest, bmpRes.data, false);
-        bmpRes.clear(false);
+        ImageData bmpRes{};
+        Texture texA{};
+        if (Bmp::decode(TEXTURE_PATH + "Simba.bmp", bmpRes)) {
+            texA.create(bmpRes.data, bmpRes.format, , bmpRes.width, bmpRes.height,  FilterMode::Nearest);
+            bmpRes.clear(false);
+        }
+    
+        Texture texB{};
+        if (Bmp::decode(TEXTURE_PATH + "Blade.bmp", bmpRes)) {
+            texB.create(bmpRes.data, bmpRes.width, bmpRes.height, bmpRes.format, FilterMode::Nearest);
+            bmpRes.clear(false);
+        }
 
-        bmpRes = decodeBmp(TEXTURE_PATH + "Blade.bmp");
-        Texture2D texB;
-        texB.create(bmpRes.resolution.x, bmpRes.resolution.y, bmpRes.format, FilterMode::Nearest, bmpRes.data, false);
-        bmpRes.clear(false);
-
-        bmpRes = decodeBmp(TEXTURE_PATH + "Sus.bmp");
-        Texture2D texC;
-        texC.create(bmpRes.resolution.x, bmpRes.resolution.y, bmpRes.format, FilterMode::Nearest, bmpRes.data, false);
-        bmpRes.clear(false);
+        Texture texC{};
+        if (Bmp::decode(TEXTURE_PATH + "Sus.bmp", bmpRes)) {
+            texC.create(bmpRes.data, bmpRes.width, bmpRes.height, bmpRes.format, FilterMode::Nearest);
+            bmpRes.clear(false);
+        }
 
         Shader shaderA(SHADER_PATH + "Indexed.shader");
         Shader shaderB(SHADER_PATH + "Textured.shader");
@@ -140,7 +144,7 @@ int main() {
                     const float sin = (sinf(timeT + (NN * BLADE_FREQ * PI)));
 
                     off = { cosf(rot) * BLADE_WIDTH, sinf(rot) * BLADE_WIDTH };
-                    rendA.setTRS(off + Math::rotateRad(JVector2f(0, (sin + 2.0f) * 0.5f * BLADE_AMP), rot), rot + sin * BLADE_ROT_MAX + rotO + BLADE_ROT_OFFSET, JVector2f(1, 1));
+                    //rendA.setTRS(off + Math::rotateRad(JVector2f(0, (sin + 2.0f) * 0.5f * BLADE_AMP), rot), rot + sin * BLADE_ROT_MAX + rotO + BLADE_ROT_OFFSET, JVector2f(1, 1));
 
                     rot += radPerI;
                 }

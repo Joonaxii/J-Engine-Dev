@@ -9,8 +9,8 @@
 #include <string>
 #include <iostream>
 #include <unordered_map>
-#include <JEngine/Cryptography/FAH16.h>
 #include <JEngine/Collections/ObjectRef.h>
+#include <JEngine/Cryptography/UUID.h>
 
 namespace JEngine {
     struct ShaderSources {
@@ -77,8 +77,8 @@ namespace JEngine {
         bool serializeJson(json& jsonF) const override;
         bool deserializeJson(json& jsonF) override;
 
-        bool serializeBinary(std::ostream& stream) const override;
-        bool deserializeBinary(std::istream& stream, const size_t size) override;
+        bool serializeBinary(const Stream& stream) const override;
+        bool deserializeBinary(const Stream& stream, const size_t size) override;
 
         uint64_t getBlendUnion() const;
 
@@ -89,10 +89,10 @@ namespace JEngine {
         static bool removeShaderFromLUT(const ObjectRef<Shader>& shader);
 
     protected:
-        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
+        virtual bool jsonToBinaryImpl(json& jsonF, const Stream& stream) const override { return false; }
 
     private:
-        typedef std::unordered_map<FAH16, ObjectRef<Shader>, std::hash<FAH16>> ShaderLUT;
+        typedef std::unordered_map<UUID16, ObjectRef<Shader>, std::hash<UUID16>> ShaderLUT;
 
         static uint64_t CURRENT_BLENDING_MODE;
         static ShaderLUT SHADER_LUT;

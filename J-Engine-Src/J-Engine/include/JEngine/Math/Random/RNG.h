@@ -21,12 +21,12 @@ namespace JEngine::RNG {
 
     uint32_t randNum();
 
-    template<typename T>
-    T randN() { return static_cast<T>(randNum() / T(UINT32_MAX)); }
+    template<typename T = float>
+    T randScalar() { return static_cast<T>(randNum() / T(UINT32_MAX)); }
 
     template<typename T>
     T randRange(const T min, const T max) {
-        return Math::lerp(min, max, randN());
+        return Math::lerp(min, max, randScalar<T>());
     }
 
     template<>
@@ -76,12 +76,12 @@ namespace JEngine::RNG {
 
     template<>
     inline float randRange<float>(const float min, const float max, const bool exclusive) {
-        return Math::lerp(min, max, randN<float>());
+        return Math::lerp(min, max, randScalar<float>());
     }
 
     template<>
     inline double randRange<double>(const double min, const double max, const bool exclusive) {
-        return Math::lerp(min, max, randN<double>());
+        return Math::lerp(min, max, randScalar<double>());
     }
 
     template<typename TValue, typename TWeight>
@@ -99,14 +99,14 @@ namespace JEngine::RNG {
     }
 
     template<typename TValue, typename TWeight>
-    const TValue& selectWeighted(const WeightedValue<TValue, TWeight>* arrIn, size_t start, size_t length, const TValue default) {
-        return selectWeighted(arrIn, start, length, getTotalWeight(arrIn, start, length), default);
+    const TValue& selectWeighted(const WeightedValue<TValue, TWeight>* arrIn, size_t start, size_t length, const TValue def) {
+        return selectWeighted(arrIn, start, length, getTotalWeight(arrIn, start, length), def);
     }
 
     template<typename TValue, typename TWeight>
-    const TValue& selectWeighted(const WeightedValue<TValue, TWeight>*arrIn, size_t start, size_t length, const float total, const TValue & default) {
+    const TValue& selectWeighted(const WeightedValue<TValue, TWeight>*arrIn, size_t start, size_t length, const float total, const TValue& def) {
         auto ind = selectWeightedIndex(arrIn, start, length, total);
-        return ind < 0 ? default: arrIn[ind].getValue();
+        return ind < 0 ? def: arrIn[ind].getValue();
     }
 
     template<typename TValue, typename TWeight>
@@ -116,7 +116,7 @@ namespace JEngine::RNG {
 
     template<typename TValue, typename TWeight>
     int32_t selectWeightedIndex(const WeightedValue<TValue, TWeight>*arrIn, size_t start, size_t length, const TWeight total) {
-        const TWeight randValue = randN<TWeight>() * total;
+        const TWeight randValue = randScalar<TWeight>() * total;
 
         TWeight prevAccu = 0;
         TWeight accu = 0;

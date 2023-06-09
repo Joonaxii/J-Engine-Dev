@@ -147,13 +147,39 @@ namespace JEngine {
 #pragma endregion
     private:
         friend struct Serializable<LayerMask>;
+        friend struct YAML::convert<LayerMask>;
         uint32_t _value;
     };
+}
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::LayerMask& itemRef) {
+        yamlOut << YAML::Hex << static_cast<const uint32_t>(itemRef);
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::LayerMask> {
+        static Node encode(const JEngine::LayerMask& rhs) {
+            Node node;
+            node.push_back(static_cast<const uint32_t>(rhs));
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::LayerMask& rhs) {
+            rhs = JEngine::LayerMask(node.as<uint32_t>());
+            return true;
+        }
+    };
+}
+
+//JSON
+namespace JEngine {
     template<>
     inline bool Serializable<LayerMask>::deserializeJson(LayerMask& itemRef, json& jsonF, const LayerMask& defaultValue) {
-        itemRef._value = jsonF.is_number_integer() ? jsonF.get<uint32_t>() : defaultValue;
+        itemRef._value = jsonF.is_number_integer() ? jsonF.get<uint32_t>() : defaultValue._value;
         return true;
     }
 
@@ -162,5 +188,5 @@ namespace JEngine {
         jsonF.update(itemRef._value);
         return true;
     }
-#pragma endregion
 }
+#pragma endregion

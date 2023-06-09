@@ -5,8 +5,6 @@
 namespace JEngine {
     class Texture2D : public Texture {
     public:
-        static constexpr char* JTEX_HEADER = "JTEX";
-
         Texture2D();
    
         bool serializeBinary(std::ostream& stream) const override;

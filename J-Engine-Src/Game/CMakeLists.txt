@@ -1,4 +1,4 @@
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project (Game)
@@ -19,6 +19,8 @@ include_directories("include")
 include_directories("${CMAKE_SOURCE_DIR}/J-Engine/include")
 include_directories("${CMAKE_SOURCE_DIR}/J-Engine/ext/imgui")
 include_directories("${CMAKE_SOURCE_DIR}/J-Engine/ext/include")
+include_directories("${CMAKE_SOURCE_DIR}/J-Engine/ext/spdlog/include")
+include_directories("${CMAKE_SOURCE_DIR}/J-Engine/ext/YAML/include")
 
 # set_target_properties(Game  ${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${JENGINE_GAME_NAME})
 # set_target_properties(Game PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:Game>"

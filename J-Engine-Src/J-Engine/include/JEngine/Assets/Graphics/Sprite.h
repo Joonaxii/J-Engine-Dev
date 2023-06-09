@@ -57,11 +57,11 @@ namespace JEngine {
         bool serializeJson(json& jsonF) const override;
         bool deserializeJson(json& jsonF) override;
 
-        bool serializeBinary(std::ostream& stream) const override;
-        bool deserializeBinary(std::istream& stream, const size_t size) override;
+        bool serializeBinary(const Stream& stream) const override;
+        bool deserializeBinary(const Stream& stream, const size_t size) override;
 
     protected:
-        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
+        virtual bool jsonToBinaryImpl(json& jsonF, const Stream& stream) const override { return false; }
 
     private:
         static uint32_t         DEFAULT_INDICES[6];

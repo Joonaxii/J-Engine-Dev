@@ -5,6 +5,8 @@
 namespace JEngine {
     struct JColor;
     struct JColor32;
+    struct JColor555;
+    struct JColor565;
     struct JColor24 {
         static const JColor24 White;
         static const JColor24 Black;
@@ -26,8 +28,12 @@ namespace JEngine {
         JColor24(const JColor& rgba);
         JColor24(const JColor32& rgba);
 
-        operator JColor32();
-        operator JColor();
+        JColor24(const JColor555& rgb);
+        JColor24(const JColor565& rgb);
+
+        operator uint32_t() const;
+        operator JColor32() const;
+        operator JColor() const;
 
         void set(const JColor& rgba);
         void set(const JColor32& rgba);
@@ -72,9 +78,9 @@ namespace JEngine {
 #pragma region Serialization
 //YAML
 namespace YAML {
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::JColor24& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JColor24& itemRef) {
         yamlOut << YAML::Flow << YAML::Hex;
-        yamlOut << YAML::BeginSeq << itemRef.r << itemRef.g << itemRef.b << YAML::EndSeq;
+        yamlOut << YAML::BeginSeq << uint16_t(itemRef.r) << uint16_t(itemRef.g) << uint16_t(itemRef.b) << YAML::EndSeq;
         return yamlOut;
     }
 
@@ -82,9 +88,9 @@ namespace YAML {
     struct convert<JEngine::JColor24> {
         static Node encode(const JEngine::JColor24& rhs) {
             Node node;
-            node.push_back(rhs.r);
-            node.push_back(rhs.g);
-            node.push_back(rhs.b);
+            node.push_back(uint16_t(rhs.r));
+            node.push_back(uint16_t(rhs.g));
+            node.push_back(uint16_t(rhs.b));
             return node;
         }
 

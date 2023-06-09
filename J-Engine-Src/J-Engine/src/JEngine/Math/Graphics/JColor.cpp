@@ -38,7 +38,7 @@ namespace JEngine {
         return !(*this == other);
     }
 
-    JColor::operator JColor32() {
+    JColor::operator JColor32() const {
         return JColor32(
             Math::scalarToUInt<uint8_t, float>(r),
             Math::scalarToUInt<uint8_t, float>(g),
@@ -46,7 +46,7 @@ namespace JEngine {
             Math::scalarToUInt<uint8_t, float>(a));
     }
 
-    JColor::operator JColor24() {
+    JColor::operator JColor24() const {
         return JColor24(
             Math::scalarToUInt<uint8_t, float>(r),
             Math::scalarToUInt<uint8_t, float>(g),

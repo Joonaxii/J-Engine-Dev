@@ -21,7 +21,7 @@ namespace JEngine {
 //YAML
 namespace YAML {
     template<typename TWeight>
-    yamlOut& operator<<(yamlOut& yamlOut, const JEngine::IWeighted<TWeight>& itemRef) {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::IWeighted<TWeight>& itemRef) {
         yamlOut << itemRef.getWeight();
         return yamlOut;
     }

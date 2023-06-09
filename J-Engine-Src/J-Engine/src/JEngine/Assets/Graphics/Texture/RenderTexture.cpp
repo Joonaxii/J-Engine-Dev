@@ -98,7 +98,7 @@ namespace JEngine {
     }
 
     bool RenderTexture::serializeBinary(std::ostream& stream) const {
-        stream.write(JRTX_HEADER, 4);
+        stream.write(toHeaderStr(AssetDataFormat::JRTX), 4);
 
         return true;
     }
@@ -107,7 +107,7 @@ namespace JEngine {
         char headerId[5]{0};
         stream.read(headerId, 4);
 
-        if (strcmp(headerId, JRTX_HEADER) == 0) {
+        if (strcmp(headerId, toHeaderStr(AssetDataFormat::JRTX)) == 0) {
 
 
 

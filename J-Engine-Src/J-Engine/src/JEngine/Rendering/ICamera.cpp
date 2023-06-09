@@ -60,7 +60,7 @@ namespace JEngine {
         Serialization::serialize(_viewRect, jsonF["viewRect"]);
         Serialization::serialize(_screenRect, jsonF["screenRect"]);
 
-        UUID uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUIDFactory::Empty;
+        UUID8 uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUID8::Empty;
         Serialization::serialize(uuid, jsonF["blendMaterial"]);
         return true;
     }
@@ -77,7 +77,7 @@ namespace JEngine {
         Serialization::deserialize(_viewRect, jsonF["viewRect"]);
         Serialization::deserialize(_screenRect, jsonF["screenRect"]);
 
-        UUID uuid{};
+        UUID8 uuid{};
         Serialization::deserialize(uuid, jsonF["blendMaterial"]);
         //TODO: Add fetching of material by UUID
         return true;
@@ -95,7 +95,7 @@ namespace JEngine {
         Serialization::serialize(_viewRect, stream);
         Serialization::serialize(_screenRect, stream);
 
-        const UUID uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUIDFactory::Empty;
+        const UUID8 uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUID8::Empty;
         Serialization::serialize(uuid, stream);
         return true;
     }
@@ -112,7 +112,7 @@ namespace JEngine {
         Serialization::deserialize(_viewRect, stream);
         Serialization::deserialize(_screenRect, stream);
 
-        UUID uuid{};
+        UUID8 uuid{};
         Serialization::deserialize(uuid, stream);
         //TODO: Find material by UUID
 

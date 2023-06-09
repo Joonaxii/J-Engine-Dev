@@ -28,8 +28,8 @@ namespace JEngine {
             PathEntry(const std::string& path, const EntryData& data) : path(path), data(data) {}
         };
 
-        static constexpr char* ASSET_CACHE_HDR = "ASDB";
-        static constexpr char* ASSET_CACHE_EXT = ".resdb";
+        static constexpr const char* ASSET_CACHE_HDR = "ASDB";
+        static constexpr const char* ASSET_CACHE_EXT = ".resdb";
 
         static constexpr uint8_t ET_FOLDER = 0x0;
         static constexpr uint8_t ET_FILE = 0x1;
@@ -44,7 +44,7 @@ namespace JEngine {
         FileEntry* findOrAdd(std::string_view& path, const EntryData& data, bool& addNew);
 
         FileEntry* findByPath(const std::string& path);
-        IAsset* findAssetByUUID(const UUID& uuid);
+        IAsset* findAssetByUUID(const UUID8& uuid);
 
         void eraseEntry(const bool eraseRoot);
         void erasePath(PathEntry& path);
@@ -77,7 +77,7 @@ namespace JEngine {
 
         const std::vector<FileEntry>& getItems();
 
-        static inline constexpr char* FileEntry::entryTypeToStr(const uint8_t input) {
+        static inline constexpr const char* entryTypeToStr(const uint8_t input) {
             switch (input)
             {
                 default: return "UNKNOWN";
@@ -106,11 +106,15 @@ namespace JEngine {
         void writeMetadataToJson(const std::string& root);
         void validateMetaDataRecurse(const std::string& root, std::vector<FileEntry*>& generate);
     };
+}
+
 
 
 #pragma region Serialization
+//Binary
+namespace JEngine {
     template<>
-    inline bool Serializable<FileEntry::EntryData>::deserializeBinary(FileEntry::EntryData& itemRef, std::istream& stream) {
+    inline bool Serializable<FileEntry::EntryData>::deserializeBinary(FileEntry::EntryData& itemRef, const Stream& stream) {
         Serialization::deserialize(itemRef.type, stream);
         Serialization::deserialize(itemRef.pak, stream);
         Serialization::deserialize(itemRef.position, stream);
@@ -118,11 +122,11 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<FileEntry::EntryData>::serializeBinary(const FileEntry::EntryData& itemRef, std::ostream& stream) {
+    inline bool Serializable<FileEntry::EntryData>::serializeBinary(const FileEntry::EntryData& itemRef, const Stream& stream) {
         Serialization::serialize(itemRef.type, stream);
         Serialization::serialize(itemRef.pak, stream);
         Serialization::serialize(itemRef.position, stream);
         return true;
     }
-#pragma endregion
 }
+#pragma endregion

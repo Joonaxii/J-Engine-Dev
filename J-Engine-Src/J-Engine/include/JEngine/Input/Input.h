@@ -484,8 +484,55 @@ namespace JEngine {
 
         static bool any(const int32_t mode, const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
     };
+}
+
 
 #pragma region Serialization
+//YAML
+namespace YAML {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::Input::DeviceIndex& itemRef) {
+        yamlOut << YAML::Dec << uint16_t(itemRef);
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::Input::DeviceIndex> {
+        static Node encode(const JEngine::Input::DeviceIndex& rhs) {
+            Node node;
+            node.push_back(static_cast<const uint16_t>(rhs));
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::Input::DeviceIndex& rhs) {
+            rhs = JEngine::Input::DeviceIndex(node.as<uint16_t>());
+            return true;
+        }
+    };
+
+
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::Input::InputCode& itemRef) {
+        yamlOut << YAML::Dec << uint16_t(itemRef);
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::Input::InputCode> {
+        static Node encode(const JEngine::Input::InputCode& rhs) {
+            Node node;
+            node.push_back(static_cast<const uint16_t>(rhs));
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::Input::InputCode& rhs) {
+            rhs = JEngine::Input::InputCode(node.as<uint16_t>());
+            return true;
+        }
+    };
+}
+
+
+//JSON
+namespace JEngine {
     template<>
     inline bool Serializable<Input::DeviceIndex>::deserializeJson(Input::DeviceIndex& itemRef, json& jsonF, const Input::DeviceIndex& defaultValue) {
         itemRef = jsonF.is_number_integer() ? Input::DeviceIndex(jsonF.get<uint8_t>()) : defaultValue;
@@ -496,8 +543,8 @@ namespace JEngine {
     inline bool Serializable<Input::DeviceIndex>::serializeJson(const Input::DeviceIndex& itemRef, json& jsonF) {
         jsonF.update(uint8_t(itemRef));
         return true;
-    } 
-    
+    }
+
 
     template<>
     inline bool Serializable<Input::InputCode>::deserializeJson(Input::InputCode& itemRef, json& jsonF, const Input::InputCode& defaultValue) {
@@ -510,7 +557,7 @@ namespace JEngine {
         jsonF.update(uint16_t(itemRef));
         return true;
     }
-#pragma endregion
 }
+#pragma endregion
 
 CREATE_ENUM_OPERATORS_SELF(JEngine::Input::DeviceIndex);

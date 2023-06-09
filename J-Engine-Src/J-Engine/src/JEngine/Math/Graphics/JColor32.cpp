@@ -1,6 +1,9 @@
 #include <JEngine/Math/Graphics/JColor32.h>
 #include <JEngine/Math/Graphics/JColor24.h>
+#include <JEngine/Math/Graphics/JColor555.h>
+#include <JEngine/Math/Graphics/JColor565.h>
 #include <JEngine/Math/Graphics/JColor.h>
+#include <JEngine/IO/ImageUtils.h>
 #include <JEngine/Math/Math.h>
 #include <algorithm>
 
@@ -28,14 +31,31 @@ namespace JEngine {
         b(Math::scalarToUInt<uint8_t, float>(rgba.b)),
         a(Math::scalarToUInt<uint8_t, float>(rgba.a)) { }
 
-    JColor32::operator JColor24() {
+
+    JColor32::JColor32(const JColor555& rgb) {
+        unpackRGB555(rgb.data, r, g, b, a);
+    }
+
+    JColor32::JColor32(const JColor555& rgb, const uint8_t alpha) {
+        unpackRGB555(rgb.data, r, g, b, a);
+        a = alpha;
+    }
+
+    JColor32::JColor32(const JColor565& rgb) : JColor32(rgb, 0xFF) { }
+    JColor32::JColor32(const JColor565& rgb, const uint8_t alpha) {
+        unpackRGB565(rgb.data, r, g, b);
+        a = alpha;
+    }
+
+
+    JColor32::operator JColor24() const {
         return JColor24(
             r,
             g,
             b);
     }
 
-    JColor32::operator JColor() {
+    JColor32::operator JColor() const {
         return JColor(
             Math::uintToScalar<uint8_t, float>(r), 
             Math::uintToScalar<uint8_t, float>(g), 
@@ -68,6 +88,13 @@ namespace JEngine {
         this->b = b;
         this->a = a;
     }
+
+    bool JColor32::operator==(const JColor24 & other) const {
+        return (*reinterpret_cast<const uint32_t*>(this) & 0xFFFFFFU) == uint32_t(other);
+    };
+    bool JColor32::operator!=(const JColor24& other) const {
+        return (*reinterpret_cast<const uint32_t*>(this) & 0xFFFFFFU) != uint32_t(other);
+    };
 
     bool JColor32::operator==(const JColor32& other) const {
         return *reinterpret_cast<const uint32_t*>(this) == *reinterpret_cast<const uint32_t*>(&other);
@@ -140,17 +167,17 @@ namespace JEngine {
 
     JColor32 JColor32::operator*(const JColor32& other) const {
         return JColor32(
-            Math::multiplyBytes(r, other.r),
-            Math::multiplyBytes(g, other.g),
-            Math::multiplyBytes(b, other.b),
-            Math::multiplyBytes(a, other.a));
+            Math::multByte(r, other.r),
+            Math::multByte(g, other.g),
+            Math::multByte(b, other.b),
+            Math::multByte(a, other.a));
     }
 
     JColor32& JColor32::operator*=(const JColor32& other) {
-        r = Math::multiplyBytes(r, other.r);
-        g = Math::multiplyBytes(g, other.g);
-        b = Math::multiplyBytes(b, other.b);
-        a = Math::multiplyBytes(a, other.a);
+        r = Math::multByte(r, other.r);
+        g = Math::multByte(g, other.g);
+        b = Math::multByte(b, other.b);
+        a = Math::multByte(a, other.a);
         return *this;
     }
 }

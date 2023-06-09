@@ -2,7 +2,7 @@
 #include <JEngine/Collections/IReferenceProvider.h>
 #include <JEngine/Utility/Flags.h>
 #include <functional>
-#include <stdint.h>
+#include <cstdint>
 
 namespace JEngine {
     static constexpr uint32_t MAX_UINT_24 = 0xFFFFFFU;
@@ -71,7 +71,7 @@ namespace JEngine {
         ObjectRef(T* ptr, const bool ownedByThis) :
             _data(MAX_UINT_24, (ownedByThis ? OWNS_PTR_FLAG : 0)), _idData(NULL_ID, 0), _obj(ptr) { }
 
-        ObjectRef(const int32_t id, IReferenceProvider<T>& referenceProvider) :ObjectRef(id, refrenceProvider, false) {}
+        ObjectRef(const int32_t id, IReferenceProvider<T>& referenceProvider) :ObjectRef(id, referenceProvider, false) {}
         ObjectRef(const int32_t id, IReferenceProvider<T>& referenceProvider, const bool ownedByThis) :
             _data(MAX_UINT_24, (ownedByThis ? OWNS_PTR_FLAG : 0) | IS_FROM_PROVIDER), _idData(NULL_ID, 0), _obj(nullptr) {
             setPtr(id, referenceProvider);
@@ -126,6 +126,12 @@ namespace JEngine {
 
         bool operator!=(const ObjectRef<T, isArray>& other) const { return !(*this == other); }
 
+        //bool operator==(const T* other) const {
+        //    return getPtr() == other;
+        //}
+
+        //bool operator!=(const T* other) const { return !(*this == other); }
+
         operator T* () { return getPtr(); }
         operator const T* () const { return getPtr(); }
 
@@ -159,7 +165,7 @@ namespace JEngine {
             _idData.setId(NULL_ID);
             _idData.setVersion(0);
             _data.setIndex(MAX_UINT_24);
-            _object = refe;
+            _obj.ptr = refe;
             _data.getFlags().setBit(IS_FROM_PROVIDER, false);
         }
 
@@ -184,6 +190,9 @@ namespace JEngine {
         const uint32_t getVersion() const { return _idData.getVersion(); }
         const uint32_t getID() const { return _idData.getId(); }
 
+        // friend bool operator==(const T* ptr, const ObjectRef<T, isArray>& other);
+        // friend bool operator!=(const T* ptr, const ObjectRef<T, isArray>& other);
+
     private:
         static constexpr uint8_t OWNS_PTR_FLAG = 0x1;
         static constexpr uint8_t IS_FROM_PROVIDER = 0x2;
@@ -192,4 +201,12 @@ namespace JEngine {
         mutable priv::IndexData _data;
         mutable RefID _idData;
     };
+
+    //template<typename T, bool isArray>
+    //inline bool operator==(const T* ptr, const ObjectRef<T, isArray>& other) {
+    //    return other.getPtr() == ptr;
+    //}
+
+    //template<typename T, bool isArray>
+    //inline bool operator!=(const T* ptr, const ObjectRef<T, isArray>& other) { return !(*ptr == other); }
 }

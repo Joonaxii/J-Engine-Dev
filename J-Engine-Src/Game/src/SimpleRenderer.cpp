@@ -30,7 +30,7 @@ void SimpleRenderer::setSprite(JEngine::Sprite* sprite) {
     Material* mat = _material.getPtr();
     Texture* texture = mat ? mat->getMainTexturePtr() : nullptr;
 
-    if (!mat || texture != sprite->getTexture()) {
+    if (!mat || texture != sprite->getTexturePtr()) {
         Material* newMat = getNewMaterial(mat);
         newMat->setMainTexture(sprite->getTexture());
     }

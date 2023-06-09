@@ -1,484 +1,339 @@
 #include <JEngine/Assets/Graphics/Texture/Texture.h>
 #include <JEngine/Math/Graphics/JColor24.h>
+#include <JEngine/Core/Log.h>
 #include <JEngine/Rendering/OpenGL/GLHelpers.h>
+#include <JEngine/IO/Compression/ZLib.h>
+#include <JEngine/Utility/DataFormatUtils.h>
+#include <JEngine/IO/MemoryStream.h>
 
 namespace JEngine {
-    const int32_t findClosest(Span<uint8_t>& palette, const uint8_t value) {
-        int16_t dist = INT16_MAX;
-        int32_t index = -1;
-
-        for (size_t i = 0; i < palette.length(); i += 4) {
-            auto dst = std::abs(palette[i] - value);
-
-            if (dst <= dist) {
-                dist = dst;
-                index = int32_t(i);
-                if (dst == 0) { return index; }
-            }
-        }
-        return index;
+    Texture::Texture() : _width(0), _height(0), _textureId(0), _paletteId(0), _paletteSize(0), _crcTex(0), _format(TextureFormat::Unknown) { }
+    Texture::Texture(Texture&& other) noexcept :
+        _width(other._width), _height(other._height),
+        _paletteSize(other._paletteSize),
+        _format(other._format),
+        _crcTex(other._crcTex),
+        _textureId(std::exchange(other._textureId, 0)),
+        _paletteId(std::exchange(other._paletteId, 0))
+    {
+    }
+    Texture::~Texture() noexcept {
+        release();
     }
 
-    const int32_t findClosest(Span<uint8_t>& palette, const JColor24 rgb) {
-        int16_t dist = INT16_MAX;
-        int32_t index = -1;
-
-        int16_t pix = rgb.r + rgb.g + rgb.b;
-        for (size_t i = 0; i < palette.length(); i += 4) {
-            int16_t pal = palette[i] + palette[i + 1] + palette[i + 2];
-            auto dst = std::abs(pal - pix);
-
-            if (dst <= dist) {
-                dist = dst;
-                index = int32_t(i);
-                if (dst == 0) { return index; }
-            }
-        }
-        return index;
-    }
-
-    const int32_t findClosest(Span<uint8_t>& palette, const JColor32 rgba) {
-        int16_t dist = INT16_MAX;
-        int32_t index = -1;
-
-        int16_t pix = rgba.r + rgba.g + rgba.b + rgba.a;
-        for (size_t i = 0; i < palette.length(); i += 4) {
-            int16_t pal = palette[i] + palette[i + 1] + palette[i + 2] + palette[i + 3];
-            auto dst = std::abs(pal - pix);
-
-            if (dst <= dist) {
-                dist = dst;
-                index = int32_t(i);
-                if (dst == 0) { return index; }
-            }
-        }
-        return index;
-    }
-
-    int32_t Texture::generatePaletteAndTexture(const uint8_t* inputData, const uint16_t width, const uint16_t height, const TextureFormat format, uint8_t* outputData, const bool validate) {
-        assert(format != TextureFormat::Indexed && "Input data can't be indexed!");
-        int32_t count = 0;
-
-        const int32_t reso = width * height;
-        Span<uint8_t> data(outputData, (256 * 4) + reso);
-        Span<uint8_t> paletteData = data.slice(0, 0);
-        Span<uint8_t> pixelData = data.slice(256 * 4);
-
-        const int32_t dataSize = (getBitsPerPixel(format) >> 3) * reso;
-        bool isFull = false;
-        switch (format) {
-            case TextureFormat::R8:
-                for (size_t i = 0; i < reso; i++) {
-                    int32_t ind = isFull ? findClosest(paletteData, inputData[i]) : paletteData.indexOf(inputData[i]);
-                    if (ind < 0) {
-                        if (validate && isFull) { return -1; }
-                        ind = isFull ? 0 : count++;
-                        isFull = count >= 256;
-                    }
-                    pixelData[i] = uint8_t(ind);
-                }
-                break;
-            case TextureFormat::RGB24: {
-                Span<JColor24> paletteRGB = paletteData.castTo<JColor24>();
-                for (size_t i = 0, j = 0; i < reso; i++, j += 3) {
-                    const auto rgb = JColor24(inputData[j], inputData[j + 1], inputData[j + 2]);
-                    int32_t ind = isFull ? findClosest(paletteData, rgb) : paletteRGB.indexOf(rgb);
-                    if (ind < 0) {
-                        if (validate && isFull) { return -1; }
-                        ind = isFull ? 0 : count++;
-                        isFull = count >= 256;
-                    }
-                    pixelData[i] = uint8_t(ind);
-                }
-                break;
-            }
-            case TextureFormat::RGBA32: {
-                Span<JColor32> paletteRGB = paletteData.castTo<JColor32>();
-                for (size_t i = 0, j = 0; i < reso; i++, j += 3) {
-                    const auto rgb = JColor32(inputData[j], inputData[j + 1], inputData[j + 2]);
-                    int32_t ind = isFull ? findClosest(paletteData, rgb) : paletteRGB.indexOf(rgb);
-                    if (ind < 0) {
-                        if (validate && isFull) { return -1; }
-                        ind = isFull ? 0 : count++;
-                        isFull = count >= 256;
-                    }
-                    pixelData[i] = uint8_t(ind);
-                }
-                break;
-            }
-        }
-        return count;
-    }
-
-    void Texture::readPixel(const ConstSpan<uint8_t>& data, const TextureFormat format, const int32_t index, JColor32& color) {
-        switch (format)
-        {
-            case TextureFormat::R8:
-                color.r = color.g = color.b = data[index];
-                color.a = 0xFF;
-                break;
-            case TextureFormat::Indexed: {
-                const ConstSpan<uint8_t> pixelData = data.slice(256LL * 4);
-                memcpy(&color, &data[pixelData[index]], 4);
-                break;
-            }
-            case TextureFormat::RGBA32:
-                memcpy(&color, &data[index], 4);
-                break;
-            case TextureFormat::RGB24:
-                color.a = 0xFF;
-                memcpy(&color, &data[index], 3);
-                break;
-        }
-    }
-
-    Texture::Texture() : _size(0, 0), _texFlags(0), _format(TextureFormat::RGBA32), _filter(FilterMode::Nearest), _pixelData(nullptr),
-        _palId(0), _texId(0) {
-    }
-
-    Texture::~Texture() {
-        freePalette();
-        freeTexture();
-
-        if (_pixelData && (_texFlags & FLAG_KEEP_DATA)) {
-            free(_pixelData);
-        }
-    }
-
-    bool Texture::create(const uint16_t width, const uint16_t height) {
-        return create(width, height, _format, _filter);
-    }
-
-    bool Texture::create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter) {
-        return create(width, height, format, filter, NULL, _texFlags & FLAG_KEEP_DATA);
-    }
-
-    bool Texture::create(const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter, uint8_t* pixelData, const bool keepData) {
-        const uint32_t maxSize = getMaximumSize();
-        const bool validSize = width > 0 && height > 0 && height <= maxSize && width <= maxSize;
-        if (!validSize) {
-            std::cout << "[JEngine - Texture] Error: Failed to create texture! (Invalid Resolution)" << std::endl;
+    bool Texture::create(const uint8_t* input, TextureFormat format, int32_t paletteSize, int32_t width, int32_t height, FilterMode filter, uint8_t flags) {
+        _valid = false;
+        const bool isIndexed = format == TextureFormat::Indexed8 || format == TextureFormat::Indexed16;
+        if (isIndexed && !Math::isAlignedToPalette(paletteSize)) {
+            JENGINE_CORE_WARN("Couldn't create texture, palette is not aligned to palette scan! ({0}, should be {1})", paletteSize, Math::alignToPalette(paletteSize));
             return false;
         }
 
-        const int32_t bitsPerPixel = getBitsPerPixel(format);
-        const int32_t bytesPerPixel = bitsPerPixel >> 3;
-
-        if (bytesPerPixel < 0) {
-            std::cout << "[JEngine - Texture] Error: Failed to create texture! (Invalid Bit Depth)" << std::endl;
+        if (format == TextureFormat::Unknown || width == 0 || height == 0) {
+            JENGINE_CORE_WARN("Couldn't create texture, given data was invalid! ({0}, {1}x{2})", getTextureFormatName(format), width, height);
             return false;
         }
 
-        _size.x = width;
-        _size.y = height;
+        _flags = flags;
+        _filter = filter;
+        if (format == TextureFormat::Indexed8) { paletteSize = 256; }
+        size_t extra = isIndexed ? paletteSize * 4 : 0;
+        const uint8_t* pixels = input + extra;
 
-        _texFlags.setBit(FLAG_FLIPPED, false);
+        _crcTex = 0xFFFFFFFFU;
+        _crcTex = Data::updateCRC(_crcTex, input, std::min<size_t>((width * height * (getBitsPerPixel(format) >> 3)) + extra, 1024)) ^ 0xFFFFFFFFU;
+
+        _paletteSize = paletteSize;
+        if (!_textureId) {
+            glGenTextures(1, &_textureId);
+        }
 
         _format = format;
-        _filter = filter;
-        applyData(pixelData, true);
+        _width = uint16_t(width);
+        _height = uint16_t(height);
 
-        _texFlags.setBit(FLAG_KEEP_DATA, keepData);
-        if (keepData) {
-            if (_pixelData) { free(_pixelData); }
-            _pixelData = pixelData;
+
+        glBindTexture(GL_TEXTURE_2D, _textureId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, getGLPixelAlignment(format));
+        glTexImage2D(GL_TEXTURE_2D, 0, textureFormatToGLFormat(format, true), width, height, 0, textureFormatToGLFormat(format, false), GL_UNSIGNED_BYTE, input ? pixels : nullptr);
+
+        if (!input) {
+            return true;
         }
+
+        if (isIndexed) {
+            if (!_paletteId) {
+                glGenTextures(1, &_paletteId);
+            }
+
+            uint32_t texType = format == TextureFormat::Indexed16 ? GL_TEXTURE_2D : GL_TEXTURE_1D;
+
+            glBindTexture(texType, _paletteId);
+            glTexParameteri(texType, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(texType, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(texType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(texType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+            if (format == TextureFormat::Indexed16) {
+                uint32_t palSize = paletteSize >> 8;
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, palSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, input);
+            }
+            else {
+                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, paletteSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, input);
+            }
+
+        }
+        else {
+            releasePalette();
+        }
+
+        _valid = true;
         return true;
     }
 
-    void Texture::setPalette(const uint8_t* pixels, const size_t size, const TextureFormat format) {
-        assert(format != TextureFormat::Indexed && "A palette cannot have Indexed pixel format!");
-        assert(_format == TextureFormat::Indexed && "Texture must be Indexed!");
-        assert(pixels != nullptr && "Palette can't be null!");
+    uint32_t Texture::bind(uint32_t slot) const {
+        glActiveTexture(GL_TEXTURE0 + slot++);
+        glBindTexture(GL_TEXTURE_2D, _textureId);
 
-        const int32_t bitsPerPixel = getBitsPerPixel(format);
-        const int32_t bytesPerPixel = bitsPerPixel >> 3;
+        if (_format == TextureFormat::Indexed8) {
+            glActiveTexture(GL_TEXTURE0 + slot++);
+            glBindTexture(GL_TEXTURE_1D, _paletteId);
+        }
+        return slot;
+    }
 
-        assert(bytesPerPixel > 0 && "Invalid bits per pixel value!");
-        const int32_t entries = std::min<int32_t>(int32_t(size / bytesPerPixel), 256);
+    uint32_t Texture::unBind(uint32_t slot) const {
+        glActiveTexture(GL_TEXTURE0 + slot++);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
-        uint8_t* pixelData = reinterpret_cast<uint8_t*>(malloc(256 * sizeof(JColor32)));
-        if (pixelData) {
-            if (format == TextureFormat::RGBA32) {
-                memcpy(pixelData, pixels, size);
+        if (_format == TextureFormat::Indexed8) {
+            glActiveTexture(GL_TEXTURE0 + slot++);
+            glBindTexture(GL_TEXTURE_1D, 0);;
+        }
+        return slot;
+    }
+
+    uint8_t* Texture::getPixels() const {
+        size_t size = _width * _height * getBitsPerPixel(_format);
+        if (_format == TextureFormat::Indexed8) {
+            size += 1024;
+        }
+        else if (_format == TextureFormat::Indexed16) {
+            size += _paletteSize * 4;
+        }
+        uint8_t* pixels = reinterpret_cast<uint8_t*>(malloc(size));
+        return getPixels(pixels);
+    }
+    uint8_t* Texture::getPixels(uint8_t* buffer) const {
+        if (!_textureId || !buffer) { return nullptr; }
+
+        size_t bpp = getBitsPerPixel(_format);
+        size_t offset = 0;
+        size_t size = _width * _height * bpp;
+        if (_format == TextureFormat::Indexed8) {
+            size += offset = 1024;
+        }
+        else if (_format == TextureFormat::Indexed16) {
+            size += offset = _paletteSize * 4;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, _textureId);
+        glPixelStorei(GL_PACK_ALIGNMENT, getGLPixelAlignment(_format));
+        glGetTexImage(GL_TEXTURE_2D, 0, textureFormatToGLFormat(_format, false), GL_UNSIGNED_BYTE, buffer + offset);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glPixelStorei(GL_PACK_ALIGNMENT, 4);
+
+        switch (_format)
+        {
+            case TextureFormat::Indexed8:
+                glBindTexture(GL_TEXTURE_1D, _paletteId);
+                glGetTexImage(GL_TEXTURE_1D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+                glBindTexture(GL_TEXTURE_1D, 0);
+                break;
+            case TextureFormat::Indexed16:
+                glBindTexture(GL_TEXTURE_2D, _paletteId);
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+                glBindTexture(GL_TEXTURE_2D, 0);
+                break;
+        }
+        return buffer;
+    }
+
+    bool Texture::serializeBinary(const Stream& stream) const {
+        stream.writeValue(DataHeader<FMT_JTEX>::Value);
+
+        Serialization::serialize(_flags, stream);
+        Serialization::serialize(_width, stream);
+        Serialization::serialize(_height, stream);
+
+        Serialization::serialize(_format, stream);
+        Serialization::serialize(_filter, stream);
+        Serialization::serialize(_paletteSize, stream);
+
+        const int32_t bitsPP = getBitsPerPixel(_format);
+        const int32_t bytesPP = bitsPP >> 3;
+
+        const size_t offset = _format == TextureFormat::Indexed16 ? _paletteSize * 4 : _format == TextureFormat::Indexed8 ? 256 * 4 : 0;
+        const size_t dataSize = (_width * _height * bytesPP) + offset;
+        uint16_t compression = _flags.select(VALUE_COMPRESSION);
+
+        auto pixels = getPixels();
+        if (compression) {
+            //Texture data is compressed
+
+            int64_t pos = stream.tell();
+            int32_t size = 0;
+            stream.writeValue(size);
+
+            uint8_t buffer[8192]{ 0 };
+
+            ZLib::ZLibContext context{};
+            ZLib::deflateBegin(context, compression == 10 ? -1 : compression, buffer, sizeof(buffer));
+            ZLib::deflateSegment(context, pixels, dataSize, stream, buffer, sizeof(buffer));
+            auto res = ZLib::deflateEnd(context, size, stream, buffer, sizeof(buffer));
+            if (res != Z_OK) {
+                std::cout << "ZLib compression failed! " << std::endl;
+                std::cout << ZLib::zerr(res) << std::endl;
+            }
+
+            stream.flush();
+
+            int64_t cPos = stream.tell();
+            size = int32_t(cPos - (pos + 4));
+
+            stream.seek(pos, SEEK_SET);
+            stream.writeValue(size);
+            stream.seek(cPos, SEEK_SET);
+        }
+        else {
+            //Texture data is uncompressed
+            stream.write(pixels, dataSize, false);
+        }
+
+        if (pixels) {
+            free(pixels);
+        }
+        return false;
+    }
+    bool Texture::deserializeBinary(const Stream& stream, const size_t size) {
+        uint32_t header = 0;
+        stream.readValue(header, false);
+
+        if (header == DataHeader<FMT_JTEX>::Value) {
+            Serialization::deserialize(_flags, stream);
+            Serialization::deserialize(_width, stream);
+            Serialization::deserialize(_height, stream);
+
+            Serialization::deserialize(_format, stream);
+            Serialization::deserialize(_filter, stream);
+            Serialization::deserialize(_paletteSize, stream);
+
+            if (_format == TextureFormat::Indexed8) {
+                _paletteSize = 256;
+            }
+
+            const uint16_t compression = _flags.select(VALUE_COMPRESSION);
+
+            bool indexed = _format == TextureFormat::Indexed16 || _format == TextureFormat::Indexed8;
+            const size_t offset = indexed ? _paletteSize * 4 : 0;
+            const size_t dataSize = _width * _height * (getBitsPerPixel(_format) >> 3) + offset;
+            uint8_t* pixels = reinterpret_cast<uint8_t*>(malloc(dataSize));
+
+            if (compression) {
+                //Data is compressed
+                size_t compressedSize = 0;
+                stream.read(&compressedSize, 4, false);
+
+                uint8_t* ptrComp = nullptr;
+                ptrComp = reinterpret_cast<uint8_t*>(malloc(compressedSize));
+                stream.read(ptrComp, compressedSize, false);
+
+                MemoryStream cStrm(ptrComp, compressedSize, compressedSize);
+                MemoryStream oStrm(pixels, 0, dataSize);
+                cStrm.seek(0, SEEK_SET);
+                oStrm.seek(0, SEEK_SET);
+                auto ret = ZLib::inflateData(cStrm, oStrm);
+                if (ret != Z_OK) {
+                    std::cout << ZLib::zerr(ret) << std::endl;
+                }
+                oStrm.flush();
+                free(ptrComp);
             }
             else {
-                uint8_t r = 0, g = 0, b = 0, a = 0xFF;
-                for (size_t i = 0, j = 0, l = 0; i < entries; i++, j += bytesPerPixel, l += 4)
-                {
-                    switch (format)
-                    {
-                        case TextureFormat::R8:
-                            r = g = b = pixels[j];
-                            break;
-                        case TextureFormat::RGB24:
-                            r = pixels[j];
-                            g = pixels[j + 1];
-                            b = pixels[j + 2];
-                            break;
-                    }
-
-                    pixelData[l + 0] = r;
-                    pixelData[l + 1] = g;
-                    pixelData[l + 2] = b;
-                }
-            }
-        }
-
-        applyPalette(pixelData);
-        free(pixelData);
-    }
-
-    const JVector2<uint16_t>& Texture::getSize() const {
-        return _size;
-    }
-
-    uint32_t Texture::getMaximumSize() { return 8192; }
-
-    uint8_t* Texture::getTextureData() const {
-        if (!_texId) { return nullptr; }
-
-        if (_texFlags & FLAG_KEEP_DATA && _pixelData) {
-            return _pixelData;
-        }
-
-        const int32_t offset = (_format == TextureFormat::Indexed ? 256 * 4 : 0);
-        const int32_t bpp = getBitsPerPixel(_format);
-        const int32_t reso = _size.x * _size.y;
-        const int32_t size = reso * bpp + offset;
-
-        uint8_t* data = reinterpret_cast<uint8_t*>(malloc(size));
-
-        GLCall(glBindTexture(GL_TEXTURE_2D, _texId));
-        GLCall(glPixelStorei(GL_PACK_ALIGNMENT, getGLPixelAlignment(_format)));
-        GLCall(glGetTexImage(GL_TEXTURE_2D, 0, textureFormatToGLFormat(_format, false), GL_UNSIGNED_BYTE, data + offset));
-        GLCall(glBindTexture(GL_TEXTURE_2D, 0));
-
-        if (_format == TextureFormat::Indexed && _palId) {
-            GLCall(glBindTexture(GL_TEXTURE_1D, _palId));
-            GLCall(glPixelStorei(GL_PACK_ALIGNMENT, 4));
-            GLCall(glGetTexImage(GL_TEXTURE_1D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
-            GLCall(glBindTexture(GL_TEXTURE_1D, 0));
-        }
-        return data;
-    }
-
-    const uint32_t Texture::getMainNativeHandle() const {
-        return _texId;
-    }
-
-    const uint32_t Texture::getPaletteNativeHandle() const {
-        return _palId;
-    }
-
-    void Texture::update(const uint8_t* pixels, const TextureFormat format, const uint32_t width, const uint32_t height, TextureFormat toFormat, const FilterMode filter, const bool keepData) {
-        if (pixels && _texId) {
-            const int32_t reso = width * height;
-
-            const int32_t bPP = getBitsPerPixel(toFormat) >> 3;
-            const int32_t size = bPP * reso + (toFormat == TextureFormat::Indexed ? 256 * 4 : 0);
-            const int32_t sizeNew = 4 * reso + (toFormat == TextureFormat::Indexed ? 256 * 4 : 0);
-
-            uint8_t* data = reinterpret_cast<uint8_t*>(malloc(sizeNew));
-
-        start:
-            if (data) {
-                if (toFormat == format) {
-                    memcpy(data, pixels, size);
-                }
-                else {
-                    const int32_t bPPIn = getBitsPerPixel(format) >> 3;
-                    if (toFormat == TextureFormat::Indexed) {
-                        int32_t res = generatePaletteAndTexture(pixels, width, height, format, data, true);
-                        if (res < 0) { toFormat = TextureFormat::RGBA32; goto start; }
-
-                    }
-                    else {
-                        const int32_t bPPIn = getBitsPerPixel(format);
-                        const size_t scanSizeFrom = width * bPPIn;
-                        const size_t scanSizeTo = width * bPP;
-                        ConstSpan<uint8_t> span(pixels, size);
-                        JColor32 temp(0, 0, 0);
-                        for (size_t y = 0, yP = 0, yPC = 0; y < height; y++, yP += scanSizeFrom, yPC += scanSizeTo) {
-                            for (size_t x = 0, xP = 0, xPC = 0; x < width; x++, xP += bPPIn, xPC += bPP) {
-                                readPixel(span, format, int32_t(yP + xP), temp);
-                                memcpy(data + yPC + xPC, &temp, bPP);
-                            }
-                        }
-                    }
-                }
-            }
-            const bool newIsIndexed = toFormat == TextureFormat::Indexed;
-            const int32_t offset = newIsIndexed ? 256 * 4 : 0;
-
-            if (!newIsIndexed && _palId) {
-                freePalette();
+                //Data not compressed
+                stream.read(pixels, dataSize, false);
             }
 
-            _filter = filter;
-            _format = toFormat;
-            _size.x = width;
-            _size.y = height;
+            create(pixels, _format, _paletteSize, _width, _height, _filter, _flags);
+            free(pixels);
+            return true;
+        }
+        return false;
+    }
 
-            applyPixels(data + offset, width, height, toFormat, filter);
+    uint32_t Texture::bindNull(uint32_t slot) {
+        glActiveTexture(GL_TEXTURE0 + slot++);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return slot;
+    }
 
-            if (newIsIndexed) {
-                if (!_palId) {
-                    GLuint texture;
-                    glGenTextures(1, &texture);
-                    _palId = static_cast<uint32_t>(texture);
+    void Texture::release() {
+        releaseTexture();
+        releasePalette();
+        invalidate();
+    }
+
+    void Texture::releaseTexture() {
+        if (_textureId) {
+            glDeleteTextures(1, &_textureId);
+            _textureId = 0;
+        }
+    }
+
+    void Texture::releasePalette() {
+        if (_paletteId) {
+            glDeleteTextures(1, &_paletteId);
+            _paletteId = 0;
+        }
+    }
+
+    TextureGenState TEX_GEN_STATE{};
+
+    bool waitForTexGen() {
+        return TEX_GEN_STATE.state != TEX_GEN_IDLE;
+    }
+
+    void setupTexGen(std::shared_ptr<Texture>& texture, const ImageData& data) {
+        TEX_GEN_STATE.state = TEX_GEN_WAIT;
+        TEX_GEN_STATE.texture = &texture;
+        TEX_GEN_STATE.data = data;
+    }
+
+    void updateTexGen() {
+        if (TEX_GEN_STATE.state == TEX_GEN_WAIT) {
+            auto& data = TEX_GEN_STATE.data;
+            TEX_GEN_STATE.state = TEX_GEN_PROCESSING;
+
+            if (TEX_GEN_STATE.texture) {
+                std::shared_ptr<Texture>& tex = *TEX_GEN_STATE.texture;
+                if (!tex) {
+                    tex = std::make_shared<Texture>();
                 }
 
-                applyPalette(data);
+                if (tex) {
+                    tex->create(data.data, data.format, data.paletteSize, data.width, data.height, data.filter, data.flags);
+                }
             }
 
-            _texFlags.setBit(FLAG_KEEP_DATA, keepData);
-            if (keepData) {
-                if (_pixelData) { free(_pixelData); }
-                _pixelData = data;
-            }
-            else {
-                free(data);
-            }
-
-            glFlush();
-        }
-    }
-
-    void Texture::update(Texture& texture) {
-        update(texture, _format);
-    }
-
-    void Texture::update(Texture& texture, const TextureFormat toFormat) {
-        update(texture, toFormat, _filter);
-    }
-
-    void Texture::update(Texture& texture, const TextureFormat toFormat, const FilterMode filter) {
-        auto pix = texture.getTextureData();
-        update(pix, texture._format, texture._size.x, texture._size.y, toFormat, filter, _texFlags & FLAG_KEEP_DATA);
-        free(pix);
-    }
-    uint32_t Texture::bind(const uint32_t slot) const {
-        uint32_t bindP = slot;
-
-        GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));
-        GLCall(glBindTexture(GL_TEXTURE_2D, _texId));
-
-        if (_format == TextureFormat::Indexed) {
-            GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));
-            GLCall(glBindTexture(GL_TEXTURE_1D, _palId));;
-        }
-        return bindP;
-    }
-
-    uint32_t Texture::unbind(const uint32_t slot) const {
-        uint32_t bindP = slot;
-
-        GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));
-        GLCall(glBindTexture(GL_TEXTURE_2D, 0));
-
-        if (_format == TextureFormat::Indexed) {
-            GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));
-            GLCall(glBindTexture(GL_TEXTURE_1D, 0));;
-        }
-        return bindP;
-    }
-
-    void Texture::setTextureFormat(const TextureFormat& format) {
-        if (_format == format) { return; }
-        update(*this, format);
-    }
-    const TextureFormat Texture::getTextureFormat() const { return _format; }
-
-    void Texture::setFilterMode(const FilterMode& filter) {
-        if (_filter == filter) { return; }
-        _filter = filter;
-
-        if (_texId) {
-            const uint32_t flt = filterModeToGLFilter(filter);
-
-            glBindTexture(GL_TEXTURE_2D, _texId);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
-        }
-    }
-    FilterMode Texture::getFilterMode() const { return _filter; }
-
-    void Texture::setCompressionLevel(const int32_t level) {
-        _texFlags.setValue(uint16_t(level > 10 ? 10 : level < 0 ? 0 : level), VALUE_COMPRESSION);
-    }
-
-    int32_t Texture::getCompressionLevel() const {
-        return _texFlags.select(VALUE_COMPRESSION);
-    }
-
-    uint32_t Texture::bindNull(const uint32_t slot) {
-        uint32_t bindP = slot;
-
-        GLCall(glActiveTexture(GL_TEXTURE0 + bindP++));
-        GLCall(glBindTexture(GL_TEXTURE_2D, 0));
-        return bindP;
-    }
-
-    void Texture::applyData(const uint8_t* pixels, const bool doFlush) {
-        if (!_texId) {
-            glGenTextures(1, &_texId);
-        }
-
-        const bool isIndexed = _format == TextureFormat::Indexed;
-
-        applyPixels(pixels + (isIndexed ? 256 * 4 : 0), _size.x, _size.y, _format, _filter);
-        _texFlags.setBit(FLAG_FLIPPED, false);
-
-        if (_format == TextureFormat::Indexed) {
-            if (!_palId) {
-                glGenTextures(1, &_palId);
-            }
-            applyPalette(pixels);
-        }
-
-        if (!doFlush) { return; }
-        glFlush();
-    }
-
-    void Texture::applyPixels(const uint8_t* pixels, const uint16_t width, const uint16_t height, const TextureFormat format, const FilterMode filter) {
-        if (!_texId) { return; }
-
-        const uint32_t flt = filterModeToGLFilter(filter);
-
-        GLCall(glBindTexture(GL_TEXTURE_2D, _texId));
-        GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt));
-        GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt));
-        GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-        GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-
-        GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, getGLPixelAlignment(format)));
-        GLCall(glTexImage2D(GL_TEXTURE_2D, 0, textureFormatToGLFormat(format, true), width, height, 0, textureFormatToGLFormat(format, false), GL_UNSIGNED_BYTE, pixels));
-    }
-
-    void Texture::applyPalette(const uint8_t* palette) {
-        if (!_palId) { return; }
-
-        GLCall(glBindTexture(GL_TEXTURE_1D, _palId));
-        GLCall(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-        GLCall(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-        GLCall(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-        GLCall(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-        GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
-        GLCall(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette));
-    }
-
-    void Texture::freeTexture() {
-        if (_texId) {
-            glDeleteTextures(1, &_texId);
-            _texId = 0;
-        }
-    }
-
-    void Texture::freePalette() {
-        if (_palId) {
-            glDeleteTextures(1, &_palId);
-            _palId = 0;
+            TEX_GEN_STATE.state = TEX_GEN_IDLE;
+            TEX_GEN_STATE.texture = {};
+            TEX_GEN_STATE.data = {};
         }
     }
 }

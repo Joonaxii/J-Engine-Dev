@@ -1,0 +1,915 @@
+#include <JEngine/IO/Image.h>
+#include <iostream>
+#include <JEngine/Core/Log.h>
+#include <JEngine/Math/Graphics/JColor24.h>
+#include <JEngine/Math/Graphics/JColor32.h>
+#include <JEngine/Math/Math.h>
+#include <JEngine/Utility/DataUtilities.h>
+#include <JEngine/Utility/Span.h>
+#include <JEngine/IO/FileStream.h>
+#include <JEngine/IO/Compression/ZLib.h>
+#include <JEngine/IO/MemoryStream.h>
+
+namespace JEngine {
+    int32_t calcualtePadding(const int32_t width, const int32_t bpp) {
+        const int32_t rem = (width * bpp) & 0x3;
+        return rem ? 4 - rem : 0;
+    }
+
+    void flipRB(uint8_t* data, const int32_t width, const int32_t bpp) {
+        switch (bpp)
+        {
+            default: return;
+            case 3:
+            case 4:
+                for (size_t i = 0, j = 0; i < width; i++, j += bpp) {
+                    uint8_t temp = data[j];
+                    data[j] = data[j + 2];
+                    data[j + 2] = temp;
+                }
+                break;
+        }
+    }
+
+    namespace Bmp {
+
+        bool decode(const std::string& path, ImageData& imgData, const ImageDecodeParams params) {
+            return decode(path.c_str(), imgData, params);
+        }
+
+        bool decode(const char* path, ImageData& imgData, const ImageDecodeParams params) {
+            FileStream stream(path, "rb");
+
+            if (stream.isOpen()) {
+                return decode(stream, imgData, params);
+            }
+
+            JENGINE_CORE_ERROR("[Image-IO] (BMP) Error: Failed to open '{0}'!", path);
+            return false;
+        }
+
+        bool decode(const Stream& stream, ImageData& imgData, const ImageDecodeParams params) {
+#pragma pack(push, 1)
+            struct BmpHeader {
+                //File Header
+                uint16_t signature;
+                uint32_t length;
+                char reserved[4];
+                uint32_t dataOffset;
+
+                //Info Header
+                uint32_t headerSize;
+
+                int32_t width;
+                int32_t height;
+
+                uint16_t planes;
+                uint16_t bpp;
+
+                uint32_t compression;
+                uint32_t imageSize;
+
+                uint32_t pPMX;
+                uint32_t pPMY;
+
+                int32_t colorsUsed;
+                int32_t numOfColors;
+            };
+#pragma pack(pop, 1)
+
+            imgData = {};
+
+            size_t start = stream.tell();
+            size_t dataSize = stream.size();
+     
+            if (dataSize < 54) {
+                JENGINE_CORE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data to read header!");
+                return false;
+            }
+
+            BmpHeader header;
+            stream.read(&header, sizeof(header), false);
+
+            if (header.signature != 0x4D42U) {
+                JENGINE_CORE_ERROR("[Image-IO] (BMP) Decode Error: Invalid BMP signature!");
+                return false;
+            }
+            if (header.length > dataSize) {
+                JENGINE_CORE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data in stream!");
+                return false;
+            }
+
+            switch (header.bpp)
+            {
+                case 8:
+                case 24:
+                case 32:
+                    break;
+                default:
+                    JENGINE_CORE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported bitdepth ({0})!", header.bpp);
+                    return false;
+            }
+            if (header.compression != 0 && header.compression != 0x3) { 
+                JENGINE_CORE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported compression mode ({0})!", header.compression);
+                return false;
+            }
+
+            const bool flipX = header.width < 0;
+            const bool flipY = header.height > 0;
+            const uint32_t bytesPerPixel = header.bpp >> 3;
+
+            if (header.width < 0) { header.width = -header.width; }
+            if (header.height < 0) { header.height = -header.height; }
+
+            const uint32_t reso = header.width * header.height;
+       
+            const int32_t padding = calcualtePadding(header.width, bytesPerPixel);
+
+            const uint32_t rawScanSize = (header.width * bytesPerPixel);
+            const uint32_t scanSize = rawScanSize + padding;
+            char* scan = reinterpret_cast<char*>(_malloca(scanSize));
+
+            if (!scan) {
+                JENGINE_CORE_ERROR("[Image-IO] (BMP) Decode Error: Failed to allocate scanline of size {0} bytes!", scanSize);
+                return false;
+            }
+
+            const uint32_t paletteOff = header.bpp == 8 ? 256LL * 4 : 0;
+
+            const uint32_t pixelDataSize = rawScanSize * header.height;
+            const uint32_t outSize = pixelDataSize + paletteOff;
+
+            imgData.data = reinterpret_cast<uint8_t*>(malloc(outSize));
+
+            if (!imgData.data) {
+                JENGINE_CORE_ERROR("[Image-IO] (BMP) Decode Error: Failed to allocate pixel buffer of size {0} bytes!", scanSize);
+                _freea(scan);
+                return false;
+            }
+
+            memset(imgData.data, 0, outSize);
+            imgData.width = header.width;
+            imgData.height = header.height;
+        
+            //Take note of position before any potential extra data used for 
+            //bit depts other than 24 bits.
+            size_t pos = stream.tell();
+
+            const size_t end = size_t(pixelDataSize - rawScanSize) + paletteOff;
+            //Seek to start of data and read data to buffer
+            stream.seek(start + std::streamoff(header.dataOffset), std::ios::beg);
+            for (size_t i = 0, sP = flipY ? 0 : paletteOff; i < header.height; i++, sP += rawScanSize) {
+                stream.read(scan, scanSize, false);
+                memcpy(imgData.data + (flipY ? (end - sP) : sP), scan, rawScanSize);
+            }
+
+            stream.seek(pos, std::ios::beg);
+            switch (header.bpp)
+            {
+                case 8: {
+                    //Read palette, swap Red & Blue channels, and then set alpha to 255
+                    stream.read(imgData.data, header.numOfColors * 4, false);
+                    JColor32* cPtr = reinterpret_cast<JColor32*>(imgData.data);
+
+                    for (size_t i = 0; i < header.numOfColors; i++) {
+                        auto& color = cPtr[i];
+                        std::swap(color.b, color.r);
+                        color.a = 0xFF;
+                    }
+                    imgData.format = TextureFormat::Indexed8;
+                    break;
+                }
+                case 24: {
+                    //Swap Red & Blue channels
+                    JColor24* cPtr = reinterpret_cast<JColor24*>(imgData.data);
+                    for (size_t i = 0; i < reso; i++) {
+                        auto& color = cPtr[i];
+                        std::swap(color.b, color.r);
+                    }
+                    imgData.format = TextureFormat::RGB24;
+                    break;
+                }
+                case 32: {
+                    //Read color bit masks and calculate the bit offsets for them
+                    uint32_t maskBuffer[4]{ 0 };
+                    stream.read(reinterpret_cast<char*>(maskBuffer), 16, false);
+
+                    const int32_t maskOffsets[4]{
+                        Math::findFirstLSB(maskBuffer[0]),
+                        Math::findFirstLSB(maskBuffer[1]),
+                        Math::findFirstLSB(maskBuffer[2]),
+                        Math::findFirstLSB(maskBuffer[3]),
+                    };
+
+                    //Apply color masks
+                    uint32_t* iPtr = reinterpret_cast<uint32_t*>(imgData.data);
+                    JColor32* cPtr = reinterpret_cast<JColor32*>(imgData.data);
+                    for (size_t i = 0, j = 0; i < reso; i++, j++) {
+                        auto& color = cPtr[i];
+                        const uint32_t data = uint32_t(color);
+
+                        color.r = (data & maskBuffer[0]) >> maskOffsets[0];
+                        color.g = (data & maskBuffer[1]) >> maskOffsets[1];
+                        color.b = (data & maskBuffer[2]) >> maskOffsets[2];
+                        color.a = (data & maskBuffer[3]) >> maskOffsets[3];
+                    }
+                    imgData.format = TextureFormat::RGBA32;
+                    break;
+                }
+            }
+            return true;
+        }
+
+        bool encode(const char* path, const ImageData& imgData) {
+            FileStream fs(path);
+            if (fs.open("wb")) {
+                return encode(fs, imgData);
+            }
+            JENGINE_CORE_ERROR("[Image-IO] (BMP) Encode Error: Failed to open file '{0}' for writing!", path);
+            return false;
+        }
+
+        bool encode(const Stream& stream, const ImageData& imgData) {
+            static constexpr const char* BMP_SIG = "BM";
+            static constexpr uint32_t HEADER_SIZE = 54;
+
+            if (imgData.format == TextureFormat::Unknown) {
+                JENGINE_CORE_ERROR("[Image-IO] (BMP) Encode Error: Unknown texture format!");
+                return false;
+            }
+
+            uint8_t bpp = getBitsPerPixel(imgData.format) >> 3;
+
+            int32_t scanSR = imgData.width * bpp;
+            int32_t padding = calcualtePadding(imgData.width, 3);
+            int32_t scanSP = scanSR + padding;
+
+            int32_t extra = 0;
+            switch (imgData.format)
+            {
+                case TextureFormat::Indexed8:
+                    extra = 1024;
+                    break;
+                case TextureFormat::RGBA32:
+                    extra = 16;
+                    break;
+            }
+
+            int32_t dataOffset = HEADER_SIZE + extra;
+            int32_t total = (dataOffset + (scanSP * imgData.height));
+
+            uint8_t* scan = reinterpret_cast<uint8_t*>(_malloca(scanSP));
+            if (!scan) { 
+                JENGINE_CORE_ERROR("[Image-IO] (BMP) Encode Error: Failed to allocate scanline buffer of size {0} bytes!", scanSP);
+                return false; 
+            }
+            memset(scan, 0, scanSP);
+
+            //File Header
+            stream.write(BMP_SIG, 2);
+            stream.writeValue<uint32_t>(total, 1);
+            stream.writeZero(4);
+            stream.writeValue(dataOffset);
+
+            //Info Header
+            stream.writeValue(40);
+
+            stream.write(&imgData.width, 4);
+            stream.write(&imgData.height, 4);
+            stream.writeValue<uint16_t>(1);
+
+            stream.writeValue<uint16_t>(bpp << 3);
+
+            switch (imgData.format)
+            {
+                default:
+                    stream.writeValue<int32_t>(0, 1);
+                    stream.writeValue<int32_t>(0, 1);
+                    break;
+                case TextureFormat::RGBA32:
+                    stream.writeValue<int32_t>(3, 1);
+                    stream.writeValue<int32_t>(scanSP * imgData.height, 1);
+                    break;
+            }
+
+            stream.writeValue<uint32_t>(2835, 2);
+
+            if (imgData.format == TextureFormat::Indexed8) {
+                stream.writeValue<int32_t>(256);
+                stream.writeZero(4);
+            }
+            else {
+                stream.writeZero(8);
+            }
+
+            switch (imgData.format)
+            {
+                default:
+                    break;
+                case TextureFormat::RGBA32:
+                    stream.writeValue<uint32_t>(0x00FF0000U, 1);
+                    stream.writeValue<uint32_t>(0x0000FF00U, 1);
+                    stream.writeValue<uint32_t>(0x000000FFU, 1);
+                    stream.writeValue<uint32_t>(0xFF000000U, 1);
+                    break;
+                case TextureFormat::Indexed8: {
+                    JColor32 palette[256]{};
+                    memcpy(palette, imgData.data, 1024);
+                    for (size_t i = 0; i < 256; i++) {
+                        palette[i].flipRB();
+                        palette[i].a = 0x00;
+                    }
+                    stream.write(palette, sizeof(palette));
+                }
+                    break;
+            }
+
+            for (size_t y = 0, yP = size_t(imgData.height) * scanSR - size_t(scanSR); y < imgData.height; y++, yP -= scanSR) {
+                memcpy(scan, imgData.data + yP, scanSR);
+                flipRB(scan, imgData.width, bpp);
+                stream.write(scan, scanSP);
+            }
+            return true;
+        }
+    }
+
+    namespace Png {
+        enum PngChunkType : uint32_t {
+            CH_IHDR = 0x52444849U,
+            CH_PLTE = 0x45544C50U,
+            CH_tRNS = 0x534E5274U,
+            CH_IDAT = 0x54414449U,
+            CH_IEND = 0x444E4549U,
+        };
+
+#pragma pack(push, 1)
+        struct PngChunk {
+            uint32_t length{0};
+            PngChunkType type{};
+            size_t position{0};
+            uint32_t crc{0};
+
+            PngChunk() : length(), type(), position(), crc() {}
+            PngChunk(const uint32_t length, const PngChunkType type) : length(length), type(type), position(), crc() {}
+
+            void set(const uint32_t length, const PngChunkType type) {
+                this->length = length;
+                this->type = type;
+            }
+        };
+
+        struct IHDRChunk {
+            int32_t width;
+            int32_t height;
+            uint8_t bitDepth;
+            uint8_t colorType;
+            uint8_t compression;
+            uint8_t filter;
+            uint8_t interlaced;
+        };
+
+#pragma pack(pop, 1)
+
+        static bool calculateDiff(const uint8_t* data, size_t width, size_t bpp, uint64_t& current) {
+            uint64_t curVal = 0;
+            uint64_t buf = 0;
+            for (size_t i = 0, j = 0; i < width; i++, j += bpp) {
+                memcpy(&buf, data + j, bpp);
+                curVal += buf;
+                if (curVal >= current) { return false; }
+            }
+            current = curVal;
+            return true;
+        }
+
+        static int32_t paethPredictor(int32_t a, int32_t b, int32_t c) {
+            int32_t p = a + b - c;
+            int32_t pA = std::abs(p - a);
+            int32_t pB = std::abs(p - b);
+            int32_t pC = std::abs(p - c);
+
+            if (pA <= pB && pA <= pC) { return a; }
+            return pB <= pC ? b : c;
+        }
+
+        static void applyFilter(Span<uint8_t>& current, Span<uint8_t>& prior, Span<uint8_t>& target, int32_t width, int32_t bpp, uint8_t filter) {
+            width *= bpp;
+            switch (filter)
+            {
+                case 1: //Sub
+                    memcpy(target.get(), current.get(), bpp);
+                    for (int32_t x = bpp, xS = 0; x < width; x++, xS++) {
+                        target[x] = uint8_t(int32_t(current[x]) - current[xS]);
+                    }
+                    break;
+                case 2: //Up
+                    for (int32_t x = 0; x < width; x++) {
+                        target[x] = uint8_t(int32_t(current[x]) - prior[x]);
+                    }
+                    break;
+                case 3: //Average
+                    for (int32_t x = 0, xS = -bpp; x < width; x++, xS++) {
+                        target[x] = uint8_t(int32_t(current[x]) - ((int32_t(prior[x]) + (xS < 0 ? 0 : current[xS])) >> 1));
+                    }
+                    break;
+                case 4: //Paeth
+                    for (int32_t x = 0, xS = -bpp; x < width; x++, xS++) {
+                        int32_t a = (xS < 0 ? 0 : current[xS]);
+                        int32_t b = prior[x];
+                        int32_t c = (xS < 0 ? 0 : prior[xS]);
+                        target[x] = uint8_t(int32_t(current[x]) - paethPredictor(a, b, c));
+                    }
+                    break;
+            }
+        }
+
+        static void reverseFilter(Span<uint8_t>& current, Span<uint8_t>& prior, int32_t width, int32_t bpp, uint8_t filter) {
+            width *= bpp;
+            switch (filter)
+            {
+                case 1: //Sub
+                    for (int32_t x = bpp, xS = 0; x < width; x++, xS++) {
+                        current[x] = uint8_t(current[x] + current[xS]);
+                    }
+                    break;
+                case 2: //Up
+                    for (int32_t x = 0; x < width; x++) {
+                        current[x] = uint8_t(current[x] + prior[x]);
+                    }
+                    break;
+                case 3: //Average
+                    for (int32_t x = 0, xS = -bpp; x < width; x++, xS++) {
+                        current[x] = uint8_t(current[x] + ((prior[x] + (xS < 0 ? 0 : current[xS])) >> 1));
+                    }
+                    break;
+                case 4: //Paeth
+                    for (int32_t x = 0, xS = -bpp; x < width; x++, xS++) {
+                        int32_t a = (xS < 0 ? 0 : current[xS]);
+                        int32_t b = prior[x];
+                        int32_t c = (xS < 0 ? 0 : prior[xS]);
+                        current[x] = uint8_t(current[x] + paethPredictor(a, b, c));
+                    }
+                    break;
+            }
+        }
+
+        static bool readChunk(const Stream& stream, PngChunk& chunk) {
+            stream.readValue<uint32_t>(&chunk.length, 1, true);
+            stream.readValue<PngChunkType>(&chunk.type, 1, false);
+            chunk.position = stream.tell();
+            stream.seek(chunk.length, SEEK_CUR);
+            stream.readValue<uint32_t>(&chunk.crc, 1, true);
+            stream.seek(-int64_t(chunk.length + 4), SEEK_CUR);
+
+            //TODO: Maybe adding some validation here to return true or false?
+            return true;
+        }
+
+        bool decode(const std::string& path, ImageData& imgData, const ImageDecodeParams params) {
+            return decode(path.c_str(), imgData, params);
+        }
+
+        bool decode(const char* path, ImageData& imgData, const ImageDecodeParams params) {
+            FileStream stream(path, "rb");
+            if (stream.isOpen()) {
+                return decode(stream, imgData, params);
+            }
+
+            JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Failed to open '{0}'!", path);
+            return false;
+        }
+
+        bool decode(const Stream& stream, ImageData& imgData, const ImageDecodeParams params) {
+            static uint8_t PNG_HEADER[]{ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, };
+            uint8_t buffer[32]{0};
+
+            stream.read(buffer, 8, false);
+            if (std::memcmp(PNG_HEADER, buffer, 8)) {
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Invalid PNG signature!");
+                return false;
+            }
+
+            std::vector<PngChunk> idats{};
+            PngChunk paletteChnk{};
+            PngChunk alphaChnk{};
+
+            size_t totalIdat = 0;
+
+            IHDRChunk ihdr{};
+            PngChunk chunk{};
+            while (!stream.isEOF()) {
+                if (!readChunk(stream, chunk)) { break; }
+                switch (chunk.type)
+                {
+                    case CH_PLTE:
+                        paletteChnk = chunk;
+                        stream.seek(chunk.length + 4, SEEK_CUR);
+                        break;
+                    case CH_tRNS:
+                        alphaChnk = chunk;
+                        stream.seek(chunk.length + 4, SEEK_CUR);
+                        break;
+
+                    default:
+                        stream.seek(chunk.length + 4, SEEK_CUR);
+                        break;
+
+                    case CH_IHDR:
+                        stream.read(&ihdr, sizeof(IHDRChunk), false);
+                        Data::reverseEndianess(&ihdr, sizeof(uint32_t), 2);
+                        stream.seek(4, SEEK_CUR);
+
+                        if (ihdr.interlaced) {
+                            JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Interlaced PNGs are note supported!");
+                            return false;
+                        }
+
+                        switch (ihdr.bitDepth)
+                        {
+                            default:
+                                JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported bitdepth {0}!", ihdr.bitDepth);
+                                return false;
+                            case 8:
+                                break;
+                        }
+
+                        switch (ihdr.colorType)
+                        {
+                            default:
+                                JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported color type {0}!", ihdr.colorType);
+                                return false;
+                            case 0:
+                                imgData.format = TextureFormat::R8;
+                                break;
+                            case 2:
+                                imgData.format = TextureFormat::RGB24;
+                                break;
+                            case 6:
+                                imgData.format = TextureFormat::RGBA32;
+                                break;
+                            case 3:
+                                imgData.format = TextureFormat::Indexed8;
+                                break;
+                        }
+
+                        imgData.width  = uint16_t(std::abs(ihdr.width));
+                        imgData.height = uint16_t(std::abs(ihdr.height));
+                        break;
+
+                    case CH_IDAT:
+                        totalIdat += chunk.length;
+                        idats.emplace_back(chunk);
+                        stream.seek(chunk.length + 4, SEEK_CUR);
+                        break;
+
+                    case CH_IEND: //If we hit an IEND chunk, break out of the loop
+                        stream.seek(4, SEEK_CUR);
+                        goto end;
+                }
+            }
+            end:
+
+            uint8_t bpp = getBitsPerPixel(imgData.format) >> 3;
+            uint32_t scanSR = imgData.width * bpp;
+            uint32_t scanSP = scanSR + 1;
+
+            uint32_t paletteSize = imgData.format == TextureFormat::Indexed8 ? 256 * 4 : (params.flags & F_IMG_BUILD_PALETTE) ? 256*256*4 : 0;
+            uint32_t totalSize = scanSR * imgData.height + paletteSize;
+            uint32_t rawSize = scanSP * imgData.height;
+
+            imgData.data = reinterpret_cast<uint8_t*>(malloc(totalSize));
+            if (!imgData.data) {
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate pixel buffer! ({0} bytes)", totalSize);
+                return false;
+            }
+            memset(imgData.data, 0, totalSize);
+
+            uint8_t* rawBuffer = reinterpret_cast<uint8_t*>(_malloca(rawSize));
+            if (!rawBuffer) {
+                free(imgData.data);
+                imgData.data = nullptr;
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate decompress buffer! ({0} bytes)", rawSize);
+                return false;
+            }
+
+            uint8_t* compBuffer = reinterpret_cast<uint8_t*>(_malloca(totalIdat));
+            if (!compBuffer) {
+                _freea(rawBuffer);
+                free(imgData.data);
+                imgData.data = nullptr;
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate IDAT buffer! ({0} bytes)", totalIdat);
+                return false;
+            }
+
+            size_t pos = 0;
+            for (const auto& ch : idats) {
+                stream.seek(ch.position, SEEK_SET);
+                stream.read(compBuffer + pos, ch.length, false);
+                pos += ch.length;
+            }
+            int32_t ret = ZLib::inflateData(compBuffer, totalIdat, rawBuffer, rawSize);
+            _freea(compBuffer);
+
+            if (ret == -1) {
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: ZLib Inflate failed!");
+                _freea(rawBuffer);
+                
+                free(imgData.data);
+                imgData.data = nullptr;
+                return false;
+            }
+
+            uint8_t* scanBuffer = reinterpret_cast<uint8_t*>(_malloca(scanSP * 2));
+            if (!scanBuffer) {
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate scan buffer!");
+                _freea(rawBuffer);
+
+                free(imgData.data);
+                imgData.data = nullptr;
+                return false;
+            }
+            memset(scanBuffer, 0, scanSP * 2);
+
+            if (imgData.format == TextureFormat::Indexed8) {
+                if (paletteChnk.type == CH_PLTE) {
+                    stream.seek(paletteChnk.position, SEEK_SET);
+                    size_t count = paletteChnk.length / 3;
+
+                    JColor24 palette[256]{};
+                    stream.read(palette, sizeof(JColor24), count);
+
+                    for (size_t i = 0, j = 0; i < count; i++, j += 4) {
+                        memcpy(imgData.data + j, &palette[i], 3);
+                        imgData.data[j + 3] = 0xFF;
+                    }
+                }
+
+                if (alphaChnk.type == CH_tRNS) {
+                    stream.seek(alphaChnk.position, SEEK_SET);
+
+                    uint8_t alpha[256]{0};
+                    stream.read(alpha, alphaChnk.length, false);
+
+                    for (size_t i = 0, j = 3; i < alphaChnk.length; i++, j += 4) {
+                        imgData.data[j] = alpha[i];
+                    }
+                }
+            }
+
+            Span<uint8_t> prior  (scanBuffer,          scanSP);
+            Span<uint8_t> current(scanBuffer + scanSP, scanSP);
+
+            Span<uint8_t> priorPix = prior.slice(1);
+            Span<uint8_t> currentPix = current.slice(1);
+
+            TextureFormat fmt = TextureFormat::Indexed8;
+            size_t posR = paletteSize;
+            int32_t colorCount = 0;
+            bool canBuild = bpp > 1;
+            for (size_t y = 0, xP = 0, xPS = 0; y < imgData.height; y++, xP += scanSP) {
+                memcpy(current.get(), rawBuffer + xP, scanSP);
+                reverseFilter(currentPix, priorPix, imgData.width, bpp, current[0]);
+
+                auto pixTgt = imgData.data + posR;
+                currentPix.copyTo(pixTgt);
+                posR += scanSR;
+
+                if (canBuild && imgData.format != TextureFormat::Indexed8 && (params.flags & F_IMG_BUILD_PALETTE)) {
+                    if (!tryBuildPalette(pixTgt, 0, scanSR, colorCount, fmt, bpp, imgData.data, -1)) {
+                        canBuild = false;
+                    }
+                }
+                current.copyTo(prior);
+            }
+
+            if (colorCount > 0 && canBuild) {
+                colorCount = fmt == TextureFormat::Indexed8 ? 256 : Math::alignToPalette(colorCount);
+
+                JENGINE_CORE_TRACE("[Image-IO] (PNG) Decode: Building palette with {0} colors!", colorCount);
+                totalSize = colorCount * 4 + (imgData.width * imgData.height * 2);
+                uint8_t* temp = reinterpret_cast<uint8_t*>(malloc(totalSize));
+          
+                if (!temp) {
+                    JENGINE_CORE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate Indexed pixel buffer! ({0} bytes)", totalSize);
+                    return false;
+                }
+                applyPalette(imgData.data, imgData.width, imgData.height, colorCount, imgData.format, temp, fmt, -1);
+
+                free(imgData.data);
+                imgData.data = temp;
+            }
+
+            _freea(scanBuffer);
+            _freea(rawBuffer);
+            return true;
+        }
+
+        static void writeChunk(const Stream& stream, const PngChunk& chunk, const uint8_t* data) {
+            stream.writeValue(chunk.length, 1, true);
+            stream.writeValue(chunk.type);
+            stream.write(data, chunk.length);
+
+            uint32_t crc = Data::updateCRC(0xFFFFFFFFU, &chunk.type, sizeof(PngChunkType));
+            crc = Data::updateCRC(crc, data, chunk.length) ^ 0xFFFFFFFFU;
+            stream.writeValue(crc, 1, true);
+        }
+
+        bool encode(const char* path, const ImageData& imgData, const uint32_t compression)  {
+            FileStream fs(path);
+            if (fs.open("wb")) {
+                return encode(fs, imgData, compression);
+            }
+            JENGINE_CORE_ERROR("[Image-IO] (PNG) Encode Error: Failed to open file '{0}' for writing!", path);
+            return false;
+        }
+
+        bool encode(const Stream& stream, const ImageData& imgData, const uint32_t compression) {
+            if (!imgData.data) {
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Encode Error: Given pixel array is null!");
+                return false;
+            }
+
+            switch (imgData.format)
+            {
+                default:
+                    JENGINE_CORE_ERROR("[Image-IO] (PNG) Encode Error: Encoding for format '{0}' isn't supported!", getTextureFormatName(imgData.format));
+                    return false;
+                case TextureFormat::R8:
+                case TextureFormat::Indexed8:
+                case TextureFormat::Indexed16:
+                case TextureFormat::RGB24:
+                case TextureFormat::RGBA32:
+                    break;
+            }
+
+            if (imgData.width < 1 || imgData.height < 1) {
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Encode Error: Invalid resolution ({0}x{1}) for encoding!", imgData.width, imgData.height);
+                return false;
+            }
+
+            static uint8_t PNG_HEADER[]{ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, };
+            uint8_t buffer[32]{ 0 };
+            Span<uint8_t> bufSpan(buffer, 32);
+            PngChunk chunk;
+
+            stream.write(PNG_HEADER, sizeof(PNG_HEADER));
+
+            //IHDR
+            bufSpan.writeAt<uint32_t>(0, imgData.width, true);
+            bufSpan.writeAt<uint32_t>(4, imgData.height, true);
+
+            TextureFormat fmt = imgData.format;
+            switch (imgData.format)
+            {
+                default:
+                    bufSpan.writeAt<uint8_t>(8, 8);
+                    bufSpan.writeAt<uint8_t>(9, 0);
+                    break;
+                case TextureFormat::Indexed16:
+                    if (hasAlpha(imgData.data, imgData.width, imgData.height, imgData.format, imgData.paletteSize)) {
+                        fmt = TextureFormat::RGBA32;
+                        goto rgbaSet;
+                    }
+                    fmt = TextureFormat::RGB24;
+                    goto rgbSet;
+                    break;
+                case TextureFormat::RGB24:
+                    rgbSet:
+                    bufSpan.writeAt<uint8_t>(8, 8);
+                    bufSpan.writeAt<uint8_t>(9, 2);
+                    break;                      
+                case TextureFormat::RGBA32:
+                    rgbaSet:
+                    bufSpan.writeAt<uint8_t>(8, 8);
+                    bufSpan.writeAt<uint8_t>(9, 6);
+                    break;
+                case TextureFormat::Indexed8:
+                    bufSpan.writeAt<uint8_t>(8, 8);
+                    bufSpan.writeAt<uint8_t>(9, 3);
+                    break;
+            }
+            bufSpan.writeValuesAt<uint8_t>(10, 0, 3, false);
+
+            chunk.type = CH_IHDR;
+            chunk.length = 13;
+            writeChunk(stream, chunk, bufSpan.get());
+
+            if (imgData.format == TextureFormat::Indexed8) {
+                //Main palette, always 256
+                JColor24 palette[256]{};
+
+                for (size_t i = 0, j = 0, k = 0; i < 256; i++, j += 3, k += 4) {
+                    memcpy(palette + i, imgData.data + k, 3);
+                }
+
+                chunk.type = CH_PLTE;
+                chunk.length = sizeof(palette);
+                writeChunk(stream, chunk, reinterpret_cast<uint8_t*>(palette));
+
+                //Transparency
+                uint8_t* alpha = reinterpret_cast<uint8_t*>(palette);
+                for (size_t i = 0, j = 3; i < 256; i++, j += 4) {
+                    alpha[i] = imgData.data[j];
+                }
+                chunk.type = CH_tRNS;
+                chunk.length = 256;
+                writeChunk(stream, chunk, alpha);
+            }
+
+            int32_t bpp = getBitsPerPixel(fmt) >> 3;
+            uint32_t scanSR = imgData.width * bpp;
+            uint32_t scanSP = scanSR + 1;
+            uint8_t* scanBuffer = reinterpret_cast<uint8_t*>(malloc(scanSP * 6));
+            if (!scanBuffer) {
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Encode Error: Couldn't allocate scan/filter buffer! ({0} bytes)", scanSP * 6);
+                return false;
+            }
+
+            size_t cmpBufSize = scanSP * (imgData.height + 2) + 4;
+            uint8_t* compressBuf = reinterpret_cast<uint8_t*>(malloc(cmpBufSize));
+            Span<uint8_t> compBuf(compressBuf, cmpBufSize);
+            if (!compressBuf) {
+                free(scanBuffer);
+                JENGINE_CORE_ERROR("[Image-IO] (PNG) Encode Error: Couldn't allocate compression buffer! ({0} bytes)", cmpBufSize);
+                return false;
+            }
+
+            bool indexed = imgData.format == TextureFormat::Indexed8 || imgData.format == TextureFormat::Indexed16;
+            MemoryStream compStrm(compressBuf, 0, cmpBufSize);
+            uint8_t* pixData = imgData.data + (indexed ? imgData.paletteSize * 4 : 0);
+
+            memset(scanBuffer, 0, scanSP * 6);
+            Span<uint8_t> prior(scanBuffer, scanSP);
+            Span<uint8_t> current(scanBuffer + scanSP, scanSP);
+
+            Span<uint8_t> priorPix = prior.slice(1);
+            Span<uint8_t> currentPix = current.slice(1);
+
+            Span<uint8_t> filters[4]
+            {
+                Span<uint8_t>(scanBuffer + scanSP * 2 , scanSR),
+                Span<uint8_t>(scanBuffer + scanSP * 2 + scanSR, scanSR),
+                Span<uint8_t>(scanBuffer + scanSP * 2 + scanSR * 2, scanSR),
+                Span<uint8_t>(scanBuffer + scanSP * 2 + scanSR * 3, scanSR),
+            };
+
+            static constexpr size_t ZLIB_BUFFER_SIZE = 8192 << 3;
+            static uint8_t BUFFER[ZLIB_BUFFER_SIZE]{};
+            ZLib::ZLibContext context{};
+            ZLib::deflateBegin(context, compression, BUFFER, ZLIB_BUFFER_SIZE);
+
+            uint64_t score = 0;
+            uint8_t filter = 0;
+            int32_t dataOut = 0;
+            current[0] = 0;
+
+            uint32_t compBufPos = 0;
+
+            int32_t bppR = getBitsPerPixel(imgData.format) >> 3;
+            for (int32_t y = 0, yP = 0, yPP = 0; y < imgData.height; y++, yP += scanSR, yPP += bppR) {
+                if (imgData.format == TextureFormat::Indexed16) {
+                    currentPix.write<uint8_t>(pixData + yPP, scanSR);
+                }
+                else {
+                    currentPix.write<uint8_t>(pixData + yP, scanSR);
+                }
+
+                if (imgData.format != TextureFormat::Indexed8) {
+                    score = UINT64_MAX;
+                    filter = 0;
+                    calculateDiff(currentPix.get(), imgData.width, bpp, score);
+
+                    Span<uint8_t> pixScan(pixData + yP, scanSR);
+                    for (uint8_t i = 0; i < 4; i++) {
+                        applyFilter(pixScan, priorPix, filters[i], imgData.width, bpp, i + 1);
+                        if (calculateDiff(filters[i].get(), imgData.width, bpp, score)) {
+                            filter = uint8_t(i + 1);
+                        }
+                    }
+
+                    if (filter > 0) {
+                        filters[filter - 1].copyTo(currentPix.get());
+                    }
+
+                    current[0] = filter;
+                    priorPix.write<uint8_t>(pixData + yP, scanSR);
+                }
+
+                ZLib::deflateSegment(context, current.get(), current.length(), compStrm, BUFFER, ZLIB_BUFFER_SIZE);
+            }
+            ZLib::deflateEnd(context, dataOut, compStrm, BUFFER, ZLIB_BUFFER_SIZE);
+
+            chunk.type = CH_IDAT;
+            chunk.length = uint32_t(compStrm.tell());
+            writeChunk(stream, chunk, compressBuf);
+
+            chunk.type = CH_IEND;
+            chunk.length = 0;
+            writeChunk(stream, chunk, nullptr);
+
+            free(scanBuffer);
+            free(compressBuf);
+            return true;
+        }
+    }
+}
