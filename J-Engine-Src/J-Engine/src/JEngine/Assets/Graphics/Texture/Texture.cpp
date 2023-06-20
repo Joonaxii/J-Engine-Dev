@@ -21,6 +21,14 @@ namespace JEngine {
         release();
     }
 
+    bool Texture::create(const ImageData& img) {
+        return create(img.data, img.format, img.paletteSize, img.width, img.height, img.filter, img.flags);
+    }
+
+    bool Texture::create(const ImageData& img, FilterMode filter) {
+        return create(img.data, img.format, img.paletteSize, img.width, img.height, filter, img.flags);
+    }
+
     bool Texture::create(const uint8_t* input, TextureFormat format, int32_t paletteSize, int32_t width, int32_t height, FilterMode filter, uint8_t flags) {
         _valid = false;
         const bool isIndexed = format == TextureFormat::Indexed8 || format == TextureFormat::Indexed16;
@@ -94,6 +102,57 @@ namespace JEngine {
         }
 
         _valid = true;
+        return true;
+    }
+
+    bool Texture::update(const ImageData& img, int32_t x, int32_t y, uint8_t flags) {
+        return update(img.data, img.format, img.paletteSize, x, y, img.width, img.height, flags);
+    }
+
+    bool Texture::update(const uint8_t* input, TextureFormat format, int32_t paletteSize, int32_t x, int32_t y, int32_t width, int32_t height, uint8_t flags) {
+        if (_textureId == 0) {
+            JENGINE_CORE_WARN("Couldn't update texture, texture not created!");
+            return false;
+        }
+
+        if (format == TextureFormat::Unknown || width == 0 || height == 0) {
+            JENGINE_CORE_WARN("Couldn't update texture, given data was invalid! ({0}, {1}x{2})", getTextureFormatName(format), width, height);
+            return false;
+        }
+
+        int32_t leftX = _width - x;
+        int32_t leftY = _height - y;
+
+        if (leftX < width || leftY < height) {
+            JENGINE_CORE_WARN("Couldn't update texture, given texture block was invalid! ({0}, {1}, {2}x{3} | {4}x{5})", x, y, width, height, _width, _height);
+            return false;
+        }
+
+        switch (_format) {
+            default:
+                JENGINE_CORE_WARN("Couldn't update texture, unsupported format '{0}'!", getTextureFormatName(format));
+                return false;
+
+            case TextureFormat::Indexed8:
+            case TextureFormat::Indexed16:
+                if (_format != format) {
+                    JENGINE_CORE_WARN("Couldn't update texture, cannot convert from format '{0}' to '{1}'!", getTextureFormatName(format), getTextureFormatName(_format));
+                    return false;
+                }
+                break;
+            case TextureFormat::R8:
+            case TextureFormat::RGB24:
+            case TextureFormat::RGBA32:
+                break;
+        }
+
+        //If the formats are identical, we can just copy the data directly
+        if (_format == format) {
+
+
+
+            return true;
+        }
         return true;
     }
 
@@ -303,37 +362,76 @@ namespace JEngine {
         }
     }
 
-    TextureGenState TEX_GEN_STATE{};
-
-    bool waitForTexGen() {
-        return TEX_GEN_STATE.state != TEX_GEN_IDLE;
+    TextureGenState* getTextureGens() {
+        static TextureGenState TEX_GEN_STATE[MAX_TEXTURES_QUEUED]{};
+        return TEX_GEN_STATE;
     }
 
-    void setupTexGen(std::shared_ptr<Texture>& texture, const ImageData& data) {
-        TEX_GEN_STATE.state = TEX_GEN_WAIT;
-        TEX_GEN_STATE.texture = &texture;
-        TEX_GEN_STATE.data = data;
+    int32_t getFirstAvailableTexGen() {
+        auto gens = getTextureGens();
+        for (int32_t i = 0; i < MAX_TEXTURES_QUEUED; i++) {
+            if (gens[i].state == TEX_GEN_FREE) { return i; }
+        }
+        return -1;
+    }
+
+    void waitForTexGen(int32_t index, size_t sleepFor) {
+        while (shouldWaitForTexGen(index)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepFor));
+        }
+    }
+
+    bool shouldWaitForTexGen(int32_t index) {
+        auto& gen = getTextureGens()[index];
+        switch (gen.state)
+        {
+            default: return true;
+            case TEX_GEN_IDLE:
+                gen.state = TEX_GEN_FREE;
+                return false;
+            case TEX_GEN_FREE:
+                return false;
+        }
+    }
+
+    int32_t setupTexGen(std::shared_ptr<Texture>& texture, const ImageData& data) {
+        int32_t nextValid = getFirstAvailableTexGen();
+
+        while (nextValid < 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            nextValid = getFirstAvailableTexGen();
+        }
+
+        auto& genState = getTextureGens()[nextValid];
+        genState.state = TEX_GEN_WAIT;
+        genState.texture = &texture;
+        genState.data = data;
+        return nextValid;
     }
 
     void updateTexGen() {
-        if (TEX_GEN_STATE.state == TEX_GEN_WAIT) {
-            auto& data = TEX_GEN_STATE.data;
-            TEX_GEN_STATE.state = TEX_GEN_PROCESSING;
+        auto texGens = getTextureGens();
+        for (size_t i = 0; i < MAX_TEXTURES_QUEUED; i++) {
+            auto& genState = texGens[i];
+            if (genState.state == TEX_GEN_WAIT) {
+                auto& data = genState.data;
+                genState.state = TEX_GEN_PROCESSING;
 
-            if (TEX_GEN_STATE.texture) {
-                std::shared_ptr<Texture>& tex = *TEX_GEN_STATE.texture;
-                if (!tex) {
-                    tex = std::make_shared<Texture>();
+                if (genState.texture) {
+                    std::shared_ptr<Texture>& tex = *genState.texture;
+                    if (!tex) {
+                        tex = std::make_shared<Texture>();
+                    }
+
+                    if (tex) {
+                        tex->create(data.data, data.format, data.paletteSize, data.width, data.height, data.filter, data.flags);
+                    }
                 }
 
-                if (tex) {
-                    tex->create(data.data, data.format, data.paletteSize, data.width, data.height, data.filter, data.flags);
-                }
+                genState.state = TEX_GEN_IDLE;
+                genState.texture = {};
+                genState.data = {};
             }
-
-            TEX_GEN_STATE.state = TEX_GEN_IDLE;
-            TEX_GEN_STATE.texture = {};
-            TEX_GEN_STATE.data = {};
         }
     }
 }

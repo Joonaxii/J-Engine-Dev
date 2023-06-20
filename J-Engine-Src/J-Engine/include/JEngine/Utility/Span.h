@@ -15,8 +15,8 @@ namespace JEngine {
 
         size_t length() const { return _length; }
 
-        const T& operator[](int32_t index) const { return *(_ptr + index); }
-        T& operator[](int32_t index) { return *(_ptr + index); }
+        const T& operator[](size_t index) const { return *(_ptr + index); }
+        T& operator[](size_t index) { return *(_ptr + index); }
 
         T* get() { return _ptr; }
         const T* get() const { return _ptr; }
@@ -38,6 +38,22 @@ namespace JEngine {
         void copyTo(void* other) const {
             memcpy(other, _ptr, _length * sizeof(T));
         }
+
+        int32_t indexOf(const T& find) const {
+            for (int32_t i = 0; i < _length; i++) {
+                if (_ptr[i] == find) { return i; }
+            }
+            return -1;
+        }
+
+        int32_t indexOfLast(const T& find) const {
+            for (int32_t i = _length - 1; i >= 0; i--) {
+                if (_ptr[i] == find) { return i; }
+            }
+            return -1;
+        }
+
+        Span<T> trim() const;
 
         bool equals(const ConstSpan<T>& other);
         bool equals(const void* data, size_t size) {
@@ -195,7 +211,7 @@ namespace JEngine {
 
         size_t length() const { return _length; }
 
-        const T& operator[](int32_t index) const { return *(_ptr + index); }
+        const T& operator[](size_t index) const { return *(_ptr + index); }
         const T* get() const { return _ptr; }
 
         ConstSpan<T> slice(int64_t index, size_t length) const {
@@ -214,6 +230,20 @@ namespace JEngine {
 
         void copyTo(void* other) const {
             memcpy(other, _ptr, _length * sizeof(T));
+        }
+
+        int32_t indexOf(const T& find) const {
+            for (int32_t i = 0; i < _length; i++) {
+                if (_ptr[i] == find) { return i; }
+            }
+            return -1;
+        }
+
+        int32_t indexOfLast(const T& find) const {
+            for (int32_t i = _length - 1; i >= 0; i--) {
+                if (_ptr[i] == find) { return i; }
+            }
+            return -1;
         }
 
         bool equals(const Span<T>& other);
@@ -235,6 +265,8 @@ namespace JEngine {
             }
             return true;
         }
+
+        ConstSpan<T> trim() const;
 
         template<typename U>
         U read(const size_t start, const bool isBigEndian = false) const {
@@ -298,6 +330,123 @@ namespace JEngine {
         const T* _ptr;
         size_t _length;
     };
+
+    inline int32_t indexOf(Span<char> span, const char* string, size_t len) {
+        if (len < 1) { return -1; }
+
+        int32_t inRow = 0;
+        int32_t index = -1;
+        for (size_t i = 0; i < span.length(); i++) {
+            if (span[i] == string[inRow]) {
+                if (inRow == 0) {
+                    index = int32_t(i);
+                }
+                inRow++;
+                if (inRow >= len) { return index; }
+            }
+            else if (inRow > 0) {
+                inRow = 0;
+            }
+        }
+        return -1;
+    }
+    inline int32_t indexOf(ConstSpan<char> span, const char* string, size_t len) {
+        if (len < 1) { return -1; }
+
+        int32_t inRow = 0;
+        int32_t index = -1;
+        for (size_t i = 0; i < span.length(); i++) {
+            if (span[i] == string[inRow]) {
+                if (inRow == 0) {
+                    index = int32_t(i);
+                }
+                inRow++;
+                if (inRow >= len) { return index; }
+            }
+            else if (inRow > 0) {
+                inRow = 0;
+            }
+        }
+        return -1;
+    }
+
+    inline int32_t indexOf(Span<char> span, const char* string) {
+        return indexOf(span, string, strlen(string));
+    }
+    inline int32_t indexOf(ConstSpan<char> span, const char* string) {
+        return indexOf(span, string, strlen(string));
+    }
+    inline int32_t indexOf(Span<char> span, Span<char> string) {
+        return indexOf(span, string.get(), string.length());
+    }
+    inline int32_t indexOf(ConstSpan<char> span, Span<char> string) {
+        return indexOf(span, string.get(), string.length());
+    }
+    inline int32_t indexOf(Span<char> span, ConstSpan<char> string) {
+        return indexOf(span, string.get(), string.length());
+    }
+    inline int32_t indexOf(ConstSpan<char> span, ConstSpan<char> string) {
+        return indexOf(span, string.get(), string.length());
+    }
+
+
+    inline int32_t indexOfLast(Span<char> span, const char* string, size_t len) {
+        if (len < 1) { return -1; }
+        int32_t inRow = 0;
+        int32_t index = -1;
+        int32_t sLen = int32_t(span.length() - 1);
+        for (int32_t i = sLen; i >= 0; i--) {
+            if (span[i] == string[inRow]) {
+                if (inRow == 0) {
+                    index = i;
+                }
+                inRow++;
+                if (inRow >= len) { return index; }
+            }
+            else if(inRow > 0) {
+                inRow = 0;
+            }
+        }
+        return -1;
+    }
+    inline int32_t indexOfLast(ConstSpan<char> span, const char* string, size_t len) {
+        if (len < 1) { return -1; }
+        int32_t inRow = 0;
+        int32_t index = -1;
+        int32_t sLen = int32_t(span.length() - 1);
+        for (int32_t i = sLen; i >= 0; i--) {
+            if (span[i] == string[inRow]) {
+                if (inRow == 0) {
+                    index = i;
+                }
+                inRow++;
+                if (inRow >= len) { return index; }
+            }
+            else if (inRow > 0) {
+                inRow = 0;
+            }
+        }
+        return -1;
+    }
+
+    inline int32_t indexOfLast(Span<char> span, const char* string) {
+        return indexOfLast(span, string, strlen(string));
+    }
+    inline int32_t indexOfLast(ConstSpan<char> span, const char* string) {
+        return indexOfLast(span, string, strlen(string));
+    }
+    inline int32_t indexOfLast(Span<char> span, Span<char> string) {
+        return indexOfLast(span, string.get(), string.length());
+    }
+    inline int32_t indexOfLast(ConstSpan<char> span, Span<char> string) {
+        return indexOfLast(span, string.get(), string.length());
+    }
+    inline int32_t indexOfLast(Span<char> span, ConstSpan<char> string) {
+        return indexOfLast(span, string.get(), string.length());
+    }
+    inline int32_t indexOfLast(ConstSpan<char> span, ConstSpan<char> string) {
+        return indexOfLast(span, string.get(), string.length());
+    }
 }
 
 template<typename T>
@@ -329,4 +478,74 @@ inline bool JEngine::ConstSpan<T>::equals(const JEngine::Span<T>& other) {
 template<typename T>
 inline JEngine::Span<T>::operator JEngine::ConstSpan<T>() const {
     return JEngine::ConstSpan<T>(_ptr, _length);
+}
+
+template<>
+inline JEngine::Span<char> JEngine::Span<char>::trim() const {
+    size_t startI = 0;
+    size_t endI = _length;
+
+
+    bool checkA = true;
+    bool checkB = true;
+    for (size_t i = 0, j = _length-1; i < _length; i++, j--) {
+
+        if (checkA) {
+            if (isspace(_ptr[i])) {
+                startI++;
+            }
+            else {
+                checkA = false;
+            }
+        }
+
+        if (checkB) {
+            if (isspace(_ptr[j])) {
+                endI--;
+            }
+            else {
+                checkB = false;
+            }
+        }
+
+        if (!checkA && !checkB) { break; }
+    }
+
+    if (startI >= endI) { return Span<char>(_ptr + startI, 0); }
+    return Span<char>(_ptr + startI, endI - startI);
+}
+
+template<>
+inline JEngine::ConstSpan<char> JEngine::ConstSpan<char>::trim() const {
+    size_t startI = 0;
+    size_t endI = _length;
+
+
+    bool checkA = true;
+    bool checkB = true;
+    for (size_t i = 0, j = _length - 1; i < _length; i++, j--) {
+
+        if (checkA) {
+            if (isspace(_ptr[i])) {
+                startI++;
+            }
+            else {
+                checkA = false;
+            }
+        }
+
+        if (checkB) {
+            if (isspace(_ptr[j])) {
+                endI--;
+            }
+            else {
+                checkB = false;
+            }
+        }
+
+        if (!checkA && !checkB) { break; }
+    }
+
+    if (startI >= endI) { return ConstSpan<char>(_ptr + startI, 0); }
+    return ConstSpan<char>(_ptr + startI, endI - startI);
 }

@@ -198,4 +198,35 @@ namespace JEngine {
     size_t getDataHeaderSize(DataFormat fmt) {
         return getDataFormats()[fmt].size;
     }
+
+    void writeHeader(const Stream& stream, DataFormat format) {
+        if (format < 0 || format >= _FMT_COUNT) {
+            return;
+        }
+        auto& fmts = getDataFormats()[format];
+        stream.write(fmts.signature, fmts.size, false);
+    }
+
+    bool formatMatch(const Stream& stream, DataFormat format) {
+        if (format < 0 || format >= _FMT_COUNT) {
+            return false;
+        }
+        auto& fmts = getDataFormats()[format];
+
+        uint8_t* data = reinterpret_cast<uint8_t*>(_malloca(fmts.size));
+        if (!data) { return false; }
+
+        stream.read(data, fmts.size, false);
+        bool ret = fmts.isValid(data, fmts.size);
+
+        _freea(data);
+        return ret;
+    }
+
+    bool formatMatch(const void* data, size_t size, DataFormat format) {
+        if (format < 0 || format >= _FMT_COUNT) {
+            return false;
+        }
+        return getDataFormats()[format].isValid(data, size);
+    }
 }

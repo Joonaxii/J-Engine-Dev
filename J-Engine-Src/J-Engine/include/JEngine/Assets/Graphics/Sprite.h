@@ -54,15 +54,11 @@ namespace JEngine {
         //void setSourceAtlas(ObjectRef<Atlas>& atlas);
         //ObjectRef<Atlas>& getSourceAtlas();
 
-        bool serializeJson(json& jsonF) const override;
-        bool deserializeJson(json& jsonF) override;
+        bool serializeJson(json& jsonF) const;
+        bool deserializeJson(json& jsonF);
 
-        bool serializeBinary(const Stream& stream) const override;
-        bool deserializeBinary(const Stream& stream, const size_t size) override;
-
-    protected:
-        virtual bool jsonToBinaryImpl(json& jsonF, const Stream& stream) const override { return false; }
-
+        bool serializeBinary(const Stream& stream) const;
+        bool deserializeBinary(const Stream& stream, const size_t size);
     private:
         static uint32_t         DEFAULT_INDICES[6];
 

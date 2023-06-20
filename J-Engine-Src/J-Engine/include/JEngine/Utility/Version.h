@@ -8,12 +8,8 @@ namespace JEngine {
     template<typename TMaj, typename TMin, typename TRev>
     struct Version {
     public:
-        Version() : _major(), _minor(), _revision() {}
-        Version(const TMaj& major, const TMin& minor, const TRev& revision) : _major(major), _minor(minor), _revision(revision) {}
-
-        TMaj& getMajor() { return _major; }
-        TMin& getMinor() { return _minor; }
-        TRev& getRevision() { return _revision; }
+        constexpr Version() : _major(), _minor(), _revision() {}
+        constexpr Version(const TMaj& major, const TMin& minor, const TRev& revision) : _major(major), _minor(minor), _revision(revision) {}
 
         const TMaj& getMajor() const { return _major; }
         const TMin& getMinor() const { return _minor; }
@@ -86,8 +82,8 @@ namespace JEngine {
         static bool deserializeJson(Version<TMaj, TMin, TRev>& itemRef, json& jsonF, const Version<TMaj, TMin, TRev>& defaultVal = {});
         static bool serializeJson(const Version<TMaj, TMin, TRev>& itemRef, json& jsonF);
 
-        static bool deserializeBinary(Version<TMaj, TMin, TRev>& itemRef, std::istream& stream);
-        static bool serializeBinary(const Version<TMaj, TMin, TRev>& itemRef, std::ostream& stream);
+        static bool deserializeBinary(Version<TMaj, TMin, TRev>& itemRef, const Stream& stream);
+        static bool serializeBinary(const Version<TMaj, TMin, TRev>& itemRef, const Stream& stream);
     };
 
     template<typename TMaj, typename TMin, typename TRev>
@@ -107,7 +103,7 @@ namespace JEngine {
     }
 
     template<typename TMaj, typename TMin, typename TRev>
-    inline bool Serializable<Version<TMaj, TMin, TRev>>::deserializeBinary(Version<TMaj, TMin, TRev>& itemRef, std::istream& stream) {
+    inline bool Serializable<Version<TMaj, TMin, TRev>>::deserializeBinary(Version<TMaj, TMin, TRev>& itemRef, const Stream& stream) {
         Serialization::deserialize(itemRef._major, stream);
         Serialization::deserialize(itemRef._minor, stream);
         Serialization::deserialize(itemRef._revision, stream);
@@ -115,7 +111,7 @@ namespace JEngine {
     }
 
     template<typename TMaj, typename TMin, typename TRev>
-    inline bool Serializable<Version<TMaj, TMin, TRev>>::serializeBinary(const Version<TMaj, TMin, TRev>& itemRef, std::ostream& stream) {
+    inline bool Serializable<Version<TMaj, TMin, TRev>>::serializeBinary(const Version<TMaj, TMin, TRev>& itemRef, const Stream& stream) {
         Serialization::serialize(itemRef._major, stream);
         Serialization::serialize(itemRef._minor, stream);
         Serialization::serialize(itemRef._revision, stream);

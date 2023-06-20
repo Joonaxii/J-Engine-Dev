@@ -38,7 +38,6 @@ public:
 
 protected:
     const JRectf& getLocalBounds() const override;
-    virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override { return false; }
 
 private:
     static constexpr uint8_t FLIP_X = 0x1;

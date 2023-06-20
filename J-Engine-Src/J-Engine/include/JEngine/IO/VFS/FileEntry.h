@@ -4,7 +4,7 @@
 #include <JEngine/Assets/AssetMetaData.h>
 #include <JEngine/Assets/IAsset.h>
 #include <JEngine/IO/Serialization/Serializable.h>
-#include <JEngine/IO/Helpers/IOHelpers.h>
+#include <JEngine/IO/Helpers/IOUtils.h>
 
 namespace JEngine {
     class FileEntry {
@@ -57,8 +57,8 @@ namespace JEngine {
         void getPath(std::string& path);
         FileEntry* getParent();
 
-        void loadFromAssetDB(std::istream& stream);
-        void saveToAssetDB(std::ostream& stream);
+        void loadFromAssetDB(const Stream& stream);
+        void saveToAssetDB(const Stream& stream);
 
         void loadFromPath(const std::string& path);
         void validateMetaData(const std::string& root);
@@ -80,11 +80,11 @@ namespace JEngine {
         static inline constexpr const char* entryTypeToStr(const uint8_t input) {
             switch (input)
             {
-                default: return "UNKNOWN";
-                case ET_FOLDER: return NAMEOF(ET_FOLDER);
-                case ET_FILE: return NAMEOF(ET_FILE);
-                case ET_PAK_FILE: return NAMEOF(ET_PAK_FILE);
-                case ET_ASSET: return NAMEOF(ET_ASSET);
+                default: return "ET_UNKNOWN";
+                case ET_FOLDER: return "ET_FOLDER";
+                case ET_FILE: return "ET_FILE";
+                case ET_PAK_FILE: return "ET_PAK_FILE";
+                case ET_ASSET: return "ET_ASSET";
             }
         }
 
@@ -100,8 +100,8 @@ namespace JEngine {
         std::vector<FileEntry> _items;
 
         void printSub(int depth);
-        void readMetaDataFromDB(std::istream& stream, std::vector<std::string_view>& strs);
-        uint32_t writeMetaDataToDB(std::ostream& stream);
+        void readMetaDataFromDB(const Stream& stream, std::vector<std::string_view>& strs);
+        uint32_t writeMetaDataToDB(const Stream& stream);
 
         void writeMetadataToJson(const std::string& root);
         void validateMetaDataRecurse(const std::string& root, std::vector<FileEntry*>& generate);

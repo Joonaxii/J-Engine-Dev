@@ -1,5 +1,5 @@
 #include <JEngine/Assets/Graphics/Material/MaterialProperty.h>
-#include <JEngine/Cryptography/CRC32.h>
+#include <JEngine/Utility/DataUtilities.h>
 
 namespace JEngine {
     MaterialProperty::MaterialProperty() : _crc(), _name(""), _type(), _propData{} { }
@@ -163,7 +163,10 @@ namespace JEngine {
     const JMatrix4f& MaterialProperty::asMatrix4f() const { return reinterpret_cast<const JMatrix4f&>(_propData); }
 
     void MaterialProperty::applyChanges() {
-        _crc = CRC32::compute(_name.c_str(), _name.size());
-        _crc = CRC32::update(_crc, &_type, sizeof(_propData) + sizeof(_type));
+        _crc = 0xFFFFFFFFU;
+        _crc = Data::updateCRC(_crc, _name.c_str(), _name.size());
+        _crc = Data::updateCRC(_crc, &_type, sizeof(_type));
+        _crc = Data::updateCRC(_crc, &_propData, sizeof(_propData));
+        _crc ^= 0xFFFFFFFFU;
     }
 }

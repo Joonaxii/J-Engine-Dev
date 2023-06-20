@@ -109,7 +109,7 @@ namespace JEngine::Helpers {
             val /= 1024.0;
             ind++;
         }
-        sprintf(buffer, "%.3f %s", val, SIZES[ind]);
+        sprintf_s(buffer, size, "%.3f %s", val, SIZES[ind]);
     }
 
 	int32_t strCmpNoCase(const char* a, const char* b) {
@@ -181,17 +181,6 @@ namespace JEngine::Helpers {
 			}
 		}
 		return index;
-	}
-
-	uint8_t hexToUI8(const char c) {
-		if (c >= '0' && c <= '9') { return (c - '0'); }
-		if (c >= 'A' && c <= 'F') { return (c - 'A') + 10; }
-		if (c >= 'a' && c <= 'f') { return (c - 'a') + 10; }
-		return 0;
-	}
-
-	uint8_t hexToUI8(const char a, const char b) {
-		return hexToUI8(a) | (hexToUI8(b) << 4);
 	}
 
 	uint32_t parseHexColorInt(const std::string& str, const int start, const int length) {

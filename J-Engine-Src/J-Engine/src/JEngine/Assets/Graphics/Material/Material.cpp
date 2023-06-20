@@ -290,24 +290,20 @@ namespace JEngine {
             shader->unbind();
         }
 
+        uint32_t slot = 0;
         auto tex = _mainTex.getPtr();
         if (tex) {
-            tex->unbind();
+            slot = tex->unBind(slot);
         }
 
         for (auto& prop : _properties) {
             if (prop.getType() == MaterialProperty::T_Texture) {
                 auto texP = prop.asTexture().getPtr();
                 if (texP) {
-                    texP->unbind();
+                    slot = texP->unBind(slot);
                 }
             }
         }
-    }
-
-    bool Material::jsonToBinaryImpl(json& jsonF, std::ostream& stream) const {
-
-        return false;
     }
 
     int32_t Material::indexOfProperty(const std::string& name) const {

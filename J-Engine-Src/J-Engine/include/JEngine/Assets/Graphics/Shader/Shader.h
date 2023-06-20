@@ -74,11 +74,11 @@ namespace JEngine {
 
         uint32_t setTextures(const std::string& name, const Texture* texture, const uint32_t position = 0);
 
-        bool serializeJson(json& jsonF) const override;
-        bool deserializeJson(json& jsonF) override;
+        bool serializeJson(json& jsonF) const;
+        bool deserializeJson(json& jsonF);
 
-        bool serializeBinary(const Stream& stream) const override;
-        bool deserializeBinary(const Stream& stream, const size_t size) override;
+        bool serializeBinary(const Stream& stream) const;
+        bool deserializeBinary(const Stream& stream, const size_t size);
 
         uint64_t getBlendUnion() const;
 
@@ -87,10 +87,6 @@ namespace JEngine {
 
         static void addShaderToLUT(const ObjectRef<Shader>& shader);
         static bool removeShaderFromLUT(const ObjectRef<Shader>& shader);
-
-    protected:
-        virtual bool jsonToBinaryImpl(json& jsonF, const Stream& stream) const override { return false; }
-
     private:
         typedef std::unordered_map<UUID16, ObjectRef<Shader>, std::hash<UUID16>> ShaderLUT;
 

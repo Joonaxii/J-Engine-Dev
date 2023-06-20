@@ -49,7 +49,7 @@ namespace JEngine::ZLib {
             if (context.stream.avail_out == 0) {
                 streamIn.write(buffer, bufferSize);
                 context.stream.next_out = reinterpret_cast<uint8_t*>(buffer);
-                context.stream.avail_out = bufferSize;
+                context.stream.avail_out = uInt(bufferSize);
             }
         }
         return nErr;
@@ -64,7 +64,7 @@ namespace JEngine::ZLib {
             if (context.stream.avail_out == 0) {
                 streamIn.write(buffer, bufferSize);
                 context.stream.next_out = reinterpret_cast<uint8_t*>(buffer);
-                context.stream.avail_out = bufferSize;
+                context.stream.avail_out = uInt(bufferSize);
             }
             ret = deflate(&context.stream, Z_FINISH);
         }

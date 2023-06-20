@@ -11,7 +11,7 @@
 
 void BitStream::byteAlign() const {
     if (_stream && (_bitPos & 0x7) != 0) {
-        uint64_t next = Math::nextDivByPowOf2<uint64_t, 8>(_bitPos);
+        uint64_t next = JEngine::Math::nextDivByPowOf2<uint64_t, 8>(_bitPos);
         //_bitPos = 
     }
 }

@@ -32,14 +32,14 @@ namespace JEngine {
         void setMainTexture(const ObjectRef<Texture>& tex);
         void setFrameBuffer(const ObjectRef<FrameBuffer>& fBuffer);
 
-        bool serializeJson(json& jsonF) const override;
-        bool deserializeJson(json& jsonF) override;
+        bool serializeJson(json& jsonF) const;
+        bool deserializeJson(json& jsonF);
 
-        bool deserializeYaml(const yamlNode& yamlIn) override;
-        bool serializeYaml(yamlEmit& yamlOut) const override;
+        bool deserializeYaml(const yamlNode& yamlIn);
+        bool serializeYaml(yamlEmit& yamlOut) const;
 
-        bool serializeBinary(const Stream& stream) const override;
-        bool deserializeBinary(const Stream& stream, const size_t size) override;
+        bool serializeBinary(const Stream& stream) const;
+        bool deserializeBinary(const Stream& stream, const size_t size);
 
         const Shader* getShaderPtr() const;
         Shader* getShaderPtr();
@@ -55,10 +55,6 @@ namespace JEngine {
 
         bool bind();
         void unbind() const;
-
-    protected:
-        virtual bool jsonToBinaryImpl(json& jsonF, const Stream& stream) const override;
-
     private:
         ObjectRef<Shader> _shader;
         ObjectRef<Texture> _mainTex;

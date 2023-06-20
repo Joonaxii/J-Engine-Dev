@@ -22,36 +22,36 @@ namespace JEngine {
 
     const AssetMetaData& IAsset::getMetadata() const { return _meta; }
 
-    bool IAsset::serializeMetaYAML(yamlEmit& emit) const {
-        return false;
-    }
-    bool IAsset::deserializeMetaYAML(yamlNode& node) {
-        return false;
-    }
-    const UUID8& IAsset::getUUID() const { return _meta.getUUID(); }
+   // bool IAsset::serializeMetaYAML(yamlEmit& emit) const {
+   //     return false;
+   // }
+   // bool IAsset::deserializeMetaYAML(yamlNode& node) {
+   //     return false;
+   // }
+   // const UUID8& IAsset::getUUID() const { return _meta.getUUID(); }
 
-   bool IAsset::serializeMetaJson(json& jsonF) const {
-       Serialization::serialize(_name, jsonF["name"]);
-       Serialization::serialize(_flags, jsonF["assetFlags"]);
-       Serialization::serialize(_meta, jsonF["meta"]);
-       return true;
-   }
+   //bool IAsset::serializeMetaJson(json& jsonF) const {
+   //    Serialization::serialize(_name, jsonF["name"]);
+   //    Serialization::serialize(_flags, jsonF["assetFlags"]);
+   //    Serialization::serialize(_meta, jsonF["meta"]);
+   //    return true;
+   //}
 
-   bool IAsset::deserializeMetaJson(json& jsonF) {
-       Serialization::deserialize(_name, jsonF["name"]);
-       Serialization::deserialize(_flags, jsonF["assetFlags"]);
-       Serialization::deserialize(_meta, jsonF["meta"]);
-       return true;
-   }
+   //bool IAsset::deserializeMetaJson(json& jsonF) {
+   //    Serialization::deserialize(_name, jsonF["name"]);
+   //    Serialization::deserialize(_flags, jsonF["assetFlags"]);
+   //    Serialization::deserialize(_meta, jsonF["meta"]);
+   //    return true;
+   //}
 
-   bool IAsset::serializeMetaBinary(std::ostream& stream) const {
+   //bool IAsset::serializeMetaBinary(const Stream& stream) const {
 
-       return true;
-   }
+   //    return true;
+   //}
 
-   bool IAsset::deserializeMetaBinary(std::istream& stream, const size_t size) {
+   //bool IAsset::deserializeMetaBinary(const Stream& stream, const size_t size) {
 
-       return true;
-   }
+   //    return true;
+   //}
 }
 

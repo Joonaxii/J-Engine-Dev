@@ -59,8 +59,8 @@ namespace JEngine {
         static bool deserializeJson(JVertex<T>& itemRef, json& jsonF, const JVertex<T>& defaultValue);
         static bool serializeJson(const JVertex<T>& itemRef, json& jsonF);
 
-        static bool deserializeBinary(JVertex<T>& itemRef, std::istream& stream);
-        static bool serializeBinary(const JVertex<T>& itemRef, std::ostream& stream);
+        static bool deserializeBinary(JVertex<T>& itemRef, const Stream& stream);
+        static bool serializeBinary(const JVertex<T>& itemRef, const Stream& stream);
     };
 
     template<typename T>
@@ -80,7 +80,7 @@ namespace JEngine {
     }
 
     template<typename T>
-    inline bool Serializable<JVertex<T>>::deserializeBinary(JVertex<T>& itemRef, std::istream& stream) {
+    inline bool Serializable<JVertex<T>>::deserializeBinary(JVertex<T>& itemRef, const Stream& stream) {
         Serialization::deserialize(itemRef.position, stream);
         Serialization::deserialize(itemRef.color, stream);
         Serialization::deserialize(itemRef.uv, stream);
@@ -88,7 +88,7 @@ namespace JEngine {
     }
 
     template<typename T>
-    inline bool Serializable<JVertex<T>>::serializeBinary(const JVertex<T>& itemRef, std::ostream& stream) {
+    inline bool Serializable<JVertex<T>>::serializeBinary(const JVertex<T>& itemRef, const Stream& stream) {
         Serialization::serialize(itemRef.position, stream);
         Serialization::serialize(itemRef.color, stream);
         Serialization::serialize(itemRef.uv, stream);

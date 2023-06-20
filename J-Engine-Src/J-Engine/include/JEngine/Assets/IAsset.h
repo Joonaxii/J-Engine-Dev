@@ -17,7 +17,7 @@ namespace JEngine {
     };
 
     class FileEntry;
-    class IAsset : public ISerializable<IAsset>, public IRef {
+    class IAsset : public IRef {
     public:
         static constexpr uint8_t ASSET_IS_IN_DB = 0x1;
 
@@ -40,23 +40,23 @@ namespace JEngine {
         void setName(const std::string& name);
         const std::string& getName() const;
 
-        const UUID8& getUUID() const;
+        const UUID8& getUUID() const { return _meta.getUUID(); }
         const AssetMetaData& getMetadata() const;
 
-        virtual bool serializeMetaYAML(yamlEmit& emit) const;
-        virtual bool deserializeMetaYAML(yamlNode& node);
-
-        virtual bool serializeMetaJson(json& jsonF) const;
-        virtual bool deserializeMetaJson(json& jsonF);
-
-        virtual bool serializeMetaBinary(const Stream& stream) const;
-        virtual bool deserializeMetaBinary(const Stream& stream, const size_t size);
-
-        virtual bool serializeJson(json& jsonF) const override { return false; }
-        virtual bool deserializeJson(json& jsonF) override { return false; }
-
-        virtual bool serializeBinary(const Stream& stream) const override = 0;
-        virtual bool deserializeBinary(const Stream& stream, const size_t size) = 0;
+        //virtual bool serializeMetaYAML(yamlEmit& emit) const;
+        //virtual bool deserializeMetaYAML(yamlNode& node);
+        //
+        //virtual bool serializeMetaJson(json& jsonF) const;
+        //virtual bool deserializeMetaJson(json& jsonF);
+        //
+        //virtual bool serializeMetaBinary(const Stream& stream) const;
+        //virtual bool deserializeMetaBinary(const Stream& stream, const size_t size);
+        //
+        //virtual bool serializeJson(json& jsonF) const override { return false; }
+        //virtual bool deserializeJson(json& jsonF) override { return false; }
+        //
+        //virtual bool serializeBinary(const Stream& stream) const override = 0;
+        //virtual bool deserializeBinary(const Stream& stream, const size_t size) = 0;
 
     protected:
         UI8Flags _flags;
@@ -64,8 +64,6 @@ namespace JEngine {
         FileEntry* _fEntry;
       
         AssetMetaData _meta;
-
-        virtual bool jsonToBinaryImpl(json& jsonF, const Stream& stream) const override = 0;
     };
 }
 REGISTER_UUID_FACTORY(JEngine::IAsset)

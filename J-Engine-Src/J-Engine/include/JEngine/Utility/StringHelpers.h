@@ -28,8 +28,16 @@ namespace JEngine::Helpers {
     int32_t indexOf(const char* str, const size_t length, const std::string& search);
     int32_t indexOf(const std::string& str, const std::string& search);
 
-    uint8_t hexToUI8(const char c);
-    uint8_t hexToUI8(const char a, const char b);
+    inline constexpr uint8_t hexToUI8(char c) {
+        if (c >= '0' && c <= '9') { return (c - '0'); }
+        if (c >= 'A' && c <= 'F') { return (c - 'A') + 10; }
+        if (c >= 'a' && c <= 'f') { return (c - 'a') + 10; }
+        return 0;
+    }
+
+    inline constexpr uint8_t hexToUI8(char a, char b) {
+        return hexToUI8(a) | (hexToUI8(b) << 4);
+    }
 
     template<typename T, size_t size = sizeof(T) << 1>
     bool tryParseHex(ConstSpan<char>& span, T& out, const bool invert = false);

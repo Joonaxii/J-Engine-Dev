@@ -113,8 +113,8 @@ namespace JEngine {
         static bool deserializeJson(JRect<T>& itemRef, json& jsonF, const JRect<T>& defaultValue);
         static bool serializeJson(const JRect<T>& itemRef, json& jsonF);
 
-        static bool deserializeBinary(JRect<T>& itemRef, std::istream& stream);
-        static bool serializeBinary(const JRect<T>& itemRef, std::ostream& stream);
+        static bool deserializeBinary(JRect<T>& itemRef, const Stream& stream);
+        static bool serializeBinary(const JRect<T>& itemRef, const Stream& stream);
     };
 
     template<typename T>
@@ -132,14 +132,14 @@ namespace JEngine {
     }
 
     template<typename T>
-    inline bool Serializable<JRect<T>>::deserializeBinary(JRect<T>& itemRef, std::istream& stream) {
+    inline bool Serializable<JRect<T>>::deserializeBinary(JRect<T>& itemRef, const Stream& stream) {
         Serialization::deserialize(itemRef._min, stream);
         Serialization::deserialize(itemRef._max, stream);
         return true;
     }
 
     template<typename T>
-    inline bool Serializable<JRect<T>>::serializeBinary(const JRect<T>& itemRef, std::ostream& stream) {
+    inline bool Serializable<JRect<T>>::serializeBinary(const JRect<T>& itemRef, const Stream& stream) {
         Serialization::serialize(itemRef._min, stream);
         Serialization::serialize(itemRef._max, stream);
         return true;

@@ -9,7 +9,7 @@
 #include <map>
 
 struct GLFWwindow;
-namespace JEngine { 
+namespace JEngine {
 
     struct WindowProps {
         std::string title;
@@ -25,28 +25,30 @@ namespace JEngine {
     public:
         typedef Action<const int32_t, const int32_t, const double, const bool> ResizeEvent;
 
+        Window();
         virtual ~Window();
 
-       bool isInitialized() const;
+        bool isInitialized() const;
 
-       bool init(const char* title, const int32_t width, const int32_t height);
-       bool tick();
-       
-       size_t getWidth() const;
-       size_t getHeight() const;
-       
-       const JRectf& getWorldRect() const;
-       const JMatrix4f& getWorldProjectionMatrix() const;
-       const JMatrix4f& getScreenProjectionMatrix() const;
-       
-       void clear(const JColor32& clearColor, const uint32_t clearFlags = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-       void finalizeFrame();
-       void pollEvents();
-       
-       void close();
-       
-        static Window* create(const WindowProps& props = WindowProps());
+        bool init(const char* title, const int32_t width, const int32_t height);
+        bool tick();
 
+        size_t getWidth() const;
+        size_t getHeight() const;
+
+        const JRectf& getWorldRect() const;
+        const JMatrix4f& getWorldProjectionMatrix() const;
+        const JMatrix4f& getScreenProjectionMatrix() const;
+
+        void clear(const JColor32& clearColor, const uint32_t clearFlags = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        void finalizeFrame();
+        void pollEvents();
+
+        void close();
+
+        static Window* setInstance(Window* window);
+        static Window* getInstance();
+    
         FrameBuffer& getScreenBuffer() { return _screenBuffer; }
         const FrameBuffer& getScreenBuffer() const { return _screenBuffer; }
 
@@ -63,6 +65,7 @@ namespace JEngine {
 
     private:
         static std::map<GLFWwindow*, Window*> _glWindowToWindow;
+        static Window* _instance;
 
         JRectf _worldRect;
         JMatrix4f _worldProjection;

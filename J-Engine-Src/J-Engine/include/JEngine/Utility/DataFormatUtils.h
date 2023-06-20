@@ -43,8 +43,7 @@ namespace JEngine {
 
         FMT_JTEX, //Texture (Engine native texure format)
         FMT_JRTX, //Render Texture
-        FMT_JSPR, //Sprite (Might combine with atlas)
-        FMT_JATL, //Atlas (Collection of Sprites on a given texture)
+        FMT_JSPR, //Sprite/Atlas (Specifies either a single sprite or an atlas of sprites on a given texture)
 
         FMT_JINP, //Input Config (Contains input bind "blueprint" and default input bindings)
 
@@ -102,6 +101,11 @@ namespace JEngine {
 
     size_t getDataHeaderSize(DataFormat fmt);
 
+    void writeHeader(const Stream& stream, DataFormat format);
+
+    bool formatMatch(const Stream& stream, DataFormat format);
+    bool formatMatch(const void* data, size_t size, DataFormat format);
+
     template<DataFormat format>
     struct DataHeader {
         static constexpr uint64_t Value = 0;
@@ -138,19 +142,17 @@ namespace JEngine {
             "JEngine Preferences",
             "JEngine Material",
             "JEngine Shader",
-            "JEngine GL Include",
             "JEngine Texture",
             "JEngine Render Texture",
-            "JEngine Atlas",
+            "JEngine Sprite",
             "JEngine Input Config",
             "JEngine Scene",
             "JEngine Prefab",
 
-            "JEngine Font (TTF)",
-            "JEngine Font (OTF)",
+            "JEngine Audio",
 
-            "JEngine Text File",
-            "JEngine Binary File",
+            "JEngine Font",
+            "JEngine Data File",
         };
         return names;
     }
@@ -188,16 +190,17 @@ CREATE_DATA_HEADER(JEngine::FMT_JPRF, S_TO_UINT32("JPRF"), 4);
 
 CREATE_DATA_HEADER(JEngine::FMT_JMAT, S_TO_UINT32("JMAT"), 4);
 CREATE_DATA_HEADER(JEngine::FMT_JSHD, S_TO_UINT32("JSHD"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JGLI, S_TO_UINT32("JGLI"), 4);
 
 CREATE_DATA_HEADER(JEngine::FMT_JTEX, S_TO_UINT32("JTEX"), 4);
 CREATE_DATA_HEADER(JEngine::FMT_JRTX, S_TO_UINT32("JRTX"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JATL, S_TO_UINT32("JATL"), 4);
+CREATE_DATA_HEADER(JEngine::FMT_JSPR, S_TO_UINT32("JSPR"), 4);
 
 CREATE_DATA_HEADER(JEngine::FMT_JINP, S_TO_UINT32("JINP"), 4);
 
 CREATE_DATA_HEADER(JEngine::FMT_JSCN, S_TO_UINT32("JSCN"), 4);
 CREATE_DATA_HEADER(JEngine::FMT_JPFB, S_TO_UINT32("JPFB"), 4);
 
-CREATE_DATA_HEADER(JEngine::FMT_JTXT, S_TO_UINT32("JTXT"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JBIN, S_TO_UINT32("JBIN"), 4);
+CREATE_DATA_HEADER(JEngine::FMT_JAUD, S_TO_UINT32("JAUD"), 4);
+
+CREATE_DATA_HEADER(JEngine::FMT_JFNT, S_TO_UINT32("JFNT"), 4);
+CREATE_DATA_HEADER(JEngine::FMT_JDAT, S_TO_UINT32("JDAT"), 4);

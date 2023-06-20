@@ -13,7 +13,7 @@
 
 namespace JEngine {
     template<typename TVert>
-    class IRenderer : public ISerializable<IRenderer<TVert>> {
+    class IRenderer {
     public:
         typedef void (*RegistrationEvent)(IRenderer* renderer);
 
@@ -62,7 +62,7 @@ namespace JEngine {
         }
         virtual const JRectf& getBounds() const { return _bounds; }
 
-        virtual bool deserializeJson(json& jsonFile) override {
+        virtual bool deserializeJson(json& jsonFile) {
             const UUID8 uuid = _material.getPtr() ? _material.getPtr()->getUUID() : UUID8::Empty;
             Serialization::deserialize(uuid, jsonFile["material"]);
             Serialization::deserialize(_color, jsonFile["color"], JColor32::White);
@@ -70,7 +70,7 @@ namespace JEngine {
             return true;
         }
 
-        virtual bool serializeJson(json& jsonFile) const override {
+        virtual bool serializeJson(json& jsonFile) const {
             UUID8 uuid{};
 
             Serialization::serialize(uuid, jsonFile["material"]);
@@ -79,7 +79,7 @@ namespace JEngine {
             return true;
         }
 
-        virtual bool deserializeBinary(std::istream& stream) override {
+        virtual bool deserializeBinary(const Stream& stream) {
             UUID8 uuid{};
 
             Serialization::deserialize(uuid, stream);
@@ -88,7 +88,7 @@ namespace JEngine {
             return true;
         }
 
-        virtual bool serializeBinary(std::ostream& stream) const override {
+        virtual bool serializeBinary(const Stream& stream) const {
             const Material* mat = _material.getPtr();
             const UUID8 uuid = mat ? mat->getUUID() : UUID8::Empty;
      
@@ -119,10 +119,6 @@ namespace JEngine {
         JRectf _bounds;
 
         virtual const JRectf& getLocalBounds() const = 0;
-
-        virtual bool jsonToBinaryImpl(json& jsonF, std::ostream& stream) const override {
-            return true;
-        }
 
         static void registerRenderer(IRenderer<TVert>* rend) {
             if (REGISTER_RENDERER) {

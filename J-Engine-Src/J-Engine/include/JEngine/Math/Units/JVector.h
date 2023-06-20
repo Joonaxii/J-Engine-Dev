@@ -961,8 +961,8 @@ namespace JEngine {
         static bool deserializeJson(JVector2<T, P>& itemRef, json& jsonF, const JVector2<T, P>& defaultVal);
         static bool serializeJson(const JVector2<T, P>& itemRef, json& jsonF);
 
-        static bool deserializeBinary(JVector2<T, P>& itemRef, std::istream& stream);
-        static bool serializeBinary(const JVector2<T, P>& itemRef, std::ostream& stream);
+        static bool deserializeBinary(JVector2<T, P>& itemRef, const Stream& stream);
+        static bool serializeBinary(const JVector2<T, P>& itemRef, const Stream& stream);
     };
 
     template<typename T, typename P>
@@ -980,13 +980,13 @@ namespace JEngine {
     }
 
     template<typename T, typename P>
-    inline bool Serializable<JVector2<T, P>>::deserializeBinary(JVector2<T, P>& itemRef, std::istream& stream) {
+    inline bool Serializable<JVector2<T, P>>::deserializeBinary(JVector2<T, P>& itemRef, const Stream& stream) {
         Serialization::deserialize(itemRef.x, stream);
         Serialization::deserialize(itemRef.y, stream);
         return true;
     }
     template<typename T, typename P>
-    inline bool Serializable<JVector2<T, P>>::serializeBinary(const JVector2<T, P>& itemRef, std::ostream& stream) {
+    inline bool Serializable<JVector2<T, P>>::serializeBinary(const JVector2<T, P>& itemRef, const Stream& stream) {
         Serialization::serialize(itemRef.x, stream);
         Serialization::serialize(itemRef.y, stream);
         return true;
@@ -1003,7 +1003,7 @@ namespace YAML {
         yamlOut << YAML::Flow;
         yamlOut << YAML::BeginSeq << itemRef.x << itemRef.y << itemRef.z << YAML::EndSeq;
         return yamlOut;
-    }    
+    }
 
     inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JVector3<uint8_t>& itemRef) {
         yamlOut << YAML::Flow;
@@ -1038,8 +1038,8 @@ namespace JEngine {
         static bool deserializeJson(JVector3<T, P>& itemRef, json& jsonF, const JVector3<T, P>& defaultVal);
         static bool serializeJson(const JVector3<T, P>& itemRef, json& jsonF);
 
-        static bool deserializeBinary(JVector3<T, P>& itemRef, std::istream& stream);
-        static bool serializeBinary(const JVector3<T, P>& itemRef, std::ostream& stream);
+        static bool deserializeBinary(JVector3<T, P>& itemRef, const Stream& stream);
+        static bool serializeBinary(const JVector3<T, P>& itemRef, const Stream& stream);
     };
 
     template<typename T, typename P>
@@ -1059,14 +1059,14 @@ namespace JEngine {
     }
 
     template<typename T, typename P>
-    inline bool Serializable<JVector3<T, P>>::deserializeBinary(JVector3<T, P>& itemRef, std::istream& stream) {
+    inline bool Serializable<JVector3<T, P>>::deserializeBinary(JVector3<T, P>& itemRef, const Stream& stream) {
         Serialization::deserialize(itemRef.x, stream);
         Serialization::deserialize(itemRef.y, stream);
         Serialization::deserialize(itemRef.z, stream);
         return true;
     }
     template<typename T, typename P>
-    inline bool Serializable<JVector3<T, P>>::serializeBinary(const JVector3<T, P>& itemRef, std::ostream& stream) {
+    inline bool Serializable<JVector3<T, P>>::serializeBinary(const JVector3<T, P>& itemRef, const Stream& stream) {
         Serialization::serialize(itemRef.x, stream);
         Serialization::serialize(itemRef.y, stream);
         Serialization::serialize(itemRef.z, stream);
@@ -1120,8 +1120,8 @@ namespace JEngine {
         static bool deserializeJson(JVector4<T, P>& itemRef, json& jsonF, const JVector4<T, P>& defaultVal);
         static bool serializeJson(const JVector4<T, P>& itemRef, json& jsonF);
 
-        static bool deserializeBinary(JVector4<T, P>& itemRef, std::istream& stream);
-        static bool serializeBinary(const JVector4<T, P>& itemRef, std::ostream& stream);
+        static bool deserializeBinary(JVector4<T, P>& itemRef, const Stream& stream);
+        static bool serializeBinary(const JVector4<T, P>& itemRef, const Stream& stream);
     };
 
     template<typename T, typename P>
@@ -1143,7 +1143,7 @@ namespace JEngine {
     }
 
     template<typename T, typename P>
-    inline bool Serializable<JVector4<T, P>>::deserializeBinary(JVector4<T, P>& itemRef, std::istream& stream) {
+    inline bool Serializable<JVector4<T, P>>::deserializeBinary(JVector4<T, P>& itemRef, const Stream& stream) {
         Serialization::deserialize(itemRef.x, stream);
         Serialization::deserialize(itemRef.y, stream);
         Serialization::deserialize(itemRef.z, stream);
@@ -1151,7 +1151,7 @@ namespace JEngine {
         return true;
     }
     template<typename T, typename P>
-    inline bool Serializable<JVector4<T, P>>::serializeBinary(const JVector4<T, P>& itemRef, std::ostream& stream) {
+    inline bool Serializable<JVector4<T, P>>::serializeBinary(const JVector4<T, P>& itemRef, const Stream& stream) {
         Serialization::serialize(itemRef.x, stream);
         Serialization::serialize(itemRef.y, stream);
         Serialization::serialize(itemRef.z, stream);

@@ -4,13 +4,16 @@
 #include <JEngine/Math/Math.h>
 
 namespace JEngine {
-    Window* Window::create(const WindowProps& props) {
-        return nullptr;
-    }
-}
-
-namespace JEngine {
     std::map<GLFWwindow*, Window*> Window::_glWindowToWindow{};
+    Window* Window::_instance{nullptr};
+
+    Window* Window::setInstance(Window* window) {
+        return _instance = window;
+    }
+
+    Window* Window::getInstance() {
+        return _instance;
+    }
 
     Window::Window() : _screenBuffer(GL_RGBA32F), _minimized(true), _window(nullptr), _size(), _worldRect(), _worldProjection(), _onResize() { }
     Window::~Window() {
@@ -28,7 +31,7 @@ namespace JEngine {
 
         _window = glfwCreateWindow(width, height, title, NULL, NULL);
         if (!_window) {
-            std::cout << "Failed to initialize GLFW Window!" << std::endl;
+            JENGINE_CORE_ERROR("Failed to initialize GLFW Window!");
             return false;
         }
 
@@ -36,7 +39,7 @@ namespace JEngine {
 
         //Init Glew
         if (glewInit() != GLEW_OK) {
-            std::cout << "Failed to initialize GLEW!" << std::endl;
+            JENGINE_CORE_ERROR("Failed to initialize GLEW!");
             glfwTerminate();
             return false;
         }

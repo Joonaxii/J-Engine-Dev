@@ -90,8 +90,8 @@ namespace JEngine {
         virtual bool serializeJson(json& jsonF) const override;
         virtual bool deserializeJson(json& jsonF) override;
 
-        virtual bool serializeBinary(std::ostream& stream) const override;
-        virtual bool deserializeBinary(std::istream& stream) override;
+        virtual bool serializeBinary(const Stream& stream) const override;
+        virtual bool deserializeBinary(const Stream& stream) override;
 
         static void setRegistrationMethods(RegistrationEvent reg, RegistrationEvent unreg) {
             REGISTER_CAMERA = reg;

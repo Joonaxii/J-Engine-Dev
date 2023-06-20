@@ -1,8 +1,8 @@
 #include <JEngine/Assets/Graphics/Shader/Shader.h>
 #include <JEngine/Assets/Graphics/Texture/Texture.h>
 #include <JEngine/Rendering/OpenGL/GLHelpers.h>
-#include <JEngine/IO/Helpers/IOHelpers.h>
-#include <JEngine/Helpers/StringExtensions.h>
+#include <JEngine/IO/Helpers/IOUtils.h>
+#include <JEngine/Utility/StringHelpers.h>
 #include <JEngine/Utility/Span.h>
 #include <fstream>
 #include <sstream>
@@ -98,11 +98,15 @@ namespace JEngine {
 
         if (uId < 0) { return pos; }
         GLCall(glUniform1i(uId, pos++));
-        if (texture->getTextureFormat() == TextureFormat::Indexed) {
-            uId = getUniformLocation(name + "_Pal");
-            if (uId > -1) {
-                GLCall(glUniform1i(uId, pos++));
-            }
+
+        switch (texture->getFormat()) {
+            case TextureFormat::Indexed8:
+            case TextureFormat::Indexed16:
+                uId = getUniformLocation(name + "_Pal");
+                if (uId > -1) {
+                    GLCall(glUniform1i(uId, pos++));
+                }
+                break;
         }
         return pos;
     }
@@ -110,22 +114,22 @@ namespace JEngine {
     bool Shader::serializeJson(json& jsonF) const { return false; }
     bool Shader::deserializeJson(json& jsonF) { return false; }
 
-    bool Shader::serializeBinary(std::ostream& stream) const { return false; }
-    bool Shader::deserializeBinary(std::istream& stream, const size_t size) {
-        if (stream.good()) {
-            char* data = reinterpret_cast<char*>(malloc(size));
-            stream.read(data, size);
+    bool Shader::serializeBinary(const Stream& stream) const { return false; }
+    bool Shader::deserializeBinary(const Stream& stream, const size_t size) {
+        if (stream.isOpen()) {
+            char* data = reinterpret_cast<char*>(_malloca(size));
+            if (data) {
+                stream.read(data, size, false);
+                if (_shaderID) {
+                    GLCall(glDeleteProgram(_shaderID));
+                }
 
-            if (_shaderID) {
-                GLCall(glDeleteProgram(_shaderID));
+                // membuf buf(data, size);
+                // std::istream iStrm(&buf);
+                // auto shdr = parseShader(iStrm);
+                // _shaderID = createShader(shdr.vertexSource.c_str(), shdr.fragmentSource.c_str());
+                _freea(data);
             }
-
-            membuf buf(data, size);
-            std::istream iStrm(&buf);
-            auto shdr = parseShader(iStrm);
-            _shaderID = createShader(shdr.vertexSource.c_str(), shdr.fragmentSource.c_str());
-
-            free(data);
         }
         return true;
     }

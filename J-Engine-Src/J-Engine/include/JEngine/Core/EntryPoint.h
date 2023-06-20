@@ -10,7 +10,10 @@ int main(int argc, char** argv)
 	JENGINE_CORE_TRACE("Initializing J-Engine");
 
 	auto app = JEngine::createApplication({ argc, argv });
-	app->run();
+
+	if (app->init()) {
+		app->run();
+	}
 
 	JENGINE_CORE_TRACE("Releasing J-Engine");
 	delete app;

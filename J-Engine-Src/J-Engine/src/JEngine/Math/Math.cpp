@@ -25,7 +25,7 @@ namespace JEngine::Math {
         return LOG2_TABLE_64[((uint64_t)((value - (value >> 1)) * 0x07EDD5E59A4E28C2)) >> 58];
     }
 
-    int32_t findFirstLSB(const uint64_t value) {
+    int32_t findFirstLSB(uint64_t value) {
         const uint64_t val = value ^ (value & (value - 1));
         return log2(val);
     }

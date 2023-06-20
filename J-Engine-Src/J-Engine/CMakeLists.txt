@@ -1,4 +1,4 @@
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project ("J-Engine")
@@ -20,7 +20,6 @@ set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 add_compile_definitions(GLEW_STATIC)
 add_compile_definitions(YAML_CPP_STATIC_DEFINE)
-add_compile_definitions(SPDLOG_USE_STD_FORMAT)
 
 # Platform stuff
 IF (WIN32)
@@ -248,9 +247,6 @@ list(APPEND JENGINE_SOURCES ${JENGINE_VFS_SRC})
 
 # JEngine IO Helper files
 set(JENGINE_IO_HELPERS_SRC
-	 "include/JEngine/IO/Helpers/IOHelpers.h"
-     "src/JEngine/IO/Helpers/IOHelpers.cpp"
-	 
 	 "include/JEngine/IO/Helpers/IOUtils.h"
      "src/JEngine/IO/Helpers/IOUtils.cpp"
 )
@@ -292,7 +288,6 @@ list(APPEND JENGINE_SOURCES ${JENGINE_SERIALZIATION_SRC})
 
 # JEngine Cryptography files
 set(JENGINE_CRYPTOGRAPHY_SRC
-     "include/JEngine/Cryptography/CRC32.h"
      "include/JEngine/Cryptography/UUIDFactory.h"
      "src/JEngine/Cryptography/UUIDFactory.cpp"
      "include/JEngine/Cryptography/UUID.h"
@@ -341,10 +336,32 @@ set(JENGINE_CORE_SRC
 	 "include/JEngine/Core/Log.h"
 	 "include/JEngine/Core/Assert.h"
 	 
+	 "include/JEngine/Core/GameObject.h"
+     "src/JEngine/Core/GameObject.cpp"
+	 
+	 "include/JEngine/Core/Engine.h"
+     "src/JEngine/Core/Engine.cpp"
+	 
 	 "src/JEngine/Core/Log.cpp"
 )
 source_group("JEngine/Core" FILES ${JENGINE_CORE_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_CORE_SRC})
+
+# JEngine Component files
+set(JENGINE_COMP_SRC
+	 "src/JEngine/Components/Component.cpp" 	 
+	 "include/JEngine/Components/Component.h"
+	 
+	 "src/JEngine/Components/ComponentFactory.cpp" 	 
+	 "include/JEngine/Components/ComponentFactory.h"
+	 
+	 "src/JEngine/Components/CTransform.cpp" 	 
+	 "include/JEngine/Components/CTransform.h"
+	 
+)
+source_group("JEngine/Components" FILES ${JENGINE_COMP_SRC})
+list(APPEND JENGINE_SOURCES ${JENGINE_COMP_SRC})
+
 
 # JEngine Rendering files
 set(JENGINE_RENDERING_CORE_SRC

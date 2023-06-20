@@ -1,6 +1,5 @@
 #include <JEngine/IO/ImageUtils.h>
 #include <JEngine/Core/Assert.h>
-#include <JEngine/Core/Log.h>
 #include <JEngine/Math/Math.h>
 
 namespace JEngine {

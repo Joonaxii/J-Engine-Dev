@@ -14,7 +14,7 @@ namespace JEngine {
         Linear
     };
 
-    constexpr const char* getFilterModeName(const FilterMode format) {
+    inline constexpr const char* getFilterModeName(const FilterMode format) {
         switch (format) {
             default:					return "Unknown";
             case FilterMode::Nearest:	return "Nearest";
@@ -32,7 +32,7 @@ namespace JEngine {
         Indexed16,
     };
 
-    static constexpr int32_t getBitsPerPixel(const TextureFormat format) {
+    inline constexpr int32_t getBitsPerPixel(const TextureFormat format) {
         switch (format) {
             default: return 0;
 
@@ -43,7 +43,7 @@ namespace JEngine {
             case TextureFormat::RGBA32:    return 32;
         }
     }
-    static constexpr const char* getTextureFormatName(const TextureFormat format) {
+    inline constexpr const char* getTextureFormatName(const TextureFormat format) {
         switch (format) {
             default:						return "Unknown";
 

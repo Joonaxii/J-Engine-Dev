@@ -25,7 +25,7 @@ namespace JEngine {
     }
 
     void base64Decode(const char* str, std::vector<uint8_t>& ret) {
-        int strLen = strlen(str);
+        size_t strLen = strlen(str);
 
         int tBuf[256]{-1};
         std::fill_n(tBuf, 256, -1);

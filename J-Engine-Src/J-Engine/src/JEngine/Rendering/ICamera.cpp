@@ -83,7 +83,7 @@ namespace JEngine {
         return true;
     }
 
-    bool ICamera::serializeBinary(std::ostream& stream) const {
+    bool ICamera::serializeBinary(const Stream& stream) const {
         Serialization::serialize(_cameraFlags, stream);
         Serialization::serialize(_depth, stream);
 
@@ -100,7 +100,7 @@ namespace JEngine {
         return true;
     }
 
-    bool ICamera::deserializeBinary(std::istream& stream)  {
+    bool ICamera::deserializeBinary(const Stream& stream)  {
         Serialization::deserialize(_cameraFlags, stream);
         Serialization::deserialize(_depth, stream);
 

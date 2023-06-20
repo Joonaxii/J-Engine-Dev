@@ -63,19 +63,19 @@ int main() {
         ImageData bmpRes{};
         Texture texA{};
         if (Bmp::decode(TEXTURE_PATH + "Simba.bmp", bmpRes)) {
-            texA.create(bmpRes.data, bmpRes.format, , bmpRes.width, bmpRes.height,  FilterMode::Nearest);
+            texA.create(bmpRes, FilterMode::Nearest);
             bmpRes.clear(false);
         }
     
         Texture texB{};
         if (Bmp::decode(TEXTURE_PATH + "Blade.bmp", bmpRes)) {
-            texB.create(bmpRes.data, bmpRes.width, bmpRes.height, bmpRes.format, FilterMode::Nearest);
+            texB.create(bmpRes, FilterMode::Nearest);
             bmpRes.clear(false);
         }
 
         Texture texC{};
         if (Bmp::decode(TEXTURE_PATH + "Sus.bmp", bmpRes)) {
-            texC.create(bmpRes.data, bmpRes.width, bmpRes.height, bmpRes.format, FilterMode::Nearest);
+            texC.create(bmpRes, FilterMode::Nearest);
             bmpRes.clear(false);
         }
 
@@ -86,9 +86,9 @@ int main() {
         JVector2f position(0, 0);
         JMatrix4f mat;
 
-        Sprite spriteA("Test A", ObjectRef<Texture>(&texA), 128, JVector2f(0.5f, 0.5f), JRecti(0, 0, texA.getSize().x, texA.getSize().y));
-        Sprite spriteB("Test B", ObjectRef<Texture>(&texB), 32, JVector2f(0.5f, 0.0f), JRecti(0, 0, texB.getSize().x, texB.getSize().y));
-        Sprite spriteC("Test C", ObjectRef<Texture>(&texC), 128, JVector2f(0.5f, 0.5f), JRecti(0, 0, texC.getSize().x, texC.getSize().y));
+        Sprite spriteA("Test A", ObjectRef<Texture>(&texA), 128, JVector2f(0.5f, 0.5f), JRecti(0, 0, texA.getWidth(), texA.getHeight()));
+        Sprite spriteB("Test B", ObjectRef<Texture>(&texB), 32, JVector2f(0.5f, 0.0f), JRecti(0, 0, texB.getWidth(), texB.getHeight()));
+        Sprite spriteC("Test C", ObjectRef<Texture>(&texC), 128, JVector2f(0.5f, 0.5f), JRecti(0, 0, texC.getWidth(), texC.getHeight()));
 
         Material materials[3]{
             Material(&texB, &shaderB),

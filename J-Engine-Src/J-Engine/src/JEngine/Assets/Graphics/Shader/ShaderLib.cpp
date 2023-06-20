@@ -4,20 +4,19 @@
 #include <JEngine/Utility/Span.h>
 
 namespace JEngine {
-    void ShaderLib::parse(std::istream& stream) {
+    void ShaderLib::parse(const Stream& stream) {
         clear();
 
         std::stringstream strBuffer;
+        const size_t length = stream.size();
 
-        const size_t start = stream.tellg();
-        stream.seekg(0, std::ios::end);
+        char* libStr = reinterpret_cast<char*>(_malloca(length));
+        if (!libStr) {
+            JENGINE_CORE_ERROR("Failed to allocate shader buffer!");
+            return;
+        }
 
-        const size_t end = stream.tellg();
-        const size_t length = end - start;
-        stream.seekg(start, std::ios::beg);
-
-        char* libStr = reinterpret_cast<char*>(malloc(length));
-        stream.read(libStr, length);
+        stream.read(libStr, length, false);
 
         Span<char> libDataSpan(libStr, length);
         libDataSpan = libDataSpan.trim();
@@ -33,7 +32,7 @@ namespace JEngine {
                 case '/': //Most likely a comment
                     if (nxtC == '*') {
                         temp = libDataSpan.slice(i);
-                        int32_t endOfComment = temp.indexOf("*/");
+                        int32_t endOfComment = indexOf(temp, "*/");
 
                         assert(endOfComment > -1 && "Invalid comment found!");
                         i += size_t(endOfComment) - 1;
@@ -56,6 +55,6 @@ namespace JEngine {
             }
         }
 
-        free(libStr);
+        _freea(libStr);
     }
 }

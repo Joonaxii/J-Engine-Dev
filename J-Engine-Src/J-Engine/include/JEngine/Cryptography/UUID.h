@@ -184,7 +184,6 @@ namespace JEngine {
 }
 #pragma endregion
 
-
 template<>
 struct std::hash<JEngine::UUID8> {
     size_t operator()(const JEngine::UUID8& uuid) const {

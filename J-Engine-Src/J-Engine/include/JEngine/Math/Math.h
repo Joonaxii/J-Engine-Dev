@@ -13,6 +13,20 @@ constexpr float UINT32_TO_FLOAT = 1.0f / float(UINT32_MAX);
 constexpr float UINT64_TO_FLOAT = 1.0f / float(UINT64_MAX);
 
 namespace JEngine::Math {
+#undef max
+#undef min
+    template<typename T, typename P = double>
+    inline constexpr P normalize(T value) {
+        return value < 0 ? (value / P(-std::numeric_limits<T>::min())) : (value / P(std::numeric_limits<T>::max()));
+    }
+
+    template<typename T>
+    inline constexpr bool isPowerOf2(T value) { return (value & (value - 1)) == 0; }
+
+    template<> inline constexpr bool isPowerOf2<double>(const double value) { return isPowerOf2<int64_t>(int64_t(value)); }
+    template<> inline constexpr bool isPowerOf2<float>(const float value) { return isPowerOf2<int64_t>(int64_t(value)); }
+
+
     inline constexpr uint8_t multByte(uint8_t a, uint8_t b) {
         return uint8_t((uint32_t(a) * b * 0x10101U + 0x800000U) >> 24);
     }
@@ -22,47 +36,75 @@ namespace JEngine::Math {
     float easeOutCubic(float t);
 
     int32_t log2(uint64_t value);
-    int32_t findFirstLSB(const uint64_t value);
+    int32_t findFirstLSB(uint64_t value);
 
     template<typename T, typename P = T>
-    P sign(const T value, const T threshold) {
+    P sign(T value, T threshold) {
         return P(value > threshold ? 1 : value < -threshold ? -1 : 0);
     }
 
-    constexpr int32_t bytesRequired(const int32_t bits) {
+    constexpr inline int32_t bytesRequired(int32_t bits) {
         const int32_t bitsShft = bits >> 3;
         return ((bitsShft << 3) == bits) ? bitsShft : bitsShft + 1;
     }
 
     template<typename T, size_t size>
-    constexpr inline T nextDivByPowOf2(const T input) {
+    inline constexpr T nextDivByPowOf2(T input) {
+        static_assert(isPowerOf2(size) && "Size not a power of 2!");
         return (input + (size - 1)) & ~(size - 1);
     }
 
-#undef max
-#undef min
-    template<typename T, typename P = double>
-    constexpr P normalize(const T value) {
-        return value < 0 ? (value / P(-std::numeric_limits<T>::min())) : (value / P(std::numeric_limits<T>::max()));
-    }
-
     template<typename T>
-    bool isPowerOf2(const T value) { return (value & (value - 1)) == 0; }
-
-    template<> inline bool isPowerOf2<double>(const double value) { return isPowerOf2<int64_t>(int64_t(value)); }
-    template<> inline bool isPowerOf2<float>(const float value) { return isPowerOf2<int64_t>(int64_t(value)); }
-
-    template<typename T>
-    int32_t potToIndex(const T value) {
+    int32_t potToIndex(T value) {
         return value != T(0) && isPowerOf2<T>(value) ? log2(uint64_t(value)) : -1;
     }
 
-    template<> inline int32_t potToIndex<double>(const double value) { return potToIndex<int64_t>(int64_t(value)); }
-    template<> inline int32_t potToIndex<float>(const float value) { return potToIndex<int64_t>(int64_t(value)); }
+    template<> inline int32_t potToIndex<double>(double value) { return potToIndex<int64_t>(int64_t(value)); }
+    template<> inline int32_t potToIndex<float>(float value) { return potToIndex<int64_t>(int64_t(value)); }
 
     template<typename T>
-    constexpr T sign(const T val) {
+    inline constexpr T sign(T val) {
         return T(val > 0 ? 1 : val < 0 ? -1 : 0);
+    }
+
+    template<>
+    inline constexpr int8_t sign(int8_t val) {
+        return val & 0x7F;
+    }
+
+    template<>
+    inline constexpr int16_t sign(int16_t val) {
+        return val & 0x7FFF;
+    }
+
+    template<>
+    inline constexpr int32_t sign(int32_t val) {
+        return val & 0x7FFFFFFF;
+    }
+
+    template<>
+    inline constexpr int64_t sign(int64_t val) {
+        return val & 0x7FFFFFFFFFFFFFFFLL;
+    }
+
+    template<>
+    inline constexpr uint8_t sign(uint8_t val) {
+        return val;
+    }
+
+    template<>
+    inline constexpr uint16_t sign(uint16_t val) {
+        return val;
+    }
+
+    template<>
+    inline constexpr uint32_t sign(uint32_t val) {
+        return val;
+    }
+
+    template<>
+    constexpr uint64_t sign(uint64_t val) {
+        return val;
     }
 
     template<typename T>
@@ -95,24 +137,26 @@ namespace JEngine::Math {
         return clamp<float>(t - floorf(t / length) * length, 0.0f, length);
     }
 
+    template<typename T, typename P = float>
+    T lerp(T a, T b, P t) {
+        return T((P(1) - t) * a + b * t);
+    }
+
+    template<typename T, typename P = float>
+    P inverseLerp(T a, T b, P v) {
+        if (a == b) { return P(); }
+        return (P(v) - P(a)) / (P(b) - P(a));
+    }
+
+    template<typename T, typename P = float>
+    P remap(T a, T b, T aT, T bT, P v) {
+        return lerp<T, P>(aT, bT, inverseLerp<T, P>(a, b, v));
+    }
+
     template<typename T>
-    T lerp(const T& a, const T& b, const double t) {
-        return static_cast<T>((1.0 - t) * a + b * t);
-    }
-
-    template<>
-    inline float lerp(const float& a, const float& b, const double t) {
-        return float((1.0 - t) * a + b * t);
-    }
-
-    template<>
-    inline double lerp(const double& a, const double& b, const double t) {
-        return (1.0 - t) * a + b * t;
-    }
-
-    template<typename T, typename R = float>
-    R invLerp(const T a, const T b, const T v) {
-        return R((v - a) / (b - a));
+    constexpr inline T nextDivBy(T input, T div) {
+        const int32_t divB = input % div;
+        return divB ? input + (div - divB) : input;
     }
 
     template<typename T, typename P = float>

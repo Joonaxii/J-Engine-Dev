@@ -1,9 +1,10 @@
-#include <JEngine/Helpers/StringExtensions.h>
+#include <JEngine/Utility/StringHelpers.h>
 #include <JEngine/Helpers/TypeHelpers.h>
-#include <JEngine/IO/Helpers/IOHelpers.h>
+#include <JEngine/IO/Helpers/IOUtils.h>
 #include <JEngine/IO/VFS/FileEntry.h>
 #include <stack>
 #include <fstream>
+#include <JEngine/IO/FileStream.h>
 
 namespace JEngine {
     FileEntry::FileEntry() : FileEntry(nullptr, std::string_view(), EntryData()) { }
@@ -169,11 +170,8 @@ namespace JEngine {
         return _parent;
     }
 
-    void FileEntry::loadFromAssetDB(std::istream& stream) {
-        char hdr[4]{ 0 };
-        stream.read(hdr, 4);
-
-        if (strncmp(hdr, ASSET_CACHE_HDR, 4) != 0) { return; }
+    void FileEntry::loadFromAssetDB(const Stream& stream) {
+        if (formatMatch(stream, FMT_JPAK)) { return; }
         uint32_t count = 0;
         Serialization::deserialize(count, stream);
         std::vector<std::string_view> strs;
@@ -183,23 +181,23 @@ namespace JEngine {
         }
     }
 
-    void FileEntry::saveToAssetDB(std::ostream& stream) {
+    void FileEntry::saveToAssetDB(const Stream& stream) {
         stream.write(ASSET_CACHE_HDR, 4);
         uint32_t count = 0;
-        auto pos = stream.tellp();
+        auto pos = stream.tell();
         Serialization::serialize(count, stream);
 
         count = writeMetaDataToDB(stream);
-        auto end = stream.tellp();
+        auto end = stream.tell();
 
-        stream.seekp(pos, std::ios::beg);
+        stream.seek(pos, SEEK_SET);
         Serialization::serialize(count, stream);
-        stream.seekp(end, std::ios::beg);
+        stream.seek(end, SEEK_SET);
     }
 
     void FileEntry::loadFromPath(const std::string& path) {
-        if (!IO::dirExists(path)) {
-            std::cout << "Directory '" << path << "' doesn't exists or cannot be accessed!\n";
+        if (!IO::exists(path)) {
+            JENGINE_CORE_WARN("[FileEntry - loadFromPath] Warning: Directory '{0}' doesn't exist or cannot be accessed", path.c_str());
             return;
         }
 
@@ -275,7 +273,7 @@ namespace JEngine {
         }
     }
 
-    void FileEntry::readMetaDataFromDB(std::istream& stream, std::vector<std::string_view>& strs) {
+    void FileEntry::readMetaDataFromDB(const Stream& stream, std::vector<std::string_view>& strs) {
         std::string path = "";
         EntryData data;
         AssetMetaData meta;
@@ -295,7 +293,7 @@ namespace JEngine {
         }
     }
 
-    uint32_t FileEntry::writeMetaDataToDB(std::ostream& stream) {
+    uint32_t FileEntry::writeMetaDataToDB(const Stream& stream) {
         uint32_t c = 0;
         if (_data.type != ET_FOLDER) {
             std::string path = "";
@@ -332,7 +330,7 @@ namespace JEngine {
             outStr.close();
         }
         catch (std::ios_base::failure exc) {
-            std::cout << "Failed to write JSON '" << exc.what() << "'!\n";
+            JENGINE_CORE_WARN("[FileEntry - writeMetadataToJson] Error: Failed to write JSON '{0}'", exc.what());
         }
     }
 
@@ -343,19 +341,23 @@ namespace JEngine {
 
             std::string metaPath = root + pth + ".meta";
 
-            bool valid = IO::fileExists(metaPath);
-            std::ifstream strm;
-            if (valid) {
-                strm.open(metaPath);
-                valid = IO::checkFileType(strm) == AssetDataFormat::JSON;
+            bool valid = IO::exists(metaPath);
+            FileStream strm(metaPath.c_str(), "rb");
+            if (valid && strm.isOpen()) {
+                valid = getDataFormat(strm, -1, FMT_F_ANALYSIS_COMPLEX) == FMT_JSON;
             }
 
             if (valid) {
-                strm.seekg(0, std::ios::beg);
-                json jsonF = json::parse(strm);
-                Serialization::deserialize(_metadata, jsonF);
+                strm.seek(0, SEEK_SET);
+                char* data = reinterpret_cast<char*>(_malloca(strm.size()));
+
+                if (data) {
+                    strm.read(data, 1, strm.size(), false);
+                    json jsonF = json::parse(data, data + strm.size());
+                    Serialization::deserialize(_metadata, jsonF);
+                    UUIDFactory::addUUID<IAsset>(_metadata.getUUID());
+                }
                 strm.close();
-                UUIDFactory::addUUID<IAsset>(_metadata.getUUID());
             }
             else {
                 generate.push_back(this);

@@ -9,42 +9,45 @@ using yamlNode  = YAML::Node;
 namespace JEngine {
     namespace Serialization {
         static inline void serializeWCStringBinary(const Stream& stream, const wchar_t* str) {
-            const uint32_t len = wcslen(str);
-            stream.writeValue(len);
+            size_t len(wcslen(str));
+            stream.write(&len, sizeof(uint32_t));
             stream.write(reinterpret_cast<const char*>(str), len * sizeof(wchar_t));
         }
         static inline wchar_t* deserializeWCStringBinary(const Stream& stream) {
-            uint32_t len = 0;
-            stream.readValue(len, false);
+            size_t len = 0;
+            stream.read(&len, sizeof(uint32_t), false);
             if (len < 1) { return nullptr; }
 
-            char* buf = reinterpret_cast<char*>(malloc(len * sizeof(wchar_t) + 1));
-            buf[len * sizeof(wchar_t)] = 0;
-
-            stream.read(buf, len * sizeof(wchar_t), false);
-            return reinterpret_cast<wchar_t*>(buf);
+            wchar_t* buf = reinterpret_cast<wchar_t*>(malloc((len + 1) * sizeof(wchar_t)));
+            if (buf) {
+                buf[len] = 0;
+                stream.read(buf, len * sizeof(wchar_t), false);
+  
+            }
+            return buf;
         }
                       
         static inline void serializeCStringBinary(const Stream& stream, const char* str) {
-            const uint32_t len = strlen(str);
-            stream.writeValue(len);
+            size_t len(strlen(str));
+            stream.write(&len, sizeof(uint32_t));
             stream.write(str, len * sizeof(char));
         }
         static inline char* deserializeCStringBinary(const Stream& stream) {
-            int32_t len = 0;
-            stream.readValue(len, false);
+            size_t len = 0;
+            stream.read(&len, sizeof(uint32_t), false);
             if (len < 1) { return nullptr; }
 
             char* buf = reinterpret_cast<char*>(malloc(len + 1));
-            buf[len] = 0;
-
-            stream.read(buf, len * sizeof(wchar_t), false);
+            if (buf) {
+                buf[len] = 0;
+                stream.read(buf, len * sizeof(wchar_t), false);
+            }
             return buf;
         }
 
         static inline void serializeWStringBinary(const Stream& stream, const std::wstring& str) {
-            const uint32_t len = str.length();
-            stream.writeValue(len);
+            size_t len(str.length());
+            stream.write(&len, sizeof(uint32_t));
             stream.write(str.c_str(), len * sizeof(wchar_t));
         }
         static inline std::wstring deserializeWStringBinary(const Stream& stream) {
@@ -52,16 +55,20 @@ namespace JEngine {
             stream.readValue(len, false);;
             if (len < 1) { return L""; }
 
-            char* buf = reinterpret_cast<char*>(_malloca(len * sizeof(wchar_t)));
-            stream.read(buf, len * sizeof(wchar_t), false);
-            std::wstring str = std::wstring(reinterpret_cast<wchar_t*>(buf), len);
-            _freea(buf);
+            wchar_t* buf = reinterpret_cast<wchar_t*>(_malloca(len * sizeof(wchar_t)));
+            std::wstring str{};
+            if (buf) {
+                stream.read(buf, len * sizeof(wchar_t), false);
+                str.reserve(len);
+                memcpy(&str[0], buf, sizeof(wchar_t) * len);
+                _freea(buf);
+            }
             return str;
         }
 
         static inline void serializeStringBinary(const Stream& stream, const std::string& str) {
-            uint32_t len = str.length();
-            stream.writeValue(len);
+            size_t len = str.length();
+            stream.write(&len, sizeof(uint32_t));
             if (len < 1) { return; }
             stream.write(str.c_str(), len);
         }
@@ -76,15 +83,18 @@ namespace JEngine {
             if (buf) {
                 stream.read(buf, len, false);
                 str = std::string(buf, len);
+
+                str.reserve(len);
+                memcpy(&str[0], buf, len);
+                _freea(buf);
             }
-            _freea(buf);
             return str;
         }
 
         template<typename T>
         const void serializeBinary(const T& ref, const Stream& stream) {
             if (std::is_polymorphic<T>::value) {
-                stream.write(reinterpret_cast<char*>(&ref) + 8, sizeof(T) - 8);
+                stream.write(reinterpret_cast<const char*>(&ref) + 8, sizeof(T) - 8, false);
                 return;
             }
             stream.writeValue(ref, false);
@@ -93,7 +103,7 @@ namespace JEngine {
         template<typename T>
         const void deserializeBinary(T& ref, const Stream& stream) {
             if (std::is_polymorphic<T>::value) {
-                stream.read(reinterpret_cast<char*>(&ref) + 8, sizeof(T) - 8);
+                stream.read(reinterpret_cast<char*>(&ref) + 8, sizeof(T) - 8, false);
                 return;
             }
             stream.readValue(ref, false);
@@ -110,11 +120,6 @@ namespace JEngine {
 
         virtual bool deserializeBinary(const Stream& stream) { return false; }
         virtual bool serializeBinary(const Stream& stream) const { return false; }
-
-        static bool jsonToBinary(json& jsonF, const Stream& stream) { return jsonToBinaryImpl(jsonF, stream); }
-
-    protected:
-        virtual bool jsonToBinaryImpl(json& jsonF, const Stream& stream) const = 0;
     };
 
     template<typename T>
