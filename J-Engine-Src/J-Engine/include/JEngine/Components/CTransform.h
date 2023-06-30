@@ -79,7 +79,7 @@ namespace JEngine {
         friend class GameObject;
 
         void onInit() override;
-        void onDestroy() override;
+        virtual void onDestroy() override;
 
         void deserializeBinaryImpl(const Stream& stream) override;
         void serializeBinaryImpl(const Stream& stream) const override;
