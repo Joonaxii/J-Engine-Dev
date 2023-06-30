@@ -79,4 +79,5 @@ namespace JEngine::Helpers {
     }
 
     void formatDataSize(char* buffer, size_t size);
+
 }

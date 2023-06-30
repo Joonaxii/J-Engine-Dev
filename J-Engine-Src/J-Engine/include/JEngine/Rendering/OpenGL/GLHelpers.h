@@ -15,16 +15,14 @@ namespace JEngine {
     bool GLLogCall(const char* function, const char* file, int line);
 
     constexpr uint32_t filterModeToGLFilter(const FilterMode filter) {
-        switch (filter)
-        {
+        switch (filter) {
             default:                 return GL_NEAREST;
             case FilterMode::Linear: return GL_LINEAR;
         }
     }
 
     constexpr uint32_t textureFormatToGLFormat(const TextureFormat& fmt, const bool isMain = true) {
-        switch (fmt)
-        {
+        switch (fmt) {
             default:                            return isMain ? GL_RGBA8 : GL_RGBA;
             case TextureFormat::RGB24:          return isMain ? GL_RGB8 : GL_RGB;
             case TextureFormat::Indexed8:
@@ -34,8 +32,7 @@ namespace JEngine {
     }
 
     constexpr uint32_t getGLPixelAlignment(const TextureFormat& fmt) {
-        switch (fmt)
-        {
+        switch (fmt) {
             default:                    return 4;
 
             case TextureFormat::Indexed16:

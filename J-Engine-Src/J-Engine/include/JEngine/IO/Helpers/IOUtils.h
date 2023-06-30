@@ -32,5 +32,6 @@ namespace JEngine::IO {
 
     void fixPath(std::string& path);
     void fixPath(char* path);
+    void fixPath(char* path, size_t length);
 
 }

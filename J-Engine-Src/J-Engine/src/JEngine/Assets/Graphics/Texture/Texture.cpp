@@ -62,17 +62,13 @@ namespace JEngine {
 
 
         glBindTexture(GL_TEXTURE_2D, _textureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterModeToGLFilter(filter));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterModeToGLFilter(filter));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, getGLPixelAlignment(format));
         glTexImage2D(GL_TEXTURE_2D, 0, textureFormatToGLFormat(format, true), width, height, 0, textureFormatToGLFormat(format, false), GL_UNSIGNED_BYTE, input ? pixels : nullptr);
-
-        if (!input) {
-            return true;
-        }
 
         if (isIndexed) {
             if (!_paletteId) {
@@ -101,7 +97,7 @@ namespace JEngine {
             releasePalette();
         }
 
-        _valid = true;
+        _valid = input != nullptr;
         return true;
     }
 

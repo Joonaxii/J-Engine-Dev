@@ -63,4 +63,15 @@ namespace JEngine {
 		return comp ? comp->addComponent(go) : nullptr;
 	}
 
+	void ComponentFactory::clearAllComponentPools(bool full) {
+		for (auto& comp : getComps()) {
+			comp->clearAllocPool(full);
+		}
+	}
+
+	void ComponentFactory::trimAllComponentPools() {
+		for (auto& comp : getComps()) {
+			comp->trimAllocPool();
+		}
+	}
 }

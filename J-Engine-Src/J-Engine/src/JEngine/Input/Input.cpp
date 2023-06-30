@@ -13,7 +13,7 @@ namespace JEngine {
     Input::MouseData Input::_mDelta{};
     Action<const Input::DeviceIndex, const bool> Input::_onDeviceConnectionChange{};
 
-    static void updateControllerState(Input::Gamepad& pad, Input::InputState* states, const float deadZone, const uint64_t tick) {
+    static void updateControllerState(Input::Gamepad& pad, Input::InputState* states, float deadZone, uint64_t tick) {
         auto ogStates = states;
         bool state;
         uint8_t* padB = reinterpret_cast<uint8_t*>(&pad);
@@ -90,16 +90,16 @@ namespace JEngine {
     uint64_t Input::addDeviceConnectionCB(const Action<DeviceIndex, bool>::Func& func) {
         return _onDeviceConnectionChange.add(func);
     }
-    void Input::removeDeviceConnectionCB(const uint64_t id) {
+    void Input::removeDeviceConnectionCB(uint64_t id) {
         _onDeviceConnectionChange.remove(id);
     }
 
-    void Input::update(const bool hasFocus) {
+    void Input::update(bool hasFocus) {
         MouseData mDat;
         update(mDat, hasFocus);
     }
 
-    void Input::update(const MouseData& mouseData, const bool hasFocus) {
+    void Input::update(const MouseData& mouseData, bool hasFocus) {
         HAS_FOCUS = hasFocus;
         if (!hasFocus) { return; }
 
@@ -125,8 +125,8 @@ namespace JEngine {
         XINPUT_STATE xPad;
         for (DWORD i = 0, j = KEYBOARD_INPUTS; i < MAX_CONTROLLERS; i++, j += CONTROLLER_INPUTS) {
             auto ret = XInputGetState(i, &xPad);
-            const bool isConnected = ret == ERROR_SUCCESS;
-            const bool curConnected = _gamePads[i].isConnected();
+            bool isConnected = ret == ERROR_SUCCESS;
+            bool curConnected = _gamePads[i].isConnected();
 
             _gamePads[i].update(isConnected, xPad.Gamepad);
 
@@ -137,7 +137,7 @@ namespace JEngine {
         _frame++;
     }
 
-    bool Input::isDown(const DeviceIndex index, const InputCode code) {
+    bool Input::isDown(InputCode code, DeviceIndex index) {
         if (!HAS_FOCUS) { return false; }
 
         InputState buffer[MAX_CONTROLLERS + 1];
@@ -148,7 +148,7 @@ namespace JEngine {
         }
         return false;
     }
-    bool Input::isHeld(const DeviceIndex index, const InputCode code) {
+    bool Input::isHeld(InputCode code, DeviceIndex index) {
         if (!HAS_FOCUS) { return false; }
 
         InputState buffer[MAX_CONTROLLERS + 1];
@@ -159,7 +159,7 @@ namespace JEngine {
         }
         return false;
     }
-    void Input::setDeadZones(const DeviceIndex devices, const float* deadZones) {
+    void Input::setDeadZones(DeviceIndex devices, const float* deadZones) {
         for (size_t i = 0, j = 1, k = 0; i < MAX_CONTROLLERS; i++, j <<= 1) {
             if (j & devices) {
                 _deadZones[i] = deadZones[k++];
@@ -167,7 +167,7 @@ namespace JEngine {
         }
     }
 
-    void Input::setDeadZone(const DeviceIndex devices, const float deadZone) {
+    void Input::setDeadZone(DeviceIndex devices, float deadZone) {
         for (size_t i = 0, j = 1; i < MAX_CONTROLLERS; i++, j <<= 1) {
             if (j & devices) {
                 _deadZones[i] = deadZone;
@@ -175,12 +175,12 @@ namespace JEngine {
         }
     }
 
-    float Input::getDeadZone(const DeviceIndex device) {
+    float Input::getDeadZone(DeviceIndex device) {
         const int32_t ind = Math::potToIndex(device);
-        return ind > - 1 ? _deadZones[ind] : 0;
+        return ind > -1 ? _deadZones[ind] : 0;
     }
 
-    void Input::getDeadZones(const DeviceIndex devices, float* deadZones) {
+    void Input::getDeadZones(DeviceIndex devices, float* deadZones) {
         for (size_t i = 0, k = 0, j = 1; i < MAX_CONTROLLERS; i++, j <<= 1) {
             if (j & devices) {
                 deadZones[k++] = _deadZones[i];
@@ -188,7 +188,7 @@ namespace JEngine {
         }
     }
 
-    bool Input::isUp(const DeviceIndex index, const InputCode code) {
+    bool Input::isUp(InputCode code, DeviceIndex index) {
         if (!HAS_FOCUS) { return false; }
 
         InputState buffer[MAX_CONTROLLERS + 1];
@@ -199,7 +199,7 @@ namespace JEngine {
         }
         return false;
     }
-    bool Input::isToggled(const DeviceIndex index, const InputCode code) {
+    bool Input::isToggled(InputCode code, DeviceIndex index) {
         InputState buffer[MAX_CONTROLLERS + 1];
         const auto states = getInputStates(code, index, buffer);
 
@@ -209,15 +209,15 @@ namespace JEngine {
         return false;
     }
 
-    Input::Gamepad Input::getGamepad(const DeviceIndex device) {
+    Input::Gamepad Input::getGamepad(DeviceIndex device) {
         const int32_t ind = Math::potToIndex(device);
         return getGamepad(ind - 1);
     }
-    Input::Gamepad Input::getGamepad(const int32_t device) {
+    Input::Gamepad Input::getGamepad(int32_t device) {
         if (device > -1) { return _gamePads[device]; }
         return {};
     }
-    void Input::getGamepads(const DeviceIndex devices, Gamepad* pads) {
+    void Input::getGamepads(DeviceIndex devices, Gamepad* pads) {
         for (size_t i = 0, j = 2, k = 0; i < MAX_CONTROLLERS; i++, j <<= 1) {
             if (j & devices) {
                 pads[k++] = _gamePads[i];
@@ -225,11 +225,11 @@ namespace JEngine {
         }
     }
 
-    void Input::vibrateDevices(const DeviceIndex devices, const double left, const double right) {
+    void Input::vibrateDevices(DeviceIndex devices, double left, double right) {
         vibrateDevices(devices, Math::deNormalize<uint16_t>(left), Math::deNormalize<uint16_t>(right));
     }
 
-    void Input::vibrateDevices(const DeviceIndex devices, const uint16_t left, const uint16_t right) {
+    void Input::vibrateDevices(DeviceIndex devices, uint16_t left, uint16_t right) {
         for (int32_t i = 0, j = 2; i < MAX_CONTROLLERS; i++, j <<= 1)
         {
             if (j & devices) {
@@ -238,33 +238,33 @@ namespace JEngine {
         }
     }
 
-    bool Input::anyDown(const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+    bool Input::anyDown(DeviceIndex devices, InputResult& result, const InputCode* ignored, size_t ignoredLength) {
         return any(0, devices, result, ignored, ignoredLength);
     }
-    bool Input::anyHeld(const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+    bool Input::anyHeld(DeviceIndex devices, InputResult& result, const InputCode* ignored, size_t ignoredLength) {
         return any(1, devices, result, ignored, ignoredLength);
     }
-    bool Input::anyUp(const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+    bool Input::anyUp(DeviceIndex devices, InputResult& result, const InputCode* ignored, size_t ignoredLength) {
         return any(2, devices, result, ignored, ignoredLength);
     }
-    bool Input::anyToggled(const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+    bool Input::anyToggled(DeviceIndex devices, InputResult& result, const InputCode* ignored, size_t ignoredLength) {
         return any(3, devices, result, ignored, ignoredLength);
     }
 
-    float Input::getAxis(const DeviceIndex devices, const InputCode neg, const InputCode pos) {
+    float Input::getAxis(InputCode neg, InputCode pos, DeviceIndex devices) {
         float axis = 0;
 
-        if (isHeld(devices, neg)) { axis--; }
-        if (isHeld(devices, pos)) { axis++; }
+        if (isHeld(neg, devices)) { axis--; }
+        if (isHeld(pos, devices)) { axis++; }
 
         return axis;
     }
 
-    JVector2f Input::getVector(const DeviceIndex devices, const InputCode negX, const InputCode posX, const InputCode negY, const InputCode posY) {
-        return JVector2f(getAxis(devices, negX, posX), getAxis(devices, negY, posY));
+    JVector2f Input::getVector(InputCode negX, InputCode posX, InputCode negY, InputCode posY, DeviceIndex devices) {
+        return JVector2f(getAxis( negX, posX, devices), getAxis(negY, posY, devices));
     }
 
-    Input::InputState Input::getInputState(const DeviceIndex device, const InputCode code) {
+    Input::InputState Input::getInputState(DeviceIndex device, InputCode code) {
         const int32_t devInd = Math::potToIndex(device);
         if (devInd < 0) { return {}; }
         if (devInd == 0) { return _inputs[code]; }
@@ -275,7 +275,7 @@ namespace JEngine {
         return (GetAsyncKeyState(code) & 0x8000) >> 15U;
     }
 
-    int32_t Input::getInputStates(const InputCode code, const DeviceIndex devices, InputState* states) {
+    int32_t Input::getInputStates(InputCode code, DeviceIndex devices, InputState* states) {
         int32_t kCode = code;
 
         int32_t sInd = 0;
@@ -324,7 +324,7 @@ namespace JEngine {
     }
 
 
-    bool Input::any(const int32_t mode, const DeviceIndex devices, InputResult& result, const InputCode* ignored, const size_t ignoredLength) {
+    bool Input::any(int32_t mode, DeviceIndex devices, InputResult& result, const InputCode* ignored, size_t ignoredLength) {
         result = { InputCode::INP_None, DeviceIndex::DEV_None, 0 };
 
         bool resultB;
@@ -391,11 +391,11 @@ namespace JEngine {
         return int32_t(result.device) != 0;
     }
 
-    void Input::vibrateDevice(const int32_t device, const double left, const double right) {
+    void Input::vibrateDevice(int32_t device, double left, double right) {
         vibrateDevice(device, Math::deNormalize<uint16_t>(left), Math::deNormalize<uint16_t>(right));
     }
 
-    void Input::vibrateDevice(const int32_t index, const uint16_t left, const uint16_t right) {
+    void Input::vibrateDevice(int32_t index, uint16_t left, uint16_t right) {
         if (index < 0 || index >= MAX_CONTROLLERS) { return; }
         if (_gamePads[index].isConnected()) {
             XINPUT_VIBRATION vibration;

@@ -24,6 +24,8 @@ namespace JEngine {
         const bool operator ==(const UUID8& other) const;
         const bool operator !=(const UUID8& other) const;
 
+        operator bool() const { return *reinterpret_cast<const uint64_t*>(_hash) != 0; }
+
         friend std::ostream& operator<<(std::ostream& stream, const UUID8& hash);
 
         std::string toString() const;
@@ -71,6 +73,8 @@ namespace JEngine {
 
         const bool operator ==(const UUID16& other) const;
         const bool operator !=(const UUID16& other) const;
+
+        operator bool() const { return bool(_hash) && _len != 0; }
 
         friend std::ostream& operator<<(std::ostream& stream, const UUID16& hash);
 

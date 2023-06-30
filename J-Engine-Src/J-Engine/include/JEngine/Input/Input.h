@@ -52,7 +52,6 @@ namespace JEngine {
             }
         };
 
-
         enum DeviceIndex : uint8_t {
             DEV_None = 0,
 
@@ -64,7 +63,7 @@ namespace JEngine {
             DEV_Four = 0x10,
 
             DEV_Controller = DEV_One | DEV_Three | DEV_Four,
-            DEV_Any        = DEV_Keyboard | DEV_One | DEV_Three | DEV_Four
+            DEV_Any = DEV_Keyboard | DEV_One | DEV_Three | DEV_Four
         };
 
         enum InputCode : uint16_t {
@@ -227,7 +226,7 @@ namespace JEngine {
             INP_MouseLeft = 0x105,
             INP_MouseDown = 0x106,
             INP_MouseRight = 0x107,
-           
+
             INP_ScrollUp = 0x108,
             INP_ScrollLeft = 0x109,
             INP_ScrollDown = 0x10A,
@@ -282,7 +281,6 @@ namespace JEngine {
 
             INP_KeyCount,
         };
- 
 
         struct BatteryInfo {
         public:
@@ -311,12 +309,12 @@ namespace JEngine {
 
             bool isConnected() const { return _isConnected; }
 
-            bool isDown(const int16_t index) const {
+            bool isDown(int16_t index) const {
                 if (index < 0 || index >= 0x8000) { return false; }
                 return bool(_buttons & index);
             }
 
-            bool isDown(const InputCode code) const {
+            bool isDown(InputCode code) const {
                 return isDown(int16_t(code - KEYBOARD_INPUTS));
             }
 
@@ -326,9 +324,9 @@ namespace JEngine {
             const JVector2f& getStickL() const { return _stickL; }
             const JVector2f& getStickR() const { return _stickR; }
 
-            void update(const bool isConnected, const XINPUT_GAMEPAD& nativePad) {
+            void update(bool isConnected, const XINPUT_GAMEPAD& nativePad) {
                 _isConnected = isConnected;
-                
+
                 _buttons = nativePad.wButtons;
 
                 _trigger.x = float(Math::normalize(nativePad.bLeftTrigger));
@@ -381,12 +379,12 @@ namespace JEngine {
             inline bool isUp()       const { return bool(_flags & KEY_UP); }
             inline bool isToggled()  const { return bool(_flags & KEY_TOGGLE); }
 
-            void update(const bool state, const bool toggled, const float value, const uint64_t tick, const bool autoToggle = false) {
+            void update(bool state, bool toggled, float value, uint64_t tick, bool autoToggle = false) {
                 _axisVal = value;
 
                 const bool down = isDown();
                 const bool held = isHeld();
- 
+
                 _flags = 0;
 
                 if (down && !state) { _flags |= KEY_UP; }
@@ -416,10 +414,10 @@ namespace JEngine {
 
         static void clear();
 
-        static void update(const bool hasFocus);
-        static void update(const MouseData& mouseData, const bool hasFocus);
+        static void update(bool hasFocus);
+        static void update(const MouseData& mouseData, bool hasFocus);
 
-        static InputState getInputState(const DeviceIndex device, const InputCode code);
+        static InputState getInputState(DeviceIndex device, InputCode code);
 
         static const JVector2f& getMousePosition();
         static const JVector2f& getMouseWheel();
@@ -427,46 +425,46 @@ namespace JEngine {
         static const JVector2f& getMousePositionDelta();
         static const JVector2f& getMouseWheelDelta();
 
-        static uint64_t addDeviceConnectionCB(const Action<const DeviceIndex, const bool>::Func& func);
-        static void removeDeviceConnectionCB(const uint64_t id);
+        static uint64_t addDeviceConnectionCB(const Action<DeviceIndex, bool>::Func& func);
+        static void removeDeviceConnectionCB(uint64_t id);
 
-        static Gamepad getGamepad(const DeviceIndex device);
-        static Gamepad getGamepad(const int32_t device);
-        static void getGamepads(const DeviceIndex devices, Gamepad* pads);
+        static Gamepad getGamepad(DeviceIndex device);
+        static Gamepad getGamepad(int32_t device);
+        static void getGamepads(DeviceIndex devices, Gamepad* pads);
 
-        static void setDeadZone(const DeviceIndex devices, const float deadZone);
-        static void setDeadZones(const DeviceIndex devices, const float* deadZones);
+        static void setDeadZone(DeviceIndex devices, const float deadZone);
+        static void setDeadZones(DeviceIndex devices, const float* deadZones);
 
-        static float getDeadZone(const DeviceIndex device);
-        static void getDeadZones(const DeviceIndex devices, float* deadZones);
+        static float getDeadZone(DeviceIndex device);
+        static void getDeadZones(DeviceIndex devices, float* deadZones);
 
-        static void vibrateDevices(const DeviceIndex devices, const double left, const double right);
-        static void vibrateDevices(const DeviceIndex devices, const uint16_t left, const uint16_t right);
+        static void vibrateDevices(DeviceIndex devices, double left, double right);
+        static void vibrateDevices(DeviceIndex devices, uint16_t left, uint16_t right);
 
-        static void vibrateDevice(const int32_t device, const double left, const double right);
-        static void vibrateDevice(const int32_t device, const uint16_t left, const uint16_t right);
+        static void vibrateDevice(int32_t device, double left, double right);
+        static void vibrateDevice(int32_t device, uint16_t left, uint16_t right);
 
-        static bool isDown(const DeviceIndex index, const InputCode code);
-        static bool isHeld(const DeviceIndex index, const InputCode code);
-        static bool isUp(const DeviceIndex index, const InputCode code);
-        static bool isToggled(const DeviceIndex index, const InputCode code);
+        static bool isDown(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any);
+        static bool isHeld(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any);
+        static bool isUp(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any);
+        static bool isToggled(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any);
 
-        static bool anyDown(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
-        static bool anyHeld(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
-        static bool anyUp(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
-        static bool anyToggled(const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
+        static bool anyDown(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
+        static bool anyHeld(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
+        static bool anyUp(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
+        static bool anyToggled(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
 
-        static float getAxis(const DeviceIndex devices, const InputCode neg, const InputCode pos);
-        static JVector2f getVector(const DeviceIndex devices,
-            const InputCode negX, const InputCode posX,
-            const InputCode negY, const InputCode posY);
+        static float getAxis(InputCode neg, InputCode pos, DeviceIndex devices = DeviceIndex::DEV_Any);
+        static JVector2f getVector(
+            InputCode negX, InputCode posX,
+            InputCode negY, InputCode posY, DeviceIndex devices = DeviceIndex::DEV_Any);
 
     private:
         static bool HAS_FOCUS;
-        static constexpr uint8_t KEY_DOWN     = 0x1;
-        static constexpr uint8_t KEY_HELD     = 0x2;
-        static constexpr uint8_t KEY_UP       = 0x4;
-        static constexpr uint8_t KEY_TOGGLE   = 0x8;
+        static constexpr uint8_t KEY_DOWN = 0x1;
+        static constexpr uint8_t KEY_HELD = 0x2;
+        static constexpr uint8_t KEY_UP = 0x4;
+        static constexpr uint8_t KEY_TOGGLE = 0x8;
 
         static float _deadZones[MAX_CONTROLLERS + 1];
         static InputState _inputs[KEYBOARD_INPUTS + CONTROLLER_INPUTS * MAX_CONTROLLERS];
@@ -478,11 +476,11 @@ namespace JEngine {
         static Action<const DeviceIndex, const bool> _onDeviceConnectionChange;
 
         static bool isKeyDown(const InputCode code);
-        static int32_t getInputStates(const InputCode code, const DeviceIndex devices, InputState* states);
+        static int32_t getInputStates(InputCode code, DeviceIndex devices, InputState* states);
 
         static void updateMouseData(const MouseData& mData);
 
-        static bool any(const int32_t mode, const DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, const size_t ignoredLength = 0);
+        static bool any(int32_t mode, DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
     };
 }
 

@@ -1,10 +1,16 @@
 #include <JEngine/Core/Application.h>
 #include <JEngine/Rendering/Window.h>
+#include <JEngine/Components/ComponentFactory.h>
+#include <JEngine/Core/GameObject.h>
 
 namespace JEngine {
+    Application* Application::_instance{ nullptr };
 
-    Application::Application(const AppSpecs specs) {}
-    Application::~Application() {}
+    Application::Application(const AppSpecs specs) : _time() {}
+    Application::~Application() {
+        GameObject::getGameObjectAllocator().clear(true);
+        ComponentFactory::clearAllComponentPools(true);
+    }
 
     bool Application::init() {
         JENGINE_CORE_TRACE("Initializing Game: '{0}'", _specs.name.c_str());
@@ -16,6 +22,9 @@ namespace JEngine {
             return false;
         }
 
+        _instance = this;
+        _time.reset();
+        Input::init();
         //TODO: Possibly add some other general initialization/verification stuff
         return true;
     }

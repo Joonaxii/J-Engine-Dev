@@ -3,6 +3,7 @@
 #include <JEngine/Math/Math.h>
 
 namespace JEngine {
+#pragma pack(push, 1)
     template<typename T, typename P> struct JVector3;
     template<typename T, typename P> struct JVector4;
     template<typename T, typename P = float>
@@ -10,30 +11,30 @@ namespace JEngine {
         T x;
         T y;
 
-        JVector2();
-        JVector2(const T x, const T y);
-        JVector2(const JVector3<T, P>& vec);
-        JVector2(const JVector4<T, P>& vec);
+        constexpr JVector2();
+        constexpr JVector2(const T x, const T y);
+        constexpr JVector2(const JVector3<T, P>& vec);
+        constexpr JVector2(const JVector4<T, P>& vec);
 
-        bool operator==(const JVector2<T, P>& other) const;
-        bool operator!=(const JVector2<T, P>& other) const;
+        constexpr bool operator==(const JVector2<T, P>& other) const;
+        constexpr bool operator!=(const JVector2<T, P>& other) const;
 
-        bool operator==(const JVector3<T, P>& other) const;
-        bool operator!=(const JVector3<T, P>& other) const;
+        constexpr bool operator==(const JVector3<T, P>& other) const;
+        constexpr bool operator!=(const JVector3<T, P>& other) const;
 
-        bool operator==(const JVector4<T, P>& other) const;
-        bool operator!=(const JVector4<T, P>& other) const;
+        constexpr bool operator==(const JVector4<T, P>& other) const;
+        constexpr bool operator!=(const JVector4<T, P>& other) const;
 
-        JVector2<T, P> operator-() const;
+        constexpr JVector2<T, P> operator-() const;
 
-        JVector2<T, P> operator-(const JVector2<T, P>& other) const;
-        JVector2<T, P> operator+(const JVector2<T, P>& other) const;
+        constexpr JVector2<T, P> operator-(const JVector2<T, P>& other) const;
+        constexpr JVector2<T, P> operator+(const JVector2<T, P>& other) const;
 
-        JVector2<T, P> operator-(const JVector3<T, P>& other) const;
-        JVector2<T, P> operator+(const JVector3<T, P>& other) const;
+        constexpr JVector2<T, P> operator-(const JVector3<T, P>& other) const;
+        constexpr JVector2<T, P> operator+(const JVector3<T, P>& other) const;
 
-        JVector2<T, P> operator-(const JVector4<T, P>& other) const;
-        JVector2<T, P> operator+(const JVector4<T, P>& other) const;
+        constexpr JVector2<T, P> operator-(const JVector4<T, P>& other) const;
+        constexpr JVector2<T, P> operator+(const JVector4<T, P>& other) const;
 
         JVector2<T, P>& operator-=(const JVector2<T, P>& other);
         JVector2<T, P>& operator+=(const JVector2<T, P>& other);
@@ -44,43 +45,41 @@ namespace JEngine {
         JVector2<T, P>& operator-=(const JVector4<T, P>& other);
         JVector2<T, P>& operator+=(const JVector4<T, P>& other);
 
-        JVector2<T, P> operator/(const JVector2<T, P>& value) const;
-        JVector2<T, P> operator*(const JVector2<T, P>& value) const;
+        constexpr JVector2<T, P> operator/(const JVector2<T, P>& value) const;
+        constexpr JVector2<T, P> operator*(const JVector2<T, P>& value) const;
 
         JVector2<T, P>& operator/=(const JVector2<T, P>& value);
         JVector2<T, P>& operator*=(const JVector2<T, P>& value);
 
-        JVector2<T, P> operator/(const JVector3<T, P>& value) const;
-        JVector2<T, P> operator*(const JVector3<T, P>& value) const;
+        constexpr JVector2<T, P> operator/(const JVector3<T, P>& value) const;
+        constexpr JVector2<T, P> operator*(const JVector3<T, P>& value) const;
 
         JVector2<T, P>& operator/=(const JVector3<T, P>& value);
         JVector2<T, P>& operator*=(const JVector3<T, P>& value);
 
-        JVector2<T, P> operator/(const JVector4<T, P>& value) const;
-        JVector2<T, P> operator*(const JVector4<T, P>& value) const;
+        constexpr JVector2<T, P> operator/(const JVector4<T, P>& value) const;
+        constexpr JVector2<T, P> operator*(const JVector4<T, P>& value) const;
 
         JVector2<T, P>& operator/=(const JVector4<T, P>& value);
         JVector2<T, P>& operator*=(const JVector4<T, P>& value);
 
-        JVector2<T, P> operator/(const P& value) const;
-        JVector2<T, P> operator*(const P& value) const;
+        constexpr JVector2<T, P> operator/(const P& value) const;
+        constexpr JVector2<T, P> operator*(const P& value) const;
 
         JVector2<T, P>& operator/=(const P& value);
         JVector2<T, P>& operator*=(const P& value);
 
-        P sqrMagnitude() const;
-        P magnitude() const;
+        constexpr P sqrMagnitude() const;
+        constexpr P magnitude() const;
 
-        P dot(const JVector2<T, P>& other) const;
-        P cross(const JVector2<T, P>& other) const;
+        constexpr P dot(const JVector2<T, P>& other) const;
+        constexpr P cross(const JVector2<T, P>& other) const;
 
         P angle(const JVector2<T, P>& other) const;
         P signedAngle(const JVector2<T, P>& other) const;
 
-        JVector2<T, P> getNormalized() const;
+        constexpr JVector2<T, P> getNormalized() const;
         JVector2<T, P>& normalize();
-
-        static P invLerp(const JVector2<T, P>& a, const JVector2<T, P>& b, const JVector2<T, P>& v);
     };
 
     template<typename T, typename P> inline std::ostream& operator<<(std::ostream& os, const JVector2<T, P>& vec) {
@@ -106,31 +105,31 @@ namespace JEngine {
         T y;
         T z;
 
-        JVector3();
-        JVector3(const T x, const T y);
-        JVector3(const JVector2<T, P>& vec);
-        JVector3(const JVector4<T, P>& vec);
-        JVector3(const T x, const T y, const T z);
+        constexpr JVector3();
+        constexpr JVector3(const T x, const T y);
+        constexpr JVector3(const JVector2<T, P>& vec);
+        constexpr JVector3(const JVector4<T, P>& vec);
+        constexpr JVector3(const T x, const T y, const T z);
 
-        bool operator==(const JVector2<T, P>& other) const;
-        bool operator!=(const JVector2<T, P>& other) const;
+        constexpr bool operator==(const JVector2<T, P>& other) const;
+        constexpr bool operator!=(const JVector2<T, P>& other) const;
 
-        bool operator==(const JVector3<T, P>& other) const;
-        bool operator!=(const JVector3<T, P>& other) const;
+        constexpr bool operator==(const JVector3<T, P>& other) const;
+        constexpr bool operator!=(const JVector3<T, P>& other) const;
 
-        bool operator==(const JVector4<T, P>& other) const;
-        bool operator!=(const JVector4<T, P>& other) const;
+        constexpr bool operator==(const JVector4<T, P>& other) const;
+        constexpr bool operator!=(const JVector4<T, P>& other) const;
 
-        JVector3<T, P> operator-() const;
+        constexpr JVector3<T, P> operator-() const;
 
-        JVector3<T, P> operator-(const JVector2<T, P>& other) const;
-        JVector3<T, P> operator+(const JVector2<T, P>& other) const;
+        constexpr JVector3<T, P> operator-(const JVector2<T, P>& other) const;
+        constexpr JVector3<T, P> operator+(const JVector2<T, P>& other) const;
 
-        JVector3<T, P> operator-(const JVector3<T, P>& other) const;
-        JVector3<T, P> operator+(const JVector3<T, P>& other) const;
+        constexpr JVector3<T, P> operator-(const JVector3<T, P>& other) const;
+        constexpr JVector3<T, P> operator+(const JVector3<T, P>& other) const;
 
-        JVector3<T, P> operator-(const JVector4<T, P>& other) const;
-        JVector3<T, P> operator+(const JVector4<T, P>& other) const;
+        constexpr JVector3<T, P> operator-(const JVector4<T, P>& other) const;
+        constexpr JVector3<T, P> operator+(const JVector4<T, P>& other) const;
 
         JVector3<T, P>& operator-=(const JVector2<T, P>& other);
         JVector3<T, P>& operator+=(const JVector2<T, P>& other);
@@ -141,43 +140,41 @@ namespace JEngine {
         JVector3<T, P>& operator-=(const JVector4<T, P>& other);
         JVector3<T, P>& operator+=(const JVector4<T, P>& other);
 
-        JVector3<T, P> operator/(const JVector2<T, P>& value) const;
-        JVector3<T, P> operator*(const JVector2<T, P>& value) const;
+        constexpr JVector3<T, P> operator/(const JVector2<T, P>& value) const;
+        constexpr JVector3<T, P> operator*(const JVector2<T, P>& value) const;
 
         JVector3<T, P>& operator/=(const JVector2<T, P>& value);
         JVector3<T, P>& operator*=(const JVector2<T, P>& value);
 
-        JVector3<T, P> operator/(const JVector3<T, P>& value) const;
-        JVector3<T, P> operator*(const JVector3<T, P>& value) const;
+        constexpr JVector3<T, P> operator/(const JVector3<T, P>& value) const;
+        constexpr JVector3<T, P> operator*(const JVector3<T, P>& value) const;
 
         JVector3<T, P>& operator/=(const JVector3<T, P>& value);
         JVector3<T, P>& operator*=(const JVector3<T, P>& value);
 
-        JVector3<T, P> operator/(const JVector4<T, P>& value) const;
-        JVector3<T, P> operator*(const JVector4<T, P>& value) const;
+        constexpr JVector3<T, P> operator/(const JVector4<T, P>& value) const;
+        constexpr JVector3<T, P> operator*(const JVector4<T, P>& value) const;
 
         JVector3<T, P>& operator/=(const JVector4<T, P>& value);
         JVector3<T, P>& operator*=(const JVector4<T, P>& value);
 
-        JVector3<T, P> operator/(const P& value) const;
-        JVector3<T, P> operator*(const P& value) const;
+        constexpr JVector3<T, P> operator/(const P& value) const;
+        constexpr JVector3<T, P> operator*(const P& value) const;
 
         JVector3<T, P>& operator/=(const P& value);
         JVector3<T, P>& operator*=(const P& value);
 
-        P sqrMagnitude() const;
-        P magnitude() const;
+        constexpr P sqrMagnitude() const;
+        constexpr P magnitude() const;
 
-        P dot(const JVector3<T, P>& other) const;
-        JVector3<T, P> cross(const JVector3<T, P>& other) const;
+        constexpr P dot(const JVector3<T, P>& other) const;
+        constexpr JVector3<T, P> cross(const JVector3<T, P>& other) const;
 
         P angle(const JVector3<T, P>& other) const;
         P signedAngle(const JVector3<T, P>& other) const;
 
-        JVector3<T, P> getNormalized() const;
+        constexpr JVector3<T, P> getNormalized() const;
         JVector3<T, P>& normalize();
-
-        static P invLerp(const JVector3<T, P>& a, const JVector3<T, P>& b, const JVector3<T, P>& v);
     };
 
     template<typename T, typename P> inline std::ostream& operator<<(std::ostream& os, const JVector3<T, P>& vec) {
@@ -204,32 +201,32 @@ namespace JEngine {
         T z;
         T w;
 
-        JVector4();
-        JVector4(const T x, const T y);
-        JVector4(const JVector2<T, P>& vec);
-        JVector4(const JVector3<T, P>& vec);
-        JVector4(const T x, const T y, const T z);
-        JVector4(const T x, const T y, const T z, const T w);
+        constexpr JVector4();
+        constexpr JVector4(const T x, const T y);
+        constexpr JVector4(const JVector2<T, P>& vec);
+        constexpr JVector4(const JVector3<T, P>& vec);
+        constexpr JVector4(const T x, const T y, const T z);
+        constexpr JVector4(const T x, const T y, const T z, const T w);
 
-        bool operator==(const JVector2<T, P>& other) const;
-        bool operator!=(const JVector2<T, P>& other) const;
+        constexpr bool operator==(const JVector2<T, P>& other) const;
+        constexpr bool operator!=(const JVector2<T, P>& other) const;
 
-        bool operator==(const JVector3<T, P>& other) const;
-        bool operator!=(const JVector3<T, P>& other) const;
+        constexpr bool operator==(const JVector3<T, P>& other) const;
+        constexpr bool operator!=(const JVector3<T, P>& other) const;
 
-        bool operator==(const JVector4<T, P>& other) const;
-        bool operator!=(const JVector4<T, P>& other) const;
+        constexpr bool operator==(const JVector4<T, P>& other) const;
+        constexpr bool operator!=(const JVector4<T, P>& other) const;
 
-        JVector4<T, P> operator-() const;
+        constexpr JVector4<T, P> operator-() const;
 
-        JVector4<T, P> operator-(const JVector2<T, P>& other) const;
-        JVector4<T, P> operator+(const JVector2<T, P>& other) const;
+        constexpr JVector4<T, P> operator-(const JVector2<T, P>& other) const;
+        constexpr JVector4<T, P> operator+(const JVector2<T, P>& other) const;
 
-        JVector4<T, P> operator-(const JVector3<T, P>& other) const;
-        JVector4<T, P> operator+(const JVector3<T, P>& other) const;
+        constexpr JVector4<T, P> operator-(const JVector3<T, P>& other) const;
+        constexpr JVector4<T, P> operator+(const JVector3<T, P>& other) const;
 
-        JVector4<T, P> operator-(const JVector4<T, P>& other) const;
-        JVector4<T, P> operator+(const JVector4<T, P>& other) const;
+        constexpr JVector4<T, P> operator-(const JVector4<T, P>& other) const;
+        constexpr JVector4<T, P> operator+(const JVector4<T, P>& other) const;
 
         JVector4<T, P>& operator-=(const JVector2<T, P>& other);
         JVector4<T, P>& operator+=(const JVector2<T, P>& other);
@@ -240,40 +237,39 @@ namespace JEngine {
         JVector4<T, P>& operator-=(const JVector4<T, P>& other);
         JVector4<T, P>& operator+=(const JVector4<T, P>& other);
 
-        JVector4<T, P> operator/(const JVector2<T, P>& value) const;
-        JVector4<T, P> operator*(const JVector2<T, P>& value) const;
+        constexpr JVector4<T, P> operator/(const JVector2<T, P>& value) const;
+        constexpr JVector4<T, P> operator*(const JVector2<T, P>& value) const;
 
         JVector4<T, P>& operator/=(const JVector2<T, P>& value);
         JVector4<T, P>& operator*=(const JVector2<T, P>& value);
 
-        JVector4<T, P> operator/(const JVector3<T, P>& value) const;
-        JVector4<T, P> operator*(const JVector3<T, P>& value) const;
+        constexpr JVector4<T, P> operator/(const JVector3<T, P>& value) const;
+        constexpr JVector4<T, P> operator*(const JVector3<T, P>& value) const;
 
         JVector4<T, P>& operator/=(const JVector3<T, P>& value);
         JVector4<T, P>& operator*=(const JVector3<T, P>& value);
 
-        JVector4<T, P> operator/(const JVector4<T, P>& value) const;
-        JVector4<T, P> operator*(const JVector4<T, P>& value) const;
+        constexpr JVector4<T, P> operator/(const JVector4<T, P>& value) const;
+        constexpr JVector4<T, P> operator*(const JVector4<T, P>& value) const;
 
         JVector4<T, P>& operator/=(const JVector4<T, P>& value);
         JVector4<T, P>& operator*=(const JVector4<T, P>& value);
 
-        JVector4<T, P> operator/(const P& value) const;
-        JVector4<T, P> operator*(const P& value) const;
+        constexpr JVector4<T, P> operator/(const P& value) const;
+        constexpr JVector4<T, P> operator*(const P& value) const;
 
         JVector4<T, P>& operator/=(const P& value);
         JVector4<T, P>& operator*=(const P& value);
 
-        P sqrMagnitude() const;
-        P magnitude() const;
+        constexpr P sqrMagnitude() const;
+        constexpr P magnitude() const;
 
-        P dot(const JVector4<T, P>& other) const;
+        constexpr P dot(const JVector4<T, P>& other) const;
 
-        JVector4<T, P> getNormalized() const;
+        constexpr JVector4<T, P> getNormalized() const;
         JVector4<T, P>& normalize();
-
-        static P invLerp(const JVector4<T, P>& a, const JVector4<T, P>& b, const JVector4<T, P>& v);
     };
+#pragma pack(pop)
 
     template<typename T, typename P> inline std::ostream& operator<<(std::ostream& os, const JVector4<T, P>& vec) {
         os << "XYZW: (" << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w << ")";
@@ -291,54 +287,54 @@ namespace JEngine {
     }
 
 #pragma region JVector2
-    template<typename T, typename P> inline JEngine::JVector2<T, P>::JVector2() : x(), y() { }
-    template<typename T, typename P> inline JEngine::JVector2<T, P>::JVector2(const T x, const T y) : x(x), y(y) { }
-    template<typename T, typename P> inline JEngine::JVector2<T, P>::JVector2(const JEngine::JVector3<T, P>& vec) : x(vec.x), y(vec.y) { }
-    template<typename T, typename P> inline JEngine::JVector2<T, P>::JVector2(const JEngine::JVector4<T, P>& vec) : x(vec.x), y(vec.y) { }
+    template<typename T, typename P> inline constexpr JEngine::JVector2<T, P>::JVector2() : x(), y() { }
+    template<typename T, typename P> inline constexpr JEngine::JVector2<T, P>::JVector2(const T x, const T y) : x(x), y(y) { }
+    template<typename T, typename P> inline constexpr JEngine::JVector2<T, P>::JVector2(const JEngine::JVector3<T, P>& vec) : x(vec.x), y(vec.y) { }
+    template<typename T, typename P> inline constexpr JEngine::JVector2<T, P>::JVector2(const JEngine::JVector4<T, P>& vec) : x(vec.x), y(vec.y) { }
 
-    template<typename T, typename P> inline bool JVector2<T, P>::operator==(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector2<T, P>::operator==(const JVector2<T, P>& other) const {
         return x == other.x && y == other.y;
     }
-    template<typename T, typename P> inline bool JVector2<T, P>::operator!=(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector2<T, P>::operator!=(const JVector2<T, P>& other) const {
         return x != other.x || y != other.y;
     }
 
-    template<typename T, typename P> inline bool JVector2<T, P>::operator==(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector2<T, P>::operator==(const JVector3<T, P>& other) const {
         return x == other.x && y == other.y;
     }
-    template<typename T, typename P> inline bool JVector2<T, P>::operator!=(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector2<T, P>::operator!=(const JVector3<T, P>& other) const {
         return x != other.x || y != other.y;
     }
 
-    template<typename T, typename P> inline bool JVector2<T, P>::operator==(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector2<T, P>::operator==(const JVector4<T, P>& other) const {
         return x == other.x && y == other.y;
     }
-    template<typename T, typename P> inline bool JVector2<T, P>::operator!=(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector2<T, P>::operator!=(const JVector4<T, P>& other) const {
         return x != other.x || y != other.y;
     }
 
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator-() const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator-() const {
         return JVector2<T, P>(-x, -y);
     }
 
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator-(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator-(const JVector2<T, P>& other) const {
         return JVector2<T, P>(x - other.x, y - other.y);
     }
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator+(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator+(const JVector2<T, P>& other) const {
         return JVector2<T, P>(x + other.x, y + other.y);
     }
 
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator-(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator-(const JVector3<T, P>& other) const {
         return JVector2<T, P>(x - other.x, y - other.y);
     }
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator+(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator+(const JVector3<T, P>& other) const {
         return JVector2<T, P>(x + other.x, y + other.y);
     }
 
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator-(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator-(const JVector4<T, P>& other) const {
         return JVector2<T, P>(x - other.x, y - other.y);
     }
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator+(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator+(const JVector4<T, P>& other) const {
         return JVector2<T, P>(x + other.x, y + other.y);
     }
 
@@ -375,10 +371,10 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator/(const JVector2<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator/(const JVector2<T, P>& value) const {
         return JVector2<T, P>(x / value.x, y / value.y);
     }
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator*(const JVector2<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator*(const JVector2<T, P>& value) const {
         return JVector2<T, P>(x * value.x, y * value.y);
     }
 
@@ -393,10 +389,10 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator/(const JVector3<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator/(const JVector3<T, P>& value) const {
         return JVector2<T, P>(x / value.x, y / value.y);
     }
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator*(const JVector3<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator*(const JVector3<T, P>& value) const {
         return JVector2<T, P>(x * value.x, y * value.y);
     }
 
@@ -411,10 +407,10 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator/(const JVector4<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator/(const JVector4<T, P>& value) const {
         return JVector2<T, P>(x / value.x, y / value.y);
     }
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator*(const JVector4<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator*(const JVector4<T, P>& value) const {
         return JVector2<T, P>(x * value.x, y * value.y);
     }
 
@@ -429,14 +425,14 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline P JVector2<T, P>::dot(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr P JVector2<T, P>::dot(const JVector2<T, P>& other) const {
         return P(x * other.x + y * other.y);
     }
-    template<typename T, typename P> inline P JVector2<T, P>::cross(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr P JVector2<T, P>::cross(const JVector2<T, P>& other) const {
         return P(x * other.y - y * other.x);
     }
 
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::getNormalized() const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::getNormalized() const {
         const P mag = magnitude();
         return mag == 0 ? JVector2<T, P>(0, 0) : JVector2<T, P>(T(x / mag), T(y / mag));
     }
@@ -448,17 +444,17 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline P JVector2<T, P>::sqrMagnitude() const {
+    template<typename T, typename P> inline constexpr P JVector2<T, P>::sqrMagnitude() const {
         return P(x * x + y * y);
     }
-    template<typename T, typename P> inline P JVector2<T, P>::magnitude() const {
-        return P(std::sqrt(x * x + y * y));
+    template<typename T, typename P> inline constexpr P JVector2<T, P>::magnitude() const {
+        return P(Math::sqrt(x * x + y * y));
     }
 
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator/(const P& value) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator/(const P& value) const {
         return JVector2(T(x / value), T(y / value));
     }
-    template<typename T, typename P> inline JVector2<T, P> JVector2<T, P>::operator*(const P& value) const {
+    template<typename T, typename P> inline constexpr JVector2<T, P> JVector2<T, P>::operator*(const P& value) const {
         return JVector2(T(x * value), T(y * value));
     }
 
@@ -474,75 +470,86 @@ namespace JEngine {
     }
 
     template<typename T, typename P> inline P JVector2<T, P>::angle(const JVector2<T, P>& other) const {
-        const float den = std::sqrtf(sqrMagnitude() * other.sqrMagnitude());
+        const float den = Math::sqrt(sqrMagnitude() * other.sqrMagnitude());
         if (den < 0.000001f) { return P(0); }
 
         const float dotP = Math::clamp(dot(other) / den, -1.0f, 1.0f);
         return P(acosf(dotP) * RAD_2_DEG);
     }
     template<typename T, typename P> inline P JVector2<T, P>::signedAngle(const JVector2<T, P>& other) const {
-        return P(angle(other) * Math::sign(cross(other)));
+        return P(angle(other) * Math::sign<P>(cross(other)));
     }
 
-    template<typename T, typename P> inline P JEngine::JVector2<T, P>::invLerp(const JVector2<T, P>& a, const JVector2<T, P>& b, const JVector2<T, P>& v) {
-        const JVector2<T, P> aB = b - a;
-        const JVector2<T, P> aV = v - a;
+    template<typename T, typename P>
+    struct Math::InvLerp<JVector2<T, P>, P> {
+        static inline constexpr P inverseLerp(const JVector2<T, P>& a, const JVector2<T, P>& b, const JVector2<T, P>& v) {
+            constexpr JVector2<T, P> aB = b - a;
+            constexpr JVector2<T, P> aV = v - a;
+            constexpr P dotB = aB.sqrMagnitude();
+            return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
+        }
+    };
 
-        const P dotB = aB.sqrMagnitude();
-        return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
-    }
+    //template<typename T, typename P>
+    //inline constexpr P Math::InvLerp<JVector2<T, P>, P>::inverseLerp(const JVector2<T, P>& a, const JVector2<T, P>& b, const JVector2<T, P>& v) {
+    //    constexpr JVector2<T, P> aB = b - a;
+    //    constexpr JVector2<T, P> aV = v - a;
+    //    constexpr P dotB = aB.sqrMagnitude();
+    //    return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
+    //}
+
 #pragma endregion
 
 #pragma region JVector3
-    template<typename T, typename P> inline JEngine::JVector3<T, P>::JVector3() : x(), y(), z() { }
-    template<typename T, typename P> inline JEngine::JVector3<T, P>::JVector3(const JEngine::JVector2<T, P>& vec) : x(vec.x), y(vec.y), z() { }
-    template<typename T, typename P> inline JEngine::JVector3<T, P>::JVector3(const JEngine::JVector4<T, P>& vec) : x(vec.x), y(vec.y), z(vec.z) { }
-    template<typename T, typename P> inline JEngine::JVector3<T, P>::JVector3(const T x, const T y) : x(x), y(y), z() { }
-    template<typename T, typename P> inline JEngine::JVector3<T, P>::JVector3(const T x, const T y, const T z) : x(x), y(y), z(z) { }
+    template<typename T, typename P> inline constexpr JEngine::JVector3<T, P>::JVector3() : x(), y(), z() { }
+    template<typename T, typename P> inline constexpr JEngine::JVector3<T, P>::JVector3(const JEngine::JVector2<T, P>& vec) : x(vec.x), y(vec.y), z() { }
+    template<typename T, typename P> inline constexpr JEngine::JVector3<T, P>::JVector3(const JEngine::JVector4<T, P>& vec) : x(vec.x), y(vec.y), z(vec.z) { }
+    template<typename T, typename P> inline constexpr JEngine::JVector3<T, P>::JVector3(const T x, const T y) : x(x), y(y), z() { }
+    template<typename T, typename P> inline constexpr JEngine::JVector3<T, P>::JVector3(const T x, const T y, const T z) : x(x), y(y), z(z) { }
 
-    template<typename T, typename P> inline bool JVector3<T, P>::operator==(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector3<T, P>::operator==(const JVector2<T, P>& other) const {
         return x == other.x && y == other.y;
     }
-    template<typename T, typename P> inline bool JVector3<T, P>::operator!=(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector3<T, P>::operator!=(const JVector2<T, P>& other) const {
         return x != other.x || y != other.y;
     }
 
-    template<typename T, typename P> inline bool JVector3<T, P>::operator==(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector3<T, P>::operator==(const JVector3<T, P>& other) const {
         return x == other.x && y == other.y && z == other.z;
     }
-    template<typename T, typename P> inline bool JVector3<T, P>::operator!=(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector3<T, P>::operator!=(const JVector3<T, P>& other) const {
         return x != other.x || y != other.y || z != other.z;
     }
 
-    template<typename T, typename P> inline bool JVector3<T, P>::operator==(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector3<T, P>::operator==(const JVector4<T, P>& other) const {
         return x == other.x && y == other.y && z == other.z;
     }
-    template<typename T, typename P> inline bool JVector3<T, P>::operator!=(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector3<T, P>::operator!=(const JVector4<T, P>& other) const {
         return x != other.x || y != other.y || z != other.z;
     }
 
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator-() const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator-() const {
         return JVector3<T, P>(-x, -y, -z);
     }
 
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator-(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator-(const JVector2<T, P>& other) const {
         return JVector3<T, P>(x - other.x, y - other.y, z);
     }
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator+(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator+(const JVector2<T, P>& other) const {
         return JVector3<T, P>(x + other.x, y + other.y, z);
     }
 
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator-(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator-(const JVector3<T, P>& other) const {
         return JVector3<T, P>(x - other.x, y - other.y, z - other.z);
     }
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator+(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator+(const JVector3<T, P>& other) const {
         return JVector3<T, P>(x + other.x, y + other.y, z + other.z);
     }
 
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator-(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator-(const JVector4<T, P>& other) const {
         return JVector3<T, P>(x - other.x, y - other.y, z - other.z);
     }
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator+(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator+(const JVector4<T, P>& other) const {
         return JVector3<T, P>(x + other.x, y + other.y, z + other.z);
     }
 
@@ -583,10 +590,10 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator/(const JVector2<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator/(const JVector2<T, P>& value) const {
         return JVector3<T, P>(x / value.x, y / value.y, z);
     }
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator*(const JVector2<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator*(const JVector2<T, P>& value) const {
         return JVector3<T, P>(x * value.x, y * value.y, z);
     }
 
@@ -601,10 +608,10 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator/(const JVector3<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator/(const JVector3<T, P>& value) const {
         return JVector3<T, P>(x / value.x, y / value.y, z / value.z);
     }
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator*(const JVector3<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator*(const JVector3<T, P>& value) const {
         return JVector3<T, P>(x * value.x, y * value.y, z * value.z);
     }
 
@@ -621,10 +628,10 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator/(const JVector4<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator/(const JVector4<T, P>& value) const {
         return JVector3<T, P>(x / value.x, y / value.y, z / value.z);
     }
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator*(const JVector4<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator*(const JVector4<T, P>& value) const {
         return JVector3<T, P>(x * value.x, y * value.y, z * value.z);
     }
 
@@ -641,16 +648,16 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline P JVector3<T, P>::dot(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr P JVector3<T, P>::dot(const JVector3<T, P>& other) const {
         return P(x * other.x + y * other.y + z * other.z);
     }
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::cross(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::cross(const JVector3<T, P>& other) const {
         return JVector3<T, P>(y * other.z - z * other.y,
             z * other.x - x * other.z,
             x * other.y - y * other.x);
     }
 
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::getNormalized() const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::getNormalized() const {
         const P mag = magnitude();
         return mag == 0 ? JVector3<T, P>(0, 0, 0) : JVector3<T, P>(T(x / mag), T(y / mag), T(z / mag));
     }
@@ -663,17 +670,17 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline P JVector3<T, P>::sqrMagnitude() const {
+    template<typename T, typename P> inline constexpr P JVector3<T, P>::sqrMagnitude() const {
         return P(x * x + y * y + z * z);
     }
-    template<typename T, typename P> inline P JVector3<T, P>::magnitude() const {
+    template<typename T, typename P> inline constexpr P JVector3<T, P>::magnitude() const {
         return P(std::sqrt(x * x + y * y + z * z));
     }
 
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator/(const P& value) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator/(const P& value) const {
         return JVector3(T(x / value), T(y / value), T(z / value));
     }
-    template<typename T, typename P> inline JVector3<T, P> JVector3<T, P>::operator*(const P& value) const {
+    template<typename T, typename P> inline constexpr JVector3<T, P> JVector3<T, P>::operator*(const P& value) const {
         return JVector3(T(x * value), T(y * value), T(z * value));
     }
 
@@ -701,66 +708,68 @@ namespace JEngine {
         return P(angle(other) * Math::sign(cross(other)));
     }
 
-    template<typename T, typename P> inline P JEngine::JVector3<T, P>::invLerp(const JVector3<T, P>& a, const JVector3<T, P>& b, const JVector3<T, P>& v) {
-        const JVector3<T, P> aB = b - a;
-        const JVector3<T, P> aV = v - a;
-
-        const P dotB = aB.sqrMagnitude();
-        return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
-    }
+    template<typename T, typename P>
+    struct Math::InvLerp<JVector3<T, P>, P> {
+        static inline constexpr P inverseLerp(const JVector3<T, P>& a, const JVector3<T, P>& b, const JVector3<T, P>& v) {
+            constexpr JVector3<T, P> aB = b - a;
+            constexpr JVector3<T, P> aV = v - a;
+            constexpr P dotB = aB.sqrMagnitude();
+            return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
+        }
+    };
 #pragma endregion
 
 #pragma region JVector4
-    template<typename T, typename P> inline JEngine::JVector4<T, P>::JVector4() : x(), y(), z(), w() { }
-    template<typename T, typename P> inline JEngine::JVector4<T, P>::JVector4(const JEngine::JVector2<T, P>& vec) : x(vec.x), y(vec.y), z(), w() { }
-    template<typename T, typename P> inline JEngine::JVector4<T, P>::JVector4(const JEngine::JVector3<T, P>& vec) : x(vec.x), y(vec.y), z(vec.z), w() { }
-    template<typename T, typename P> inline JEngine::JVector4<T, P>::JVector4(const T x, const T y) : x(x), y(y), z(), w() { }
-    template<typename T, typename P> inline JEngine::JVector4<T, P>::JVector4(const T x, const T y, const T z) : x(x), y(y), z(z), w() { }
-    template<typename T, typename P> inline JEngine::JVector4<T, P>::JVector4(const T x, const T y, const T z, const T w) : x(x), y(y), z(z), w(w) { }
+    template<typename T, typename P> inline constexpr JEngine::JVector4<T, P>::JVector4() : x(), y(), z(), w() { }
+    template<typename T, typename P> inline constexpr JEngine::JVector4<T, P>::JVector4(const JEngine::JVector2<T, P>& vec) : x(vec.x), y(vec.y), z(), w() { }
+    template<typename T, typename P> inline constexpr JEngine::JVector4<T, P>::JVector4(const JEngine::JVector3<T, P>& vec) : x(vec.x), y(vec.y), z(vec.z), w() { }
+    template<typename T, typename P> inline constexpr JEngine::JVector4<T, P>::JVector4(const T x, const T y) : x(x), y(y), z(), w() { }
+    template<typename T, typename P> inline constexpr JEngine::JVector4<T, P>::JVector4(const T x, const T y, const T z) : x(x), y(y), z(z), w() { }
+    template<typename T, typename P> inline constexpr JEngine::JVector4<T, P>::JVector4(const T x, const T y, const T z, const T w) : x(x), y(y), z(z), w(w) { }
 
-    template<typename T, typename P> inline bool JVector4<T, P>::operator==(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector4<T, P>::operator==(const JVector2<T, P>& other) const {
         return x == other.x && y == other.y;
     }
-    template<typename T, typename P> inline bool JVector4<T, P>::operator!=(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector4<T, P>::operator!=(const JVector2<T, P>& other) const {
         return x != other.x || y != other.y;
     }
 
-    template<typename T, typename P> inline bool JVector4<T, P>::operator==(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector4<T, P>::operator==(const JVector3<T, P>& other) const {
         return x == other.x && y == other.y && z == other.z;
     }
-    template<typename T, typename P> inline bool JVector4<T, P>::operator!=(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector4<T, P>::operator!=(const JVector3<T, P>& other) const {
         return x != other.x || y != other.y || z != other.z;
     }
 
-    template<typename T, typename P> inline bool JVector4<T, P>::operator==(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector4<T, P>::operator==(const JVector4<T, P>& other) const {
         return x == other.x && y == other.y && z == other.z && w == other.w;
     }
-    template<typename T, typename P> inline bool JVector4<T, P>::operator!=(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr bool JVector4<T, P>::operator!=(const JVector4<T, P>& other) const {
         return x != other.x || y != other.y || z != other.z || w != other.w;
     }
 
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator-() const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator-() const {
         return JVector4<T, P>(-x, -y, -z, -w);
     }
 
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator-(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator-(const JVector2<T, P>& other) const {
         return JVector4<T, P>(x - other.x, y - other.y, z, w);
     }
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator+(const JVector2<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator+(const JVector2<T, P>& other) const {
         return JVector4<T, P>(x + other.x, y + other.y, z, w);
     }
 
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator-(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator-(const JVector3<T, P>& other) const {
         return JVector4<T, P>(x - other.x, y - other.y, z - other.z, w);
     }
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator+(const JVector3<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator+(const JVector3<T, P>& other) const {
         return JVector4<T, P>(x + other.x, y + other.y, z + other.z, w);
     }
 
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator-(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator-(const JVector4<T, P>& other) const {
         return JVector4<T, P>(x - other.x, y - other.y, z - other.z, w);
     }
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator+(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator+(const JVector4<T, P>& other) const {
         return JVector4<T, P>(x + other.x, y + other.y, z + other.z, w);
     }
 
@@ -803,10 +812,10 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator/(const JVector2<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator/(const JVector2<T, P>& value) const {
         return JVector4<T, P>(x / value.x, y / value.y, z, w);
     }
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator*(const JVector2<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator*(const JVector2<T, P>& value) const {
         return JVector4<T, P>(x * value.x, y * value.y, z, w);
     }
 
@@ -821,10 +830,10 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator/(const JVector3<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator/(const JVector3<T, P>& value) const {
         return JVector4<T, P>(x / value.x, y / value.y, z / value.z, w);
     }
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator*(const JVector3<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator*(const JVector3<T, P>& value) const {
         return JVector4<T, P>(x * value.x, y * value.y, z * value.z, w);
     }
 
@@ -841,10 +850,10 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator/(const JVector4<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator/(const JVector4<T, P>& value) const {
         return JVector4<T, P>(x / value.x, y / value.y, z / value.z, w / value.w);
     }
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator*(const JVector4<T, P>& value) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator*(const JVector4<T, P>& value) const {
         return JVector4<T, P>(x * value.x, y * value.y, z * value.z, w * value.w);
     }
 
@@ -863,11 +872,11 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline P JVector4<T, P>::dot(const JVector4<T, P>& other) const {
+    template<typename T, typename P> inline constexpr P JVector4<T, P>::dot(const JVector4<T, P>& other) const {
         return P(x * other.x + y * other.y + z * other.z + w * other.w);
     }
 
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::getNormalized() const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::getNormalized() const {
         const P mag = magnitude();
         return mag == 0 ? JVector4<T, P>(0, 0, 0, 0) : JVector4<T, P>(T(x / mag), T(y / mag), T(z / mag), T(w / mag));
     }
@@ -881,17 +890,17 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline P JVector4<T, P>::sqrMagnitude() const {
+    template<typename T, typename P> inline constexpr P JVector4<T, P>::sqrMagnitude() const {
         return P(x * x + y * y + z * z + w * w);
     }
-    template<typename T, typename P> inline P JVector4<T, P>::magnitude() const {
-        return P(std::sqrt(x * x + y * y + z * z + w * w));
+    template<typename T, typename P> inline constexpr P JVector4<T, P>::magnitude() const {
+        return P(Math::sqrt(x * x + y * y + z * z + w * w));
     }
 
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator/(const P& value) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator/(const P& value) const {
         return JVector4(T(x / value), T(y / value), T(z / value), T(w / value));
     }
-    template<typename T, typename P> inline JVector4<T, P> JVector4<T, P>::operator*(const P& value) const {
+    template<typename T, typename P> inline constexpr JVector4<T, P> JVector4<T, P>::operator*(const P& value) const {
         return JVector4(T(x * value), T(y * value), T(z * value), T(w / value));
     }
 
@@ -910,13 +919,15 @@ namespace JEngine {
         return *this;
     }
 
-    template<typename T, typename P> inline P JEngine::JVector4<T, P>::invLerp(const JVector4<T, P>& a, const JVector4<T, P>& b, const JVector4<T, P>& v) {
-        const JVector4<T, P> aB = b - a;
-        const JVector4<T, P> aV = v - a;
-
-        const P dotB = aB.sqrMagnitude();
-        return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
-    }
+    template<typename T, typename P>
+    struct Math::InvLerp<JVector4<T, P>, P> {
+        static inline constexpr P inverseLerp(const JVector4<T, P>& a, const JVector4<T, P>& b, const JVector4<T, P>& v) {
+            constexpr JVector4<T, P> aB = b - a;
+            constexpr JVector4<T, P> aV = v - a;
+            constexpr P dotB = aB.sqrMagnitude();
+            return P(dotB == 0 ? 0 : aV.dot(aB) / dotB);
+        }
+    };
 #pragma endregion
 }
 
@@ -981,14 +992,12 @@ namespace JEngine {
 
     template<typename T, typename P>
     inline bool Serializable<JVector2<T, P>>::deserializeBinary(JVector2<T, P>& itemRef, const Stream& stream) {
-        Serialization::deserialize(itemRef.x, stream);
-        Serialization::deserialize(itemRef.y, stream);
+        stream.readValue(itemRef, false);
         return true;
     }
     template<typename T, typename P>
     inline bool Serializable<JVector2<T, P>>::serializeBinary(const JVector2<T, P>& itemRef, const Stream& stream) {
-        Serialization::serialize(itemRef.x, stream);
-        Serialization::serialize(itemRef.y, stream);
+        stream.writeValue(itemRef, 1, false);
         return true;
     }
 }
@@ -1060,16 +1069,12 @@ namespace JEngine {
 
     template<typename T, typename P>
     inline bool Serializable<JVector3<T, P>>::deserializeBinary(JVector3<T, P>& itemRef, const Stream& stream) {
-        Serialization::deserialize(itemRef.x, stream);
-        Serialization::deserialize(itemRef.y, stream);
-        Serialization::deserialize(itemRef.z, stream);
+        stream.readValue(itemRef, false);
         return true;
     }
     template<typename T, typename P>
     inline bool Serializable<JVector3<T, P>>::serializeBinary(const JVector3<T, P>& itemRef, const Stream& stream) {
-        Serialization::serialize(itemRef.x, stream);
-        Serialization::serialize(itemRef.y, stream);
-        Serialization::serialize(itemRef.z, stream);
+        stream.writeValue(itemRef, 1, false);
         return true;
     }
 }
@@ -1144,18 +1149,12 @@ namespace JEngine {
 
     template<typename T, typename P>
     inline bool Serializable<JVector4<T, P>>::deserializeBinary(JVector4<T, P>& itemRef, const Stream& stream) {
-        Serialization::deserialize(itemRef.x, stream);
-        Serialization::deserialize(itemRef.y, stream);
-        Serialization::deserialize(itemRef.z, stream);
-        Serialization::deserialize(itemRef.w, stream);
+        stream.readValue(itemRef, false);
         return true;
     }
     template<typename T, typename P>
     inline bool Serializable<JVector4<T, P>>::serializeBinary(const JVector4<T, P>& itemRef, const Stream& stream) {
-        Serialization::serialize(itemRef.x, stream);
-        Serialization::serialize(itemRef.y, stream);
-        Serialization::serialize(itemRef.z, stream);
-        Serialization::serialize(itemRef.w, stream);
+        stream.writeValue(itemRef, 1, false);
         return true;
     }
 }

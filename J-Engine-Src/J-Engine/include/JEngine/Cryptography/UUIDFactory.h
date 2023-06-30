@@ -59,6 +59,8 @@ namespace JEngine {
 
     template<typename T>
     inline bool UUIDFactory::addUUID(const UUID8& uuid) {
+        if (!uuid) { return false; }
+
         auto& uuids = getUUIDSet<T>();
         if (isUUIDFound<T>(uuid)) { return false; }
         uuids.insert(uuid);
@@ -67,7 +69,7 @@ namespace JEngine {
 
     template<typename T>
     inline const void UUIDFactory::removeUUID(const UUID8& uuid) {
-        if (uuid == UUID8::Empty) { return; }
+        if (!uuid) { return; }
         getUUIDSet<T>().erase(uuid);
     }
 

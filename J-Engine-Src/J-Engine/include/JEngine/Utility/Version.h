@@ -5,6 +5,7 @@
 #include <iostream>
 
 namespace JEngine {
+#pragma pack(push, 1)
     template<typename TMaj, typename TMin, typename TRev>
     struct Version {
     public:
@@ -41,6 +42,8 @@ namespace JEngine {
         os << +ver.getMajor() << '.' << +ver.getMinor() << '.' << +ver.getRevision();
         return os;
     }
+
+#pragma pack(pop)
 }
 
 #pragma region Serialization
@@ -104,17 +107,13 @@ namespace JEngine {
 
     template<typename TMaj, typename TMin, typename TRev>
     inline bool Serializable<Version<TMaj, TMin, TRev>>::deserializeBinary(Version<TMaj, TMin, TRev>& itemRef, const Stream& stream) {
-        Serialization::deserialize(itemRef._major, stream);
-        Serialization::deserialize(itemRef._minor, stream);
-        Serialization::deserialize(itemRef._revision, stream);
+        stream.readValue(itemRef, false);
         return true;
     }
 
     template<typename TMaj, typename TMin, typename TRev>
     inline bool Serializable<Version<TMaj, TMin, TRev>>::serializeBinary(const Version<TMaj, TMin, TRev>& itemRef, const Stream& stream) {
-        Serialization::serialize(itemRef._major, stream);
-        Serialization::serialize(itemRef._minor, stream);
-        Serialization::serialize(itemRef._revision, stream);
+        stream.writeValue(itemRef, 1, false);
         return true;
     }
 }

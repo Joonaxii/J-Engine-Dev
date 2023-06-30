@@ -69,10 +69,10 @@ namespace JEngine {
         bool operator!=(const JColor24& other) const;
 
         bool operator<(const JColor32& other) const {
-            return static_cast<const uint32_t>(*this) < static_cast<const uint32_t>(other);
+            return *reinterpret_cast<const uint32_t*>(this) < *reinterpret_cast<const uint32_t*>(&other);
         };
         bool operator>(const JColor32& other) const {
-            return static_cast<const uint32_t>(*this) > static_cast<const uint32_t>(other);
+            return *reinterpret_cast<const uint32_t*>(this) > *reinterpret_cast<const uint32_t*>(&other);
         };
 
         bool operator<(const JColor24& other) const;

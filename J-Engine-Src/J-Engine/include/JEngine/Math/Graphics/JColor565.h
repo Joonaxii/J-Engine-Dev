@@ -31,8 +31,8 @@ namespace JEngine {
         JColor565(const JColor24& rgb);
         JColor565(const JColor32& rgba);
 
-        bool operator <(const JColor565& other) const { return data < other.data; }
-        bool operator >(const JColor565& other) const { return data > other.data; }
+        constexpr bool operator <(const JColor565& other) const { return data < other.data; }
+        constexpr bool operator >(const JColor565& other) const { return data > other.data; }
 
         void flipRB();
     };

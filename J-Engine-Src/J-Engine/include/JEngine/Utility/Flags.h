@@ -66,8 +66,6 @@ namespace JEngine {
         }
 
         void clear() { _value = 0; }
-
-        friend yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::Flags<T>& itemRef);
     private:
         friend struct Serializable<Flags<T>>;
         friend struct YAML::convert<Flags<T>>;
@@ -81,7 +79,7 @@ namespace JEngine {
 namespace YAML {
     template<typename T>
     inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::Flags<T>& itemRef) {
-        yamlOut << YAML::Hex << uint64_t(itemRef._value);
+        yamlOut << YAML::Hex << uint64_t(itemRef.getValue());
         return yamlOut;
     }   
 

@@ -1,6 +1,5 @@
 #include <JEngine/Math/Units/JMatrix.h>
 #include <JEngine/Math/Math.h>
-#include <cassert>
 
 namespace JEngine {
     const JMatrix4f JMatrix4f::Zero = JMatrix4f({
@@ -84,12 +83,12 @@ namespace JEngine {
     }
 
     float& JMatrix4f::operator[](const int32_t i) {
-        assert(i > -1 && i < 16 && "Index out of range of matrix!");
+        JENGINE_CORE_ASSERT(i > -1 && i < 16 && "Index out of range of matrix!");
         return _mat[i];
     }
 
     const float& JMatrix4f::operator[](const int32_t i) const {
-        assert(i > -1 && i < 16 && "Index out of range of matrix!");
+        JENGINE_CORE_ASSERT(i > -1 && i < 16 && "Index out of range of matrix!");
         return _mat[i];
     }
 
@@ -102,14 +101,14 @@ namespace JEngine {
     }
 
     float& JMatrix4f::at(const int32_t column, const int32_t row) {
-        assert(column > -1 && column < 4 && "Column outside the range of matrix!");
-        assert(row > -1 && row < 4 && "Row outside the range of matrix!");
+        JENGINE_CORE_ASSERT(column > -1 && column < 4 && "Column outside the range of matrix!");
+        JENGINE_CORE_ASSERT(row > -1 && row < 4 && "Row outside the range of matrix!");
         return (*this)[row * 4 + column];
     }
 
     const float& JMatrix4f::at(const int32_t column, const int32_t row) const {
-        assert(column > -1 && column < 4 && "Column outside the range of matrix!");
-        assert(row > -1 && row < 4 && "Row outside the range of matrix!");
+        JENGINE_CORE_ASSERT(column > -1 && column < 4 && "Column outside the range of matrix!");
+        JENGINE_CORE_ASSERT(row > -1 && row < 4 && "Row outside the range of matrix!");
         return (*this)[row * 4 + column];
     }
 
@@ -160,10 +159,19 @@ namespace JEngine {
         return JVector2f(_mat[0] * x + _mat[4] * y + _mat[12],
                          _mat[1] * x + _mat[5] * y + _mat[13]);
     }
-
     JVector2f JMatrix4f::transformPoint(const JVector2f vec) const {
         return transformPoint(vec.x, vec.y);
     }
+
+    JVector2f JMatrix4f::transformVector(const float x, const float y) const {
+        return JVector2f(_mat[0] * x + _mat[4] * y ,
+            _mat[1] * x + _mat[5] * y);
+    }
+
+    JVector2f JMatrix4f::transformVector(const JVector2f vec) const {
+        return transformVector(vec.x, vec.y);
+    }
+  
 
     JRectf JMatrix4f::transformRect(const JVector2f& min, const JVector2f& max) const {
         const JVector2f points[4] {

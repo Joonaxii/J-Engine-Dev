@@ -22,7 +22,6 @@ namespace JEngine {
             if (buf) {
                 buf[len] = 0;
                 stream.read(buf, len * sizeof(wchar_t), false);
-  
             }
             return buf;
         }
@@ -92,16 +91,16 @@ namespace JEngine {
         }
 
         template<typename T>
-        const void serializeBinary(const T& ref, const Stream& stream) {
+        void serializeBinary(const T& ref, const Stream& stream) {
             if (std::is_polymorphic<T>::value) {
                 stream.write(reinterpret_cast<const char*>(&ref) + 8, sizeof(T) - 8, false);
                 return;
             }
-            stream.writeValue(ref, false);
+            stream.writeValue(ref, 1, false);
         }
 
         template<typename T>
-        const void deserializeBinary(T& ref, const Stream& stream) {
+        void deserializeBinary(T& ref, const Stream& stream) {
             if (std::is_polymorphic<T>::value) {
                 stream.read(reinterpret_cast<char*>(&ref) + 8, sizeof(T) - 8, false);
                 return;

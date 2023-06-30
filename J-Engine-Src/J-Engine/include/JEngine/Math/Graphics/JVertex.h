@@ -4,6 +4,7 @@
 #include <JEngine/Math/Units/JVector.h>
 
 namespace JEngine {
+#pragma pack(push, 1)
     template<typename T>
     struct JVertex {
     public:
@@ -19,7 +20,7 @@ namespace JEngine {
 
     template<typename T>
     inline JVertex<T>::JVertex(const T& position, const JColor32& color, const JVector2f& uv) : position(position), color(color), uv(uv) { }
-
+#pragma pack(pop)
 }
 
 #pragma region Serialization

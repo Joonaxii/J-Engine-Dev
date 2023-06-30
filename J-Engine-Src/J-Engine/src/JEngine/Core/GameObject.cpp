@@ -18,30 +18,70 @@ namespace JEngine {
         }
         return MAX_COMPONENTS;
     }
-    GameObject* GameObject::createObject(const char* name, uint16_t flags) {
-        return new GameObject(name, flags);
-    }
-
-    GameObject* GameObject::createObject(const std::string& name, uint16_t flags) {
-        return new GameObject(name, flags);
-    }
-
-    void GameObject::destroyObject(GameObject*& go) {
-        destroyObject(const_cast<const GameObject*>(go));
-        go = nullptr;
-    }
-
-    void GameObject::destroyObject(const GameObject* go) {
-        //TODO: Do stuff like removing from scene/unregistering
-        delete go;
-    }
-
-    GameObject::GameObject(const std::string& name, uint16_t flags) : _name(name), _flags(flags) { }
-    GameObject::GameObject(const char* name, uint16_t flags) : _name(name), _flags(flags) { }
-    GameObject::~GameObject() {
-        for (auto& comp : _components) {
-            comp->destroy();
+    GameObject* GameObject::createObject(const char* name, uint16_t flags, UUID8 uuid) {
+        GameObject* go = getGameObjectAllocator().allocate();
+        if (!go) {
+            JENGINE_CORE_ERROR("[J-Engine GameObject] Error: Couldn't allocate game object!");
+            return nullptr;
         }
+
+        go->init(name, flags);
+        if (uuid) { 
+            go->_uuid = uuid;
+            UUIDFactory::addUUID<GameObject>(uuid); 
+        }
+        else {
+            go->_uuid = UUIDFactory::generateUUID<GameObject>(go->_uuid);
+        }
+        return go;
+    }
+
+    GameObject* GameObject::createObject(const std::string& name, uint16_t flags, UUID8 uuid) {
+        static constexpr size_t size = sizeof(GameObject);
+        return createObject(name.c_str(), flags, uuid);
+    }
+
+    GameObject* GameObject::destroyObject(GameObject* go) {
+        if (!go) { return nullptr; }
+        if (!getGameObjectAllocator().deallocate(go)) {
+            JENGINE_CORE_ERROR("[J-Engine GameObject] Error: Couldn't deallocate game object!");
+            return go;
+        }
+        return nullptr;
+    }
+
+    void GameObject::deserializeCompRefBinary(const Stream& stream, UUID8& go, UUID8& comp) {
+        Serialization::deserialize(go, stream);
+        Serialization::deserialize(comp, stream);
+    }
+
+    void GameObject::serializeCompRefBinary(const Stream& stream, const GameObject* go, const Component* comp)  {
+        if (go) {
+            Serialization::serialize(go->getUUID(), stream);
+            Serialization::serialize(comp ? comp->getUUID() : UUID8::Empty, stream);
+        }
+        else {
+            Serialization::serialize(UUID8::Empty, stream);
+            Serialization::serialize(UUID8::Empty, stream);
+        }
+    }
+
+    GameObject::GameObject() : _name(""), _flags() { }
+
+    GameObject::~GameObject() {
+        dCtor();
+    }
+
+    void GameObject::dCtor() {
+        if (_flags & FLAG_IS_DESTROYED) { return; }
+        for (size_t i = 0; i < _compInfo.count; i++) {
+            _components[i]->destroy();
+        }
+
+        _flags |= FLAG_IS_DESTROYED;
+        _compInfo.count = 0;
+        _compInfo.trIndex = NULL_TRANSFORM;
+        UUIDFactory::removeUUID<GameObject>(_uuid);
     }
 
     CTransform* GameObject::getTransform() {
@@ -54,8 +94,9 @@ namespace JEngine {
         return dynamic_cast<const CTransform*>(_components[_compInfo.trIndex]);
     }
 
-    void GameObject::operator delete(void* ptr) noexcept {
-        free(ptr);
+    void GameObject::init(const char* name, uint16_t flags) {
+        _flags = flags;
+        _name = std::string(name);
     }
 
     bool GameObject::addComponent(Component* comp, bool autoStart) {
@@ -83,7 +124,6 @@ namespace JEngine {
         _compInfo.count--;
         if (destroy) {
             comp->destroy();
-            delete comp;
         }
         else {
             comp->_object = nullptr;
@@ -103,7 +143,6 @@ namespace JEngine {
         _compInfo.count--;
         if (destroy) {
             comp->destroy();
-            delete comp;
         }
         else {
             comp->_object = nullptr;

@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <limits>
+#include <bitset>
 
 static constexpr int32_t PAL_SIZE = 256;
 
@@ -12,7 +13,28 @@ constexpr float UINT16_TO_FLOAT = 1.0f / float(UINT16_MAX);
 constexpr float UINT32_TO_FLOAT = 1.0f / float(UINT32_MAX);
 constexpr float UINT64_TO_FLOAT = 1.0f / float(UINT64_MAX);
 
+namespace detail
+{
+    double constexpr sqrtNewtonRaphson(double x, double curr, double prev) {
+        return curr == prev ? curr : sqrtNewtonRaphson(x, 0.5 * (curr + x / curr), curr);
+    }
+
+    float constexpr sqrtfNewtonRaphson(float x, float curr, float prev) {
+        return curr == prev ? curr : sqrtfNewtonRaphson(x, 0.5f * (curr + x / curr), curr);
+    }
+};
+
 namespace JEngine::Math {
+    template<typename T, typename P = float>
+    struct InvLerp {
+        static constexpr P inverseLerp(const T& a, const T& b, const T& v);
+    };
+
+    template<typename T, typename P>
+    inline constexpr P InvLerp<T, P>::inverseLerp(const T& a, const T& b, const T& v) {
+        return a == b ? P() : P((v - a) / (b - a));
+    }
+
 #undef max
 #undef min
     template<typename T, typename P = double>
@@ -26,6 +48,25 @@ namespace JEngine::Math {
     template<> inline constexpr bool isPowerOf2<double>(const double value) { return isPowerOf2<int64_t>(int64_t(value)); }
     template<> inline constexpr bool isPowerOf2<float>(const float value) { return isPowerOf2<int64_t>(int64_t(value)); }
 
+    template<typename T>
+    constexpr T sqrt(T x) {
+        static_assert("Not Implemented for given type!");
+        return T{};
+    }
+
+    template<>
+    inline constexpr double sqrt<double>(double x) {
+        return (x >= 0 && x < std::numeric_limits<double>::infinity()
+            ? detail::sqrtNewtonRaphson(x, x, 0)
+            : std::numeric_limits<double>::quiet_NaN());
+    }
+
+    template<>
+    inline constexpr float sqrt<float>(float x) {
+        return (x >= 0 && x < std::numeric_limits<float>::infinity()
+            ? detail::sqrtfNewtonRaphson(x, x, 0)
+            : std::numeric_limits<float>::quiet_NaN());
+    }
 
     inline constexpr uint8_t multByte(uint8_t a, uint8_t b) {
         return uint8_t((uint32_t(a) * b * 0x10101U + 0x800000U) >> 24);
@@ -38,8 +79,13 @@ namespace JEngine::Math {
     int32_t log2(uint64_t value);
     int32_t findFirstLSB(uint64_t value);
 
+    template<typename T>
+    size_t countBits(T value) {
+        return std::bitset<sizeof(T) << 3>(value).count();
+    }
+
     template<typename T, typename P = T>
-    P sign(T value, T threshold) {
+    constexpr P sign(T value, T threshold) {
         return P(value > threshold ? 1 : value < -threshold ? -1 : 0);
     }
 
@@ -138,19 +184,17 @@ namespace JEngine::Math {
     }
 
     template<typename T, typename P = float>
-    T lerp(T a, T b, P t) {
+    constexpr T lerp(const T& a, const T& b, P t) {
         return T((P(1) - t) * a + b * t);
     }
-
     template<typename T, typename P = float>
-    P inverseLerp(T a, T b, P v) {
-        if (a == b) { return P(); }
-        return (P(v) - P(a)) / (P(b) - P(a));
+    constexpr P inverseLerp(const T& a, const T& b, const T& v) {
+        return InvLerp<T, P>::inverseLerp(a, b, v);
     }
 
     template<typename T, typename P = float>
-    P remap(T a, T b, T aT, T bT, P v) {
-        return lerp<T, P>(aT, bT, inverseLerp<T, P>(a, b, v));
+    constexpr T remap(const T& a, const T& b, const T& aT, const T& bT, P v) {
+        return lerp<T, P>(aT, bT, InvLerp<T, P>::inverseLerp(a, b, v));
     }
 
     template<typename T>
@@ -183,12 +227,12 @@ namespace JEngine::Math {
     }
 
     template<typename T>
-    bool isInRangeExc(const T input, const T min, const T max) {
+    constexpr bool isInRangeExc(const T input, const T min, const T max) {
         return input >= min && input < max;
     }
 
     template<typename T>
-    bool isInRangeInc(const T input, const T min, const T max) {
+    constexpr bool isInRangeInc(const T input, const T min, const T max) {
         return input >= min && input <= max;
     }
 }

@@ -13,7 +13,7 @@
 
 namespace JEngine::IO {
     bool hasAnyExtension(const fs::path& path, const char** extensions, size_t count) {
-        if (!extensions || count < 1) { return true; }
+        if (!extensions || count < 1)  { return true; }
 
         if (!path.has_extension()) {
             for (size_t i = 0; i < count; i++) {
@@ -248,6 +248,16 @@ namespace JEngine::IO {
             char c = *path;
             if (c == '\0') { break; }
 
+            if (c == '\\') {
+                *path = '/';
+            }
+            path++;
+        }
+    }
+
+    void fixPath(char* path, size_t length) {
+        while (length-- > 0) {
+            char c = *path;
             if (c == '\\') {
                 *path = '/';
             }

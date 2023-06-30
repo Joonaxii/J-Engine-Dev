@@ -78,16 +78,18 @@ public:
     size_t writeValue(const T& value, const size_t count = 1, const bool bigEndian = false) const {
         if (!canWrite() || count < 1) { return 0; }
 
-        void* buffer = _malloca(count * sizeof(T));
+        uint8_t* buffer = reinterpret_cast<uint8_t*>(_malloca(count * sizeof(T)));
         if (!buffer) { return 0; }
 
-        T valueTemp = value;
         if (bigEndian) {
-            JEngine::Data::reverseEndianess(&valueTemp, sizeof(T), 1);
+            memcpy(buffer, &value, sizeof(T));
+            JEngine::Data::reverseEndianess(buffer, sizeof(T), 1);
         }
 
-        std::fill_n(reinterpret_cast<T*>(buffer), count, valueTemp);
-       
+        for (size_t i = 1, j = sizeof(T); i < count; i++ ,j+= sizeof(T)) {
+            memcpy(buffer + j, buffer, sizeof(T));
+        }
+
         size_t ret = write(buffer, 1, count * sizeof(T));
         _freea(buffer);
         return ret;

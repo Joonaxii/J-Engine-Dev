@@ -6,6 +6,7 @@
 #include <JEngine/Helpers/TypeHelpers.h>
 #include <JEngine/Core/GameObject.h>
 #include <JEngine/Components/Component.h>
+#include <JEngine/Collections/PoolAllocator.h>
 #define ADD_TO_GO_CALL(name) Component*(*name)(GameObject*)
 
 namespace JEngine {
@@ -13,6 +14,8 @@ namespace JEngine {
     struct Comp {
         Type* type = nullptr;
         Component* (*addComponent)(GameObject*) = nullptr;
+        void (*trimAllocPool)() = nullptr;
+        void (*clearAllocPool)(bool full) = nullptr;
     };
 
     class ComponentFactory {
@@ -63,11 +66,16 @@ namespace JEngine {
         static Component* addComponent(GameObject* go, const std::string& name);
         static Component* addComponent(GameObject* go, const UUID16& hash);
 
+        static void clearAllComponentPools(bool full);
+        static void trimAllComponentPools();
+
         template<typename T>
         static void addComp(JEngine::Comp* comp, Type* type, ADD_TO_GO_CALL(addComponent)) {
             if (comp->type != nullptr) { return; }
             comp->type = type;
             comp->addComponent = addComponent;
+            comp->trimAllocPool = Component::getComponentAllocator<T>().trim;
+            comp->clearAllocPool = Component::getComponentAllocator<T>().clear;
             getComps().push_back(comp);
         }
     };

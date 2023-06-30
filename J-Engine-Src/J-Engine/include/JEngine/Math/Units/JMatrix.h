@@ -41,6 +41,9 @@ namespace JEngine {
         JVector2f transformPoint(const float x, const float y) const;
         JVector2f transformPoint(const JVector2f vec) const;
 
+        JVector2f transformVector(const float x, const float y) const;
+        JVector2f transformVector(const JVector2f vec) const;
+
         JRectf transformRect(const JVector2f& min, const JVector2f& max) const;
         JRectf transformRect(const JRectf& rectangle) const;
 

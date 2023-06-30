@@ -146,6 +146,8 @@ set(JENGINE_COLLECTIONS_SRC
 	 "include/JEngine/Collections/IReferenceProvider.h"
 	 "include/JEngine/Collections/IRef.h"
 	 "include/JEngine/Collections/ObjectRef.h"
+	 "include/JEngine/Collections/PoolAllocator.h"
+	 "include/JEngine/Collections/SubCollection.h"
 	 "include/JEngine/Collections/ReferenceVector.h"
 )
 source_group("JEngine/Collections" FILES ${JENGINE_COLLECTIONS_SRC})
@@ -338,6 +340,9 @@ set(JENGINE_CORE_SRC
 	 
 	 "include/JEngine/Core/GameObject.h"
      "src/JEngine/Core/GameObject.cpp"
+	 
+	 "include/JEngine/Core/Scene.h"
+     "src/JEngine/Core/Scene.cpp"
 	 
 	 "include/JEngine/Core/Engine.h"
      "src/JEngine/Core/Engine.cpp"
