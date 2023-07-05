@@ -6,10 +6,7 @@ namespace JEngine {
         _parent(nullptr),
         _lPos(), _lRot(), _lSca(1, 1) { }
 
-    CTransform::~CTransform() { }
-
-    void CTransform::dCtor() {
-        Component::dCtor();
+    CTransform::~CTransform() { 
         destroyChildren();
     }
 
@@ -113,12 +110,12 @@ namespace JEngine {
     }
 
     CTransform* CTransform::getChildAt(const size_t index) {
-        JENGINE_CORE_ASSERT(index >= 0 && index < _children.size() && "Index out of range!");
+        JENGINE_CORE_ASSERT(index >= 0 && index < _children.size(), "Index out of range!");
         return _children[index];
     }
 
     const CTransform* CTransform::getChildAt(const size_t index) const {
-        JENGINE_CORE_ASSERT(index >= 0 && index < _children.size() && "Index out of range!");
+        JENGINE_CORE_ASSERT(index >= 0 && index < _children.size(), "Index out of range!");
         return _children[index];
     }
 
@@ -203,7 +200,6 @@ namespace JEngine {
         _children.clear();
     }
 
-
     void CTransform::onInit() {
         if (_parent) {
             _parent->removeChild(this);
@@ -216,8 +212,8 @@ namespace JEngine {
         _lSca = { 1, 1 };
     }
 
-    void CTransform::onDestroy() {
-        Component::deleteComponent(this);
+    void CTransform::doDelete() {
+        Component::deleteComponent<CTransform>(this);
     }
 
     void CTransform::deserializeBinaryImpl(const Stream& stream) {

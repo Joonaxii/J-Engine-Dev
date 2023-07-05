@@ -2,11 +2,12 @@
 #include <JEngine/Rendering/Window.h>
 #include <JEngine/Components/ComponentFactory.h>
 #include <JEngine/Core/GameObject.h>
+#include <JEngine/IO/Helpers/IOUtils.h>
 
 namespace JEngine {
     Application* Application::_instance{ nullptr };
 
-    Application::Application(const AppSpecs specs) : _time() {}
+    Application::Application(const AppSpecs& specs, const ResourceRoot* roots, size_t rootCount) : _time(), _assetDB(roots, rootCount) {}
     Application::~Application() {
         GameObject::getGameObjectAllocator().clear(true);
         ComponentFactory::clearAllComponentPools(true);

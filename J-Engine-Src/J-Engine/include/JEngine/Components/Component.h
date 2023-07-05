@@ -3,23 +3,17 @@
 #include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Utility/Flags.h>
 #include <JEngine/Cryptography/UUIDFactory.h>
+#include <JEngine/Core/IObject.h>
 #include <JEngine/Collections/PoolAllocator.h>
 
 namespace JEngine {
-    enum ObjectFlags : uint16_t {
-        FLAG_NO_SERIALIZE = 0x1,
-
-        FLAGS_INSTANCE = 0xFF,
-        FLAGS_RUNTIME = 0xFF00,
-        FLAG_IS_DESTROYED = 0x1000,
-    };
-
     enum ComponentFlags: uint8_t {
         COMP_IS_TRANSFORM = 0x1,
     };
 
     template<typename T>
     struct ComponentInfo {
+        static inline constexpr size_t InitPool{ 0x00 };
         static inline constexpr ComponentFlags Flags{ 0x00 };
         static inline constexpr const char* Name { "Component" };
     };
@@ -30,15 +24,12 @@ namespace JEngine {
     };
 
     class GameObject;
-    class Component : public IPoolObj {
+    class Component : public IObject {
     public:
         Component();
         virtual ~Component();
-        virtual void dCtor() override;
-
+  
         GameObject* getObject() const { return _object; }
-
-        UUID8 getUUID() const { return _uuid; }
 
         void deserializeBinary(const Stream& stream);
         void serializeBinary(const Stream& stream) const;
@@ -49,9 +40,9 @@ namespace JEngine {
         void deserializeJSON(json& jsonF);
         void serializeJSON(json& jsonF) const;
 
-        template<typename T>
-        static PoolAllocator<T>& getComponentAllocator() {
-            return PoolAllocator<T>::getGlobal();
+        template<typename T, size_t init = ComponentInfo<T>::InitPool>
+        static PoolAllocator<T, init>& getComponentAllocator() {
+            return PoolAllocator<T, init>::getGlobal();
         }
 
     protected:
@@ -65,11 +56,13 @@ namespace JEngine {
         void* operator new(size_t size) = delete;
         void operator delete(void* ptr) = delete;
 
+        virtual void doDelete() = 0;
+
         virtual void onInit() {};
         virtual void onSetup() {};
         virtual void onStart() {};
-        virtual void onUpdate(float delta) {};
-        virtual void onDestroy() = 0;
+        virtual void onUpdate(float time, float delta) {};
+        virtual void onDestroy() {};
 
         virtual void deserializeBinaryImpl(const Stream& stream) = 0;
         virtual void serializeBinaryImpl(const Stream& stream) const = 0;
@@ -89,13 +82,10 @@ namespace JEngine {
         friend class GameObject;
 
         GameObject* _object;
-        UUID8 _uuid;
-        UI16Flags _flags;
-
         void init(GameObject* go, uint16_t flags);
 
         void start();
-        void update(float delta);
+        void update(float time, float delta);
         void destroy();
     };
 }

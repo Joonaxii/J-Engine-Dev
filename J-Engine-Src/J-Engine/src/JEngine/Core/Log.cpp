@@ -1,6 +1,9 @@
 #include <JEngine/Core/Log.h>
+
+#pragma warning(push, 0)
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#pragma warning(pop)
 
 namespace JEngine {
     std::shared_ptr<spdlog::logger> Log::_coreLogger;

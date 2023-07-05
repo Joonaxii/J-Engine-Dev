@@ -35,5 +35,3 @@ namespace JEngine {
         void freeDepthBuffer();
     };
 }
-
-REGISTER_ASSET(JEngine::RenderTexture);

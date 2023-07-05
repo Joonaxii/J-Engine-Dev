@@ -59,8 +59,8 @@ namespace JEngine {
         return isSrc ? GL_SRC_ALPHA : GL_ONE_MINUS_SRC_ALPHA;
     }
 
-    Shader::Shader() : _shaderID(0), _blendingModes {GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD} { }
-    Shader::Shader(const std::string& fileath) : _shaderID(0), _blendingModes { GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD } {
+    Shader::Shader() : IAsset(), _shaderID(0), _blendingModes {GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD} { }
+    Shader::Shader(const std::string& fileath) :IAsset(),  _shaderID(0), _blendingModes { GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD } {
         ShaderSources source = parseShader(fileath);
 
         _blendingModes[0] = source.blendSrc;

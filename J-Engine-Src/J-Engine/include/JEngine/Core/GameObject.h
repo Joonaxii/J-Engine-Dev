@@ -1,30 +1,27 @@
 #pragma once
 #include <vector>
+#include <JEngine/Core/IObject.h>
 #include <JEngine/Components/Component.h>
 #include <string>
 #include <JEngine/Utility/Flags.h>
 #include <JEngine/Utility/Span.h>
+#include <JEngine/Utility/JTime.h>
 #include <JEngine/Collections/PoolAllocator.h>
 
 namespace JEngine {
     class CTransform;
     class Scene;
-    class GameObject : public IPoolObj {
+    class GameObject : public INamedObject {
     public:
         static constexpr uint8_t MAX_COMPONENTS = 32;
 
         ~GameObject();
 
-        void dCtor() override;
-
         Span<Component*> getAllComponents() { return Span<Component*>(_components, _compInfo.count); }
         ConstSpan<Component*> getAllComponents() const { return ConstSpan<Component*>(_components, _compInfo.count); }
 
-        std::string& setName(const char* newName) { return _name = newName; }
-        std::string& setName(const std::string& newName) { return _name = newName; }
-        const std::string& getName() const { return _name; }
-
-        UUID8 getUUID() const { return _uuid; }
+        JTimeIndex getTimeSpace() const { return _timeSpace; }
+        void setTimeSpace(JTimeIndex space) { _timeSpace = space; }
 
         CTransform* getTransform();
         const CTransform* getTransform() const;
@@ -88,7 +85,7 @@ namespace JEngine {
         template<typename T>
         T* addComponent(uint16_t flags = 0, bool autoStart = true) {
             if (_compInfo.count >= MAX_COMPONENTS) { 
-                JENGINE_CORE_WARN("[J-Engine - GameObject] Warning: Max number of components ({0}) for GameObject '{1}' [0x{2:x}] has been reached!!", MAX_COMPONENTS, _name.c_str(), _uuid.asUInt());
+                JENGINE_CORE_WARN("[J-Engine - GameObject] Warning: Max number of components ({0}) for GameObject '{1}' [0x{2:x}] has been reached!!", MAX_COMPONENTS, getName().c_str(), getUUID().asUInt());
                 return nullptr; 
             }
 
@@ -120,7 +117,7 @@ namespace JEngine {
                     ind = indexOfComponent(uuid);
                 }
 
-                comp->_uuid = uuid;
+                comp->setUUID(uuid);
                 return newComp;
             }
 
@@ -132,11 +129,13 @@ namespace JEngine {
         uint8_t indexOfComponent(const Component* comp) const;
         uint8_t indexOfComponent(const UUID8& uuid) const;
 
+        static GameObject* createObject(const char* name, const UUID16* components, size_t compCount, uint16_t flags = 0x00, UUID8 uuid = UUID8::Empty);
+        static GameObject* createObject(const std::string& name, const UUID16* components, size_t compCount, uint16_t flags = 0x00, UUID8 uuid = UUID8::Empty);
+
         static GameObject* createObject(const char* name, uint16_t flags = 0x00, UUID8 uuid = UUID8::Empty);
         static GameObject* createObject(const std::string& name, uint16_t flags = 0x00, UUID8 uuid = UUID8::Empty);
 
         static GameObject* destroyObject(GameObject* go);
-
 
         static void deserializeCompRefBinary(const Stream& stream, UUID8& go, UUID8& comp);
         static void serializeCompRefBinary(const Stream& stream, const GameObject* go, const Component* comp);
@@ -157,7 +156,12 @@ namespace JEngine {
             uint8_t count{ 0 };
             uint8_t trIndex{ NULL_TRANSFORM };
         };
+        JTimeIndex _timeSpace;
 
+        Scene* _scene;
+
+        CompInfo _compInfo{};
+        Component* _components[MAX_COMPONENTS]{ nullptr };
         GameObject();
 
         GameObject(const GameObject& other) = delete;
@@ -168,13 +172,8 @@ namespace JEngine {
         void operator delete(void* ptr) noexcept = delete;
         void init(const char* name, uint16_t flags);
 
-        UUID8 _uuid;
-        UI16Flags _flags;
-        std::string _name;
-        Scene* _scene;
-
-        CompInfo _compInfo{};
-        Component* _components[MAX_COMPONENTS]{nullptr};
+        void start();
+        void update(const JTime& time);
     };
 }
 REGISTER_UUID_FACTORY(JEngine::GameObject);

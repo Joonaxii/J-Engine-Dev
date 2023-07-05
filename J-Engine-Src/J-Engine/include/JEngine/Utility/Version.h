@@ -12,11 +12,11 @@ namespace JEngine {
         constexpr Version() : _major(), _minor(), _revision() {}
         constexpr Version(const TMaj& major, const TMin& minor, const TRev& revision) : _major(major), _minor(minor), _revision(revision) {}
 
-        const TMaj& getMajor() const { return _major; }
-        const TMin& getMinor() const { return _minor; }
-        const TRev& getRevision() const { return _revision; }
+        constexpr TMaj getMajor() const { return _major; }
+        constexpr TMin getMinor() const { return _minor; }
+        constexpr TRev getRevision() const { return _revision; }
 
-        const std::string toString() const {
+        std::string toString() const {
             std::stringstream sstrm;
             sstrm << _major;
             sstrm << '.';
@@ -30,12 +30,10 @@ namespace JEngine {
         friend struct Serializable<Version<TMaj, TMin, TRev>>;
         friend struct YAML::convert<Version<TMaj, TMin, TRev>>;
 
-        const TMaj _major;
-        const TMin _minor;
-        const TRev _revision;
+        TMaj _major;
+        TMin _minor;
+        TRev _revision;
     };
-
-    typedef JEngine::Version<uint16_t, uint8_t, uint8_t> JVersion;
 
     template<typename TMaj, typename TMin, typename TRev>
     inline std::ostream& operator<<(std::ostream& os, const Version<TMaj, TMin, TRev>& ver) {
@@ -45,6 +43,7 @@ namespace JEngine {
 
 #pragma pack(pop)
 }
+typedef JEngine::Version<uint16_t, uint8_t, uint8_t> JVersion;
 
 #pragma region Serialization
 //YAML

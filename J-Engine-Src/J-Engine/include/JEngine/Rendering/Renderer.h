@@ -16,6 +16,7 @@
 #include <set>
 
 namespace JEngine {
+    class IGuiPanel;
     class Renderer {
     public:
         typedef DynamicBatch<JVertex2f> DynamicBatch2D;
@@ -52,7 +53,7 @@ namespace JEngine {
 
         const RenderInfo& getRenderInfo() const;
 
-        bool doRender();
+        bool doRender(IGuiPanel* panel);
 
         void setCameraBlendMaterial(const ObjectRef<Material>& blendMaterial);
 

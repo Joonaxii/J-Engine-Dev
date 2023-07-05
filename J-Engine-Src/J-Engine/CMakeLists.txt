@@ -162,8 +162,6 @@ list(APPEND JENGINE_SOURCES ${JENGINE_ALGORITHM_SRC})
 
 # JEngine Asset files
 set(JENGINE_ASSETS_SRC
-	 "include/JEngine/Assets/AssetMetaData.h"
-	 "src/JEngine/Assets/AssetMetaData.cpp"
 	 "include/JEngine/Assets/AssetType.h"
 	 "include/JEngine/Assets/AssetDataType.h"
 	 "src/JEngine/Assets/AssetDataType.cpp"
@@ -171,8 +169,8 @@ set(JENGINE_ASSETS_SRC
 	 "include/JEngine/Assets/IAsset.h"
      "src/JEngine/Assets/IAsset.cpp"
 	 
-	 "include/JEngine/Assets/AssetPaths.h"
-	 
+	 "include/JEngine/Assets/IAssetSerializer.h"
+	
 	 "include/JEngine/Assets/AssetPacking.h"
      "src/JEngine/Assets/AssetPacking.cpp"
 )
@@ -301,6 +299,7 @@ list(APPEND JENGINE_SOURCES ${JENGINE_CRYPTOGRAPHY_SRC})
 # JEngine ImGui files
 set(JENGINE_IMGUI_SRC
      "include/JEngine/Rendering/ImGui/IImGuiDrawable.h"
+     "include/JEngine/Rendering/ImGui/ImGuiUtils.h"
 )
 source_group("JEngine/Rendering/ImGui" FILES ${JENGINE_IMGUI_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_IMGUI_SRC})
@@ -338,11 +337,19 @@ set(JENGINE_CORE_SRC
 	 "include/JEngine/Core/Log.h"
 	 "include/JEngine/Core/Assert.h"
 	 
+	 "include/JEngine/Core/IObject.h"
+	 
 	 "include/JEngine/Core/GameObject.h"
      "src/JEngine/Core/GameObject.cpp"
 	 
 	 "include/JEngine/Core/Scene.h"
      "src/JEngine/Core/Scene.cpp"
+	 
+	 "include/JEngine/Core/AssetDB.h"
+     "src/JEngine/Core/AssetDB.cpp"
+	 
+	 "include/JEngine/Core/SceneManager.h"
+     "src/JEngine/Core/SceneManager.cpp"
 	 
 	 "include/JEngine/Core/Engine.h"
      "src/JEngine/Core/Engine.cpp"
@@ -427,6 +434,11 @@ source_group("JEngine/Input" FILES ${JENGINE_INPUT_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_INPUT_SRC})
 
 add_library(J-Engine STATIC ${JENGINE_SOURCES})
+
+target_compile_options(
+    J-Engine PUBLIC
+    /external:W0
+)
 
 find_package(OpenGL REQUIRED)
 target_link_libraries(J-Engine spdlog XInput OpenGL::GL glfw ImGUI zlibstatic yaml-cpp nlohmann_json)

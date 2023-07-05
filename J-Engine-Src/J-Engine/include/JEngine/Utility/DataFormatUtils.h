@@ -117,8 +117,7 @@ namespace JEngine {
 
     template<>
     inline const char** JEngine::EnumNames<DataFormat>::getEnumNames() {
-        static const char* names[Count] =
-        {
+        static const char* names[Count] = {
             "Binary",
             "Text",
             "JSON",
@@ -159,13 +158,9 @@ namespace JEngine {
 
     template<>
     inline bool EnumNames<DataFormat>::noDraw(int32_t index) {
-        static bool noDraw[Count] {
-            false, false, true, true, true
-        };
-
         auto names = getEnumNames();
-        if (index < 0 || index >= Count || !names) { return true; }
-        return noDraw[index] || isNoName(names[index]);
+        if (index < 2 || index >= Count || !names) { return true; }
+        return isNoName(names[index]);
     }
 
 }

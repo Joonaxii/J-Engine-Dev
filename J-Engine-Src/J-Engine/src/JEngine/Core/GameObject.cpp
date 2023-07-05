@@ -1,5 +1,6 @@
 #include <JEngine/Core/GameObject.h>
 #include <JEngine/Components/CTransform.h>
+#include <JEngine/Components/ComponentFactory.h>
 
 namespace JEngine {
     uint8_t GameObject::indexOfComponent(const Component* comp) const {
@@ -13,12 +14,12 @@ namespace JEngine {
     uint8_t GameObject::indexOfComponent(const UUID8& uuid) const {
         if (uuid != UUID8::Empty) {
             for (uint8_t i = 0; i < _compInfo.count; i++) {
-                if (_components[i] && _components[i]->_uuid == uuid) { return i; }
+                if (_components[i] && _components[i]->getUUID() == uuid) { return i; }
             }
         }
         return MAX_COMPONENTS;
     }
-    GameObject* GameObject::createObject(const char* name, uint16_t flags, UUID8 uuid) {
+    GameObject* GameObject::createObject(const char* name, const UUID16* components, size_t compCount, uint16_t flags, UUID8 uuid) {
         GameObject* go = getGameObjectAllocator().allocate();
         if (!go) {
             JENGINE_CORE_ERROR("[J-Engine GameObject] Error: Couldn't allocate game object!");
@@ -27,18 +28,35 @@ namespace JEngine {
 
         go->init(name, flags);
         if (uuid) { 
-            go->_uuid = uuid;
+            go->setUUID(uuid);
             UUIDFactory::addUUID<GameObject>(uuid); 
         }
         else {
-            go->_uuid = UUIDFactory::generateUUID<GameObject>(go->_uuid);
+            go->setUUID(UUIDFactory::generateUUID<GameObject>(uuid) ? uuid : UUID8::Empty);
+        }
+
+        if (components) {
+            for (size_t i = 0; i < compCount; i++) {
+                ComponentFactory::addComponent(go, components[i]);
+            }
         }
         return go;
     }
 
+
+    GameObject* GameObject::createObject(const char* name, uint16_t flags, UUID8 uuid) {
+        static constexpr size_t size = sizeof(GameObject);
+        return createObject(name, nullptr, 0, flags, uuid);
+    }
+
+    GameObject* GameObject::createObject(const std::string& name, const UUID16* components, size_t compCount, uint16_t flags, UUID8 uuid) {
+        static constexpr size_t size = sizeof(GameObject);
+        return createObject(name.c_str(), components, compCount, flags, uuid);
+    }
+
     GameObject* GameObject::createObject(const std::string& name, uint16_t flags, UUID8 uuid) {
         static constexpr size_t size = sizeof(GameObject);
-        return createObject(name.c_str(), flags, uuid);
+        return createObject(name.c_str(), nullptr, 0, flags, uuid);
     }
 
     GameObject* GameObject::destroyObject(GameObject* go) {
@@ -66,22 +84,18 @@ namespace JEngine {
         }
     }
 
-    GameObject::GameObject() : _name(""), _flags() { }
+    GameObject::GameObject() : INamedObject() { }
 
     GameObject::~GameObject() {
-        dCtor();
-    }
-
-    void GameObject::dCtor() {
-        if (_flags & FLAG_IS_DESTROYED) { return; }
+        if (getFlags() & FLAG_IS_DESTROYED) { return; }
         for (size_t i = 0; i < _compInfo.count; i++) {
             _components[i]->destroy();
         }
 
-        _flags |= FLAG_IS_DESTROYED;
+        getFlags() |= FLAG_IS_DESTROYED;
         _compInfo.count = 0;
         _compInfo.trIndex = NULL_TRANSFORM;
-        UUIDFactory::removeUUID<GameObject>(_uuid);
+        UUIDFactory::removeUUID<GameObject>(getUUID());
     }
 
     CTransform* GameObject::getTransform() {
@@ -95,8 +109,21 @@ namespace JEngine {
     }
 
     void GameObject::init(const char* name, uint16_t flags) {
-        _flags = flags;
-        _name = std::string(name);
+        initObj(name, UUID8::Empty, flags);
+    }
+
+    void GameObject::start() {
+        for (size_t i = 0; i < _compInfo.count; i++) {
+            _components[i]->start();
+        }
+    }
+
+    void GameObject::update(const JTime& time) {
+        float delta = time.getDeltaTime<float>(_timeSpace);
+        float eTime  = time.getTime<float>(_timeSpace);
+        for (size_t i = 0; i < _compInfo.count; i++) {
+            _components[i]->update(eTime, delta);
+        }
     }
 
     bool GameObject::addComponent(Component* comp, bool autoStart) {

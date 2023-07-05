@@ -24,6 +24,8 @@ set(IMGUI_SRC
 	"imstb_rectpack.h"
 	"imstb_textedit.h"
 	"imstb_truetype.h"
+	"misc/cpp/imgui_stdlib.h"
+	"misc/cpp/imgui_stdlib.cpp"
 )
 source_group("ImGUI" FILES ${IMGUI_SRC})
 list(APPEND IMGUI_SOURCES ${IMGUI_SRC})

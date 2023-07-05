@@ -14,5 +14,3 @@ namespace JEngine {
         bool deserializeJson(json& jsonF);
     };
 }
-
-REGISTER_ASSET(JEngine::Texture2D);

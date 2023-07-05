@@ -5,9 +5,9 @@
 
 namespace JEngine::AssetPacking {
 
-    const bool packAssets(const FileEntry& folder, const Stream& stream, const uint32_t flags) {
-        stream.writeValue(DataHeader<FMT_JPAK>::Value);
-        Serialization::serialize(PakVersion, stream);
-        return true;
-    }
+    //const bool packAssets(const FileEntry& folder, const Stream& stream, const uint32_t flags) {
+    //    stream.writeValue(DataHeader<FMT_JPAK>::Value);
+    //    Serialization::serialize(PakVersion, stream);
+    //    return true;
+    //}
 }

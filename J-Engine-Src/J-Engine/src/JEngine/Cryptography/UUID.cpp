@@ -6,15 +6,13 @@ namespace JEngine {
     static constexpr size_t UUID8_HASH_STR_LEN  = 1 + 16;
     static constexpr size_t UUID16_HASH_STR_LEN = 2 + 32;
 
-    uint32_t compute(const ConstSpan<uint8_t> span, uint32_t crc) {
+    uint32_t compute(ConstSpan<uint8_t> span, uint32_t crc) {
         crc = ~crc;
         size_t len = span.length();
         auto ptr = span.get();
 
-        while (len-- > 0)
-        {
+        while (len-- > 0) {
             crc ^= *ptr++;
-
             crc = (crc >> 1) ^ (UUID8::POLYNOMIAL & (0 - (crc & 1)));
             crc = (crc >> 1) ^ (UUID8::POLYNOMIAL & (0 - (crc & 1)));
             crc = (crc >> 1) ^ (UUID8::POLYNOMIAL & (0 - (crc & 1)));
@@ -114,6 +112,28 @@ namespace JEngine {
         return *this;
     }
 
+    UUID8& UUID8::updateHash(HashState& state, const void* data, size_t size, size_t blockSize) {
+        size_t localPos = 0;
+        ConstSpan<uint8_t> dSpan(data, size);
+
+        while (localPos < size) {
+            uint64_t cLen = uint64_t(size - localPos);
+            size_t left = blockSize - state.position;
+            if (left <= 0) {
+                state.position = 0;
+                state.index++;
+                left = blockSize;
+            }
+            size_t len = cLen < left ? cLen : left;
+
+            int32_t i = state.index & 0x1;
+            _hash[i] = compute(dSpan.slice(localPos, len), _hash[i]);
+            localPos += len;
+            state.position += len;
+        }
+        return *this;
+    }
+
     UUID8& UUID8::computeHash(const char* data, const size_t size, const size_t blockSize) {
         return computeHash(ConstSpan<uint8_t>(data, size), blockSize);
     }
@@ -137,8 +157,7 @@ namespace JEngine {
         int32_t cur = 0;
         int64_t pos = 0;
         int64_t totLen = data.length();
-        while (pos < totLen)
-        {
+        while (pos < totLen) {
             uint64_t cLen = uint64_t(totLen - pos);
             size_t len = cLen < blockSize ? cLen : blockSize;
 

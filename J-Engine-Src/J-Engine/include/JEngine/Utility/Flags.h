@@ -12,6 +12,9 @@ namespace JEngine {
         Flags() : _value(0) {}
         Flags(T value) : _value(value) {}
 
+        template<typename U>
+        Flags(const U& value) : _value(T(value)) {}
+
         T operator &(const T& other) const { return _value & other; }
         Flags<T>& operator &=(const T& other) {
             _value &= other;
@@ -38,26 +41,26 @@ namespace JEngine {
         bool operator ==(const Flags<T>& other) const { return _value == other._value; }
         bool operator !=(const Flags<T>& other) const { return _value != other._value; }
 
-        bool operator ==(const T other) const { return _value == other; }
-        bool operator !=(const T other) const { return _value != other; }
+        bool operator ==(T other) const { return _value == other; }
+        bool operator !=(T other) const { return _value != other; }
 
         const T& getValue() const { return _value; }
 
-        T select(const T mask) const {
+        T select(T mask) const {
             return (_value & mask) >> Math::findFirstLSB(mask);
         }
 
-        void setValue(const T value, const T mask) {
+        void setValue(T value, T mask) {
             const T bits = Math::findFirstLSB(mask);
             _value &= ~mask;
             _value |= (value << bits) & mask;
         }
 
-        const bool isBitSet(const int32_t flag) const {
+        constexpr bool isBitSet(T flag) const {
             return _value & flag;
         }
 
-        void setBit(const int32_t flag, const bool value) {
+        void setBit(int32_t flag, bool value) {
             if (value) {
                 _value |= flag;
                 return;

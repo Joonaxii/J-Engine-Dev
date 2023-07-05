@@ -135,10 +135,24 @@ namespace JEngine::Helpers {
 		return equalsNoCase(reinterpret_cast<const ConstSpan<char>&>(a), reinterpret_cast<const ConstSpan<char>&>(b));
 	}
 
-	int32_t findNotIndexOf(const std::string& str, const char c, size_t offset, size_t len) {
-		for (size_t i = offset; i < offset + len; i++)
-		{
+	int32_t findNotIndexOf(const std::string& str, char c, size_t offset, size_t len) {
+		return findNotIndexOf(str.c_str(), str.length(), c, offset, len);
+	}
+
+	int32_t findNotIndexOf(const char* str, size_t length, char c, size_t offset, size_t len) {
+		size_t end = std::min(length, offset + len);
+		for (size_t i = offset; i < end; i++) {
 			if (str[i] != c) { return int32_t(i); }
+		}
+		return -1;
+	}
+
+	int32_t findNotIndexOf(const char* str, size_t length, const char* c, size_t offset, size_t len) {
+		size_t end = std::min(length, offset + len);
+		size_t lInp = strlen(c);
+		const char* endPtr = c + lInp;
+		for (size_t i = offset; i < end; i++) {
+			if (std::find(c, endPtr, str[i]) == endPtr) { return int32_t(i); }
 		}
 		return -1;
 	}

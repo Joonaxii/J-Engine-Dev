@@ -24,6 +24,6 @@ ENDIF(WIN32)
 add_subdirectory("J-Engine")
 add_subdirectory("Game")
 add_subdirectory("Game-Executable")
-add_subdirectory("J-Engine-Editor")
+add_subdirectory("J-Editor")
 
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT J-Engine-Editor)
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT J-Editor)

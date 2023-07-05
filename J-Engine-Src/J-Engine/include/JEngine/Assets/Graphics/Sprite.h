@@ -80,4 +80,3 @@ namespace JEngine {
         void updateLocalBounds();
     };
 }
-REGISTER_ASSET(JEngine::Sprite);

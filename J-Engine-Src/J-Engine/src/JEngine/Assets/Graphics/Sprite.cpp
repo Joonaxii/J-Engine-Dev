@@ -21,7 +21,7 @@ namespace JEngine {
     }
 
     Sprite::Sprite(const Sprite& copy) : 
-        IAsset(copy._name, copy.getId()),
+        IAsset(),
         _vertices{},
         _textureRect(0, 0, 0, 0),
         _ppu(copy._ppu),
@@ -34,7 +34,7 @@ namespace JEngine {
     }
 
     Sprite::Sprite(const std::string& name, const ObjectRef<Texture>& texture, const float ppu, const JVector2f pivot, const JRecti& rectangle) :
-        IAsset(name),
+        IAsset(),
         _vertices { },
         _texture(-1),
         _textureRect(),
@@ -48,7 +48,6 @@ namespace JEngine {
     }
 
     Sprite& Sprite::operator=(const Sprite& copy) {
-        _name = copy._name;
         _texture = ObjectRef<Texture>(nullptr);
         _textureRect = JRecti(0, 0, 0, 0);
         _ppu = copy._ppu;

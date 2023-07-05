@@ -5,6 +5,11 @@
 #include <JEngine/Utility/Span.h>
 
 namespace JEngine {
+    struct HashState {
+        size_t position{ 0 };
+        uint32_t index{ 0 };
+    };
+
     struct UUID8 {
     public:
         static constexpr uint32_t INIT_VAL = 0xFFFFFFFFU;
@@ -31,6 +36,8 @@ namespace JEngine {
         std::string toString() const;
 
         inline uint64_t asUInt() const { return *reinterpret_cast<const uint64_t*>(_hash); }
+
+        UUID8& updateHash(HashState& state, const  void* data, size_t size, size_t blockSize = BLOCK_SIZE);
 
         UUID8& parse(const std::string& str, const UUID8& defaultValue = {});
         UUID8& parse(const char* str, const UUID8& defaultValue = {});

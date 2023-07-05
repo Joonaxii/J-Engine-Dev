@@ -1,5 +1,6 @@
 #pragma once
 #include <JEngine/Components/Component.h>
+#include <JEngine/Components/ComponentFactory.h>
 #include <JEngine/Math/Units/JMatrix.h>
 #include <JEngine/Math/Units/JVector.h>
 #include <JEngine/Utility/EnumUtils.h>
@@ -34,8 +35,6 @@ namespace JEngine {
     public:
         CTransform();
         ~CTransform();
-
-        virtual void dCtor() override;
 
         bool setParent(CTransform* parent);
         CTransform* getParent() { return _parent; }
@@ -79,7 +78,7 @@ namespace JEngine {
         friend class GameObject;
 
         void onInit() override;
-        virtual void onDestroy() override;
+        virtual void doDelete() override;
 
         void deserializeBinaryImpl(const Stream& stream) override;
         void serializeBinaryImpl(const Stream& stream) const override;
@@ -111,3 +110,4 @@ namespace JEngine {
     template<>
     inline constexpr const char* ComponentInfo<CTransform>::Name = "Transform";
 }
+REGISTER_COMPONENT(JEngine::CTransform);

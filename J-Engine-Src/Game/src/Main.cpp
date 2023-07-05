@@ -121,7 +121,7 @@ int main() {
         FPS fps;
 
         DebugWindow debugWin(renderer, time, fps);
-        while (renderer.doRender()) {
+        while (renderer.doRender(nullptr)) {
 
             float timeT = float(time.getTime(0) * PI * 2.0 * BLADE_SPEED);
             JVector2f pos;

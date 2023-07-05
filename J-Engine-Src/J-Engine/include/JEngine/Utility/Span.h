@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include <JEngine/Core/Log.h>
 #include <JEngine/Core/Assert.h>
 #include <JEngine/Utility/DataUtilities.h>
@@ -47,13 +48,115 @@ namespace JEngine {
         }
 
         int32_t indexOfLast(const T& find) const {
-            for (int32_t i = _length - 1; i >= 0; i--) {
+            for (int32_t i = int32_t(_length) - 1; i >= 0; i--) {
                 if (_ptr[i] == find) { return i; }
             }
             return -1;
         }
 
+        size_t split(Span<T>* buffer, size_t maxCount, const T& value) const {
+            size_t start = 0;
+            size_t len = 0;
+            size_t split = 0;
+            for (size_t i = 0; i < _length; i++) {
+                const T& cur = _ptr[i];
+                if (cur == value) {
+                    if (len > 0) {
+                        buffer[split++] = Span<T>(_ptr + start, len);
+                    }
+                    len = 0;
+                    start = i + 1;
+                    if (split >= maxCount) { break; }
+                    continue;
+                }
+                len++;
+            }
+            if (len > 0) {
+                buffer[split++] = Span<T>(_ptr + start, len);
+            }
+            return split;
+        }
+
+        size_t split(ConstSpan<T>* buffer, size_t maxCount, const T& value) const {
+            size_t start = 0;
+            size_t len = 0;
+            size_t split = 0;
+            for (size_t i = 0; i < _length; i++) {
+                const T& cur = _ptr[i];
+                if (cur == value) {
+                    if (len > 0) {
+                        buffer[split++] = ConstSpan<T>(_ptr + start, len);
+                    }
+                    len = 0;
+                    start = i + 1;
+                    if (split >= maxCount) { break; }
+                    continue;
+                }
+                len++;
+            }
+            if (len > 0) {
+                buffer[split++] = ConstSpan<T>(_ptr + start, len);
+            }
+            return split;
+        }
+
+        size_t split(std::vector<Span<T>>& buffer, const T& value) const {
+            size_t start = 0;
+            size_t len = 0;
+            size_t split = 0;
+            for (size_t i = 0; i < _length; i++) {
+                const T& cur = _ptr[i];
+                if (cur == value) {
+                    if (len > 0) {
+                        buffer.push_back(Span<T>(_ptr + start, len));
+                        split++;
+                    }
+                    len = 0;
+                    start = i + 1;
+                    continue;
+                }
+                len++;
+            }
+            if (len > 0) {
+                buffer.push_back(Span<T>(_ptr + start, len));
+                split++;
+            }
+            return split;
+        }
+        size_t split(std::vector<ConstSpan<T>>& buffer, const T& value) const {
+            size_t start = 0;
+            size_t len = 0;
+            size_t split = 0;
+            for (size_t i = 0; i < _length; i++) {
+                const T& cur = _ptr[i];
+                if (cur == value) {
+                    if (len > 0) {
+                        buffer.push_back(ConstSpan<T>(_ptr + start, len));
+                        split++;
+                    }
+                    len = 0;
+                    start = i + 1;
+                    continue;
+                }
+                len++;
+            }
+            if (len > 0) {
+                buffer.push_back(ConstSpan<T>(_ptr + start, len));
+                split++;
+            }
+            return split;
+        }
+
+        size_t getOccurenceCount(const T& v) const {
+            size_t count = 0;
+            for (size_t i = 0; i < _length; i++) {
+                if (_ptr[i] == v) { count++; }
+            }
+            return count;
+        }
+
         Span<T> trim() const;
+        Span<T> trim(const T& value) const;
 
         bool equals(const ConstSpan<T>& other);
         bool equals(const void* data, size_t size) {
@@ -214,6 +317,14 @@ namespace JEngine {
         const T& operator[](size_t index) const { return *(_ptr + index); }
         const T* get() const { return _ptr; }
 
+        size_t getOccurenceCount(const T& v) const {
+            size_t count = 0;
+            for (size_t i = 0; i < _length; i++) {
+                if (_ptr[i] == v) { count++; }
+            }
+            return count;
+        }
+
         ConstSpan<T> slice(int64_t index, size_t length) const {
             JENGINE_CORE_ASSERT(_length - index >= length, "Invalid index or length!");
             return ConstSpan<T>(_ptr + index, length);
@@ -233,15 +344,15 @@ namespace JEngine {
         }
 
         int32_t indexOf(const T& find) const {
-            for (int32_t i = 0; i < _length; i++) {
-                if (_ptr[i] == find) { return i; }
+            for (size_t i = 0; i < _length; i++) {
+                if (_ptr[i] == find) { return int32_t(i); }
             }
             return -1;
         }
 
         int32_t indexOfLast(const T& find) const {
-            for (int32_t i = _length - 1; i >= 0; i--) {
-                if (_ptr[i] == find) { return i; }
+            for (int32_t i = int32_t(_length) - 1; i >= 0; i--) {
+                if (_ptr[i] == find) { return int32_t(i); }
             }
             return -1;
         }
@@ -267,6 +378,54 @@ namespace JEngine {
         }
 
         ConstSpan<T> trim() const;
+        ConstSpan<T> trim(const T& value) const;
+
+        size_t split(ConstSpan<T>* buffer, size_t maxCount, const T& value) const {
+            size_t start = 0;
+            size_t len = 0;
+            size_t split = 0;
+            for (size_t i = 0; i < _length; i++) {
+                const T& cur = _ptr[i];
+                if (cur == value) {
+                    if (len > 0) {
+                        buffer[split++] = ConstSpan<T>(_ptr + start, len);
+                    }
+                    len = 0;
+                    start = i + 1;
+                    if (split >= maxCount) { break; }
+                    continue;
+                }
+                len++;
+            }
+            if (len > 0) {
+                buffer[split++] = ConstSpan<T>(_ptr + start, len);
+            }
+            return split;
+        }
+
+        size_t split(std::vector<ConstSpan<T>>& buffer, const T& value) const {
+            size_t start = 0;
+            size_t len   = 0;
+            size_t split   = 0;
+            for (size_t i = 0; i < _length; i++) {
+                const T& cur = _ptr[i];
+                if (cur == value) {
+                    if(len > 0){
+                        buffer.push_back(ConstSpan<T>(_ptr + start, len));
+                        split++;
+                    }
+                    len = 0;
+                    start = i + 1;
+                    continue;
+                }
+                len++;
+            }
+            if (len > 0) {
+                buffer.push_back(ConstSpan<T>(_ptr + start, len));
+                split++;
+            }
+            return split;
+        }
 
         template<typename U>
         U read(const size_t start, const bool isBigEndian = false) const {
@@ -331,26 +490,7 @@ namespace JEngine {
         size_t _length;
     };
 
-    inline int32_t indexOf(Span<char> span, const char* string, size_t len) {
-        if (len < 1) { return -1; }
-
-        int32_t inRow = 0;
-        int32_t index = -1;
-        for (size_t i = 0; i < span.length(); i++) {
-            if (span[i] == string[inRow]) {
-                if (inRow == 0) {
-                    index = int32_t(i);
-                }
-                inRow++;
-                if (inRow >= len) { return index; }
-            }
-            else if (inRow > 0) {
-                inRow = 0;
-            }
-        }
-        return -1;
-    }
-    inline int32_t indexOf(ConstSpan<char> span, const char* string, size_t len) {
+    inline int32_t indexOf(JEngine::Span<char> span, const char* string, size_t len) {
         if (len < 1) { return -1; }
 
         int32_t inRow = 0;
@@ -370,27 +510,47 @@ namespace JEngine {
         return -1;
     }
 
-    inline int32_t indexOf(Span<char> span, const char* string) {
+    inline int32_t indexOf(JEngine::ConstSpan<char> span, const char* string, size_t len) {
+        if (len < 1) { return -1; }
+
+        int32_t inRow = 0;
+        int32_t index = -1;
+        for (size_t i = 0; i < span.length(); i++) {
+            if (span[i] == string[inRow]) {
+                if (inRow == 0) {
+                    index = int32_t(i);
+                }
+                inRow++;
+                if (inRow >= len) { return index; }
+            }
+            else if (inRow > 0) {
+                inRow = 0;
+            }
+        }
+        return -1;
+    }
+
+    inline int32_t indexOf(JEngine::Span<char> span, const char* string) {
         return indexOf(span, string, strlen(string));
     }
-    inline int32_t indexOf(ConstSpan<char> span, const char* string) {
+    inline int32_t indexOf(JEngine::ConstSpan<char> span, const char* string) {
         return indexOf(span, string, strlen(string));
     }
-    inline int32_t indexOf(Span<char> span, Span<char> string) {
+    inline int32_t indexOf(JEngine::Span<char> span, JEngine::Span<char> string) {
         return indexOf(span, string.get(), string.length());
     }
-    inline int32_t indexOf(ConstSpan<char> span, Span<char> string) {
+    inline int32_t indexOf(JEngine::ConstSpan<char> span, JEngine::Span<char> string) {
         return indexOf(span, string.get(), string.length());
     }
-    inline int32_t indexOf(Span<char> span, ConstSpan<char> string) {
+    inline int32_t indexOf(JEngine::Span<char> span, JEngine::ConstSpan<char> string) {
         return indexOf(span, string.get(), string.length());
     }
-    inline int32_t indexOf(ConstSpan<char> span, ConstSpan<char> string) {
+    inline int32_t indexOf(JEngine::ConstSpan<char> span, JEngine::ConstSpan<char> string) {
         return indexOf(span, string.get(), string.length());
     }
 
 
-    inline int32_t indexOfLast(Span<char> span, const char* string, size_t len) {
+    inline int32_t indexOfLast(JEngine::Span<char> span, const char* string, size_t len) {
         if (len < 1) { return -1; }
         int32_t inRow = 0;
         int32_t index = -1;
@@ -403,13 +563,13 @@ namespace JEngine {
                 inRow++;
                 if (inRow >= len) { return index; }
             }
-            else if(inRow > 0) {
+            else if (inRow > 0) {
                 inRow = 0;
             }
         }
         return -1;
     }
-    inline int32_t indexOfLast(ConstSpan<char> span, const char* string, size_t len) {
+    inline int32_t indexOfLast(JEngine::ConstSpan<char> span, const char* string, size_t len) {
         if (len < 1) { return -1; }
         int32_t inRow = 0;
         int32_t index = -1;
@@ -429,22 +589,22 @@ namespace JEngine {
         return -1;
     }
 
-    inline int32_t indexOfLast(Span<char> span, const char* string) {
+    inline int32_t indexOfLast(JEngine::Span<char> span, const char* string) {
         return indexOfLast(span, string, strlen(string));
     }
-    inline int32_t indexOfLast(ConstSpan<char> span, const char* string) {
+    inline int32_t indexOfLast(JEngine::ConstSpan<char> span, const char* string) {
         return indexOfLast(span, string, strlen(string));
     }
-    inline int32_t indexOfLast(Span<char> span, Span<char> string) {
+    inline int32_t indexOfLast(JEngine::Span<char> span, JEngine::Span<char> string) {
         return indexOfLast(span, string.get(), string.length());
     }
-    inline int32_t indexOfLast(ConstSpan<char> span, Span<char> string) {
+    inline int32_t indexOfLast(JEngine::ConstSpan<char> span, JEngine::Span<char> string) {
         return indexOfLast(span, string.get(), string.length());
     }
-    inline int32_t indexOfLast(Span<char> span, ConstSpan<char> string) {
+    inline int32_t indexOfLast(JEngine::Span<char> span, JEngine::ConstSpan<char> string) {
         return indexOfLast(span, string.get(), string.length());
     }
-    inline int32_t indexOfLast(ConstSpan<char> span, ConstSpan<char> string) {
+    inline int32_t indexOfLast(JEngine::ConstSpan<char> span, JEngine::ConstSpan<char> string) {
         return indexOfLast(span, string.get(), string.length());
     }
 }
@@ -536,6 +696,77 @@ inline JEngine::ConstSpan<char> JEngine::ConstSpan<char>::trim() const {
 
         if (checkB) {
             if (isspace(_ptr[j])) {
+                endI--;
+            }
+            else {
+                checkB = false;
+            }
+        }
+
+        if (!checkA && !checkB) { break; }
+    }
+
+    if (startI >= endI) { return ConstSpan<char>(_ptr + startI, 0); }
+    return ConstSpan<char>(_ptr + startI, endI - startI);
+}
+
+
+template<>
+inline JEngine::Span<char> JEngine::Span<char>::trim(const char& value) const {
+    size_t startI = 0;
+    size_t endI = _length;
+
+
+    bool checkA = true;
+    bool checkB = true;
+    for (size_t i = 0, j = _length - 1; i < _length; i++, j--) {
+
+        if (checkA) {
+            if (_ptr[i] == value) {
+                startI++;
+            }
+            else {
+                checkA = false;
+            }
+        }
+
+        if (checkB) {
+            if (_ptr[j] == value) {
+                endI--;
+            }
+            else {
+                checkB = false;
+            }
+        }
+
+        if (!checkA && !checkB) { break; }
+    }
+
+    if (startI >= endI) { return Span<char>(_ptr + startI, 0); }
+    return Span<char>(_ptr + startI, endI - startI);
+}
+
+template<>
+inline JEngine::ConstSpan<char> JEngine::ConstSpan<char>::trim(const char& value) const {
+    size_t startI = 0;
+    size_t endI = _length;
+
+
+    bool checkA = true;
+    bool checkB = true;
+    for (size_t i = 0, j = _length - 1; i < _length; i++, j--) {
+
+        if (checkA) {
+            if (_ptr[i] == value) {
+                startI++;
+            }
+            else {
+                checkA = false;
+            }
+        }
+
+        if (checkB) {
+            if (_ptr[j] == value) {
                 endI--;
             }
             else {

@@ -3,6 +3,7 @@
 #include <commdlg.h>
 #include <shlobj_core.h>
 #include <JEngine/Utility/StringHelpers.h>
+#include <JEngine/Utility/Span.h>
 
 #include <JEngine/Rendering/Window.h>
 #include <GLFW/glfw3.h>
@@ -77,6 +78,89 @@ namespace JEngine::IO {
         }
         return std::string();
     }
+
+    std::string combine(const char* lhs, size_t lenLhs, const char* rhs, size_t lenRhs) {
+        std::string newStr{};
+        newStr.reserve(lenLhs + lenRhs + 1);
+        newStr.append(lhs, lenLhs);
+
+        uint8_t state = 0;
+        char lastC = lenLhs == 0 ? 0 : *(lhs + lenLhs - 1);
+        state |= (lastC == '/' || lastC == '\\') ? 1 : 0;
+        lastC = lenRhs == 0 ? 0 : rhs[0];
+        state |= (lastC == '/' || lastC == '\\') ? 2 : 0;
+
+        size_t offset = 0;
+        switch (state) {
+            case 0:
+                newStr.append(1, '/');
+                break;
+            case 3:
+                offset = Helpers::findNotIndexOf(rhs, lenRhs, "/\\", 0, lenRhs);
+                offset = offset < 0 ? 0 : offset;
+                break;
+        }
+        newStr.append(rhs + offset, lenRhs - offset);
+
+        fixPath(newStr);
+        return newStr;
+    }
+
+    std::string combine(const std::string& lhs, const std::string& rhs) {
+        return combine(lhs.c_str(), lhs.length(), rhs.c_str(), rhs.length());
+    }
+
+    std::string getExeDir() {
+        char buffer[MAX_PATH]{ 0 };
+        GetModuleFileName(NULL, buffer, MAX_PATH);
+        ConstSpan<char> temp(buffer, strlen(buffer));
+        int32_t last = temp.indexOfLast('/');
+        if (last > -1) {
+            temp = temp.slice(0, last);
+        }
+        return std::string(temp.get(), temp.length());
+    }
+
+    bool getAll(const char* path, size_t length, uint8_t flags, std::vector<FilePath>& paths, bool recursive) {
+        fs::path pPath(path, path + length);
+        return getAll(pPath, flags, paths, recursive);
+    }
+
+    bool getAll(const fs::path& path, uint8_t flags, std::vector<FilePath>& paths, bool recursive) {
+        if ((flags & 0x3) == 0) {
+            JENGINE_CORE_WARN("[J-Engine - IOUtils] Warning: Search flags are set to 0!");
+            return false;
+        }
+        size_t startC = paths.size();
+
+        if (recursive) {
+            for (const auto& dir : fs::recursive_directory_iterator(path)) {
+                if ((flags & F_TYPE_FILE) && dir.is_regular_file()) {
+                    paths.emplace_back(dir.path(), F_TYPE_FILE);
+                    continue;
+                }
+
+                if ((flags & F_TYPE_FOLDER) && dir.is_directory()) {
+                    paths.emplace_back(dir.path(), F_TYPE_FOLDER);
+                }
+            }
+        }
+        else {
+            for (const auto& dir : fs::directory_iterator(path)) {
+                if ((flags & F_TYPE_FILE) && dir.is_regular_file()) {
+                    paths.emplace_back(dir.path(), F_TYPE_FILE);
+                    continue;
+                }
+
+                if ((flags & F_TYPE_FOLDER) && dir.is_directory()) {
+                    paths.emplace_back(dir.path(), F_TYPE_FOLDER);
+                }
+            }
+        }
+
+        return startC != paths.size();
+    }
+
 
     bool getAllFiles(const char* path, std::vector<fs::path>& paths, bool recursive) {
         size_t init = paths.size();
@@ -193,12 +277,15 @@ namespace JEngine::IO {
             }
         }
     }
-    bool exists(const char* path) {
-        size_t len = strlen(path);
-        if (!len) { return false; }
 
-        auto pth = std::filesystem::u8path(path, path + strlen(path));
+    bool exists(const char* path, size_t length) {
+        if (path == nullptr || length == 0) { return false; }
+        auto pth = std::filesystem::u8path(path, path + length);
         return std::filesystem::exists(pth);
+    }
+
+    bool exists(const char* path) {
+        return exists(path, strlen(path));
     }
 
     bool exists(const std::string& path) {
@@ -263,5 +350,24 @@ namespace JEngine::IO {
             }
             path++;
         }
+    }
+
+    bool pathsAreEqual(ConstSpan<char> lhs, ConstSpan<char> rhs)  {
+        if (lhs.length() == rhs.length()) {
+            for (size_t i = 0; i < lhs.length(); i++) {
+                char a = lhs[i];
+                char b = rhs[i];
+
+                a = char(std::tolower(a));
+                b = char(std::tolower(b));
+
+                a = a == '\\' ? '/' : a;
+                b = b == '\\' ? '/' : b;
+
+                if (a != b) { return false; }
+            }
+            return true;
+        }
+        return false;
     }
 }

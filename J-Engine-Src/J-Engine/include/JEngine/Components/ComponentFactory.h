@@ -74,8 +74,8 @@ namespace JEngine {
             if (comp->type != nullptr) { return; }
             comp->type = type;
             comp->addComponent = addComponent;
-            comp->trimAllocPool = Component::getComponentAllocator<T>().trim;
-            comp->clearAllocPool = Component::getComponentAllocator<T>().clear;
+            comp->trimAllocPool = trimPoolAllocator<T, ComponentInfo<T>::InitPool>;
+            comp->clearAllocPool = clearPoolAllocator<T, ComponentInfo<T>::InitPool>;
             getComps().push_back(comp);
         }
     };
@@ -108,7 +108,7 @@ inline const JEngine::Comp* ValidatedComp<x>::Value = JEngine::ComponentFactory:
 #define REGISTER_COMPONENT(x) \
 DEFINE_TYPE(x); \
 DEFINE_COMPONENT(x); \
-VALIDATE_COMPONENT(x);\
+VALIDATE_COMPONENT(x); \
 
 #else
 

@@ -32,11 +32,11 @@ namespace JEngine {
 
 	uint64_t JTime::getFrameCount() const { return _frameNum; }
 
-	JTime::TimeSpace& JTime::getTimeSpace(const uint8_t space) {
+	JTime::TimeSpace& JTime::getTimeSpace(uint8_t space) {
 		return _timeSpaces[space >= MAX_TIME_SPACES ? MAX_TIME_SPACES - 1 : space];
 	}
 
-	const JTime::TimeSpace& JTime::getTimeSpace(const uint8_t space) const {
+	const JTime::TimeSpace& JTime::getTimeSpace(uint8_t space) const {
 		return _timeSpaces[space >= MAX_TIME_SPACES ? MAX_TIME_SPACES - 1 : space];
 	}
 }

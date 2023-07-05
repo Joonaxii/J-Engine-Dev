@@ -7,9 +7,9 @@
 #include <JEngine/IO/MemoryStream.h>
 
 namespace JEngine {
-    Texture::Texture() : _width(0), _height(0), _textureId(0), _paletteId(0), _paletteSize(0), _crcTex(0), _format(TextureFormat::Unknown) { }
+    Texture::Texture() : IAsset(), _width(0), _height(0), _textureId(0), _paletteId(0), _paletteSize(0), _crcTex(0), _format(TextureFormat::Unknown) { }
     Texture::Texture(Texture&& other) noexcept :
-        _width(other._width), _height(other._height),
+        IAsset(other), _width(other._width), _height(other._height),
         _paletteSize(other._paletteSize),
         _format(other._format),
         _crcTex(other._crcTex),

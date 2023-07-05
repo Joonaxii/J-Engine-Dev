@@ -23,17 +23,13 @@ uint8_t getIOFlags(const char* mode) {
 FileStream::FileStream() : Stream(), _file(nullptr), _filepath() {}
 FileStream::FileStream(const char* filepath) :Stream(), _file(nullptr), _filepath(filepath) { }
 FileStream::FileStream(const wchar_t* filepath) : Stream(), _file(nullptr), _filepath() {
-    if (filepath) {
-        int len = WideCharToMultiByte(CP_UTF8, 0, filepath, -1, NULL, 0, NULL, NULL);
-        char* temp = reinterpret_cast<char*>(_malloca(len + 1));
-        if (temp) {
-            temp[len] = 0;
-            WideCharToMultiByte(CP_UTF8, 0, filepath, -1, temp, len, NULL, NULL);
-            _filepath.reserve(len);
-            _filepath.assign(temp);
-            _freea(temp);
-        }
-    }
+    setFilepath(filepath);
+}
+
+FileStream::FileStream(const char* filepath, size_t length) : Stream(), _file(nullptr), _filepath(filepath, filepath + length) {}
+
+FileStream::FileStream(const wchar_t* filepath, size_t length) : Stream(), _file(nullptr), _filepath() {
+    setFilepath(filepath, length);
 }
 
 FileStream::FileStream(const char* filepath, const char* mode, const int shared) : Stream(getIOFlags(mode)), _file(nullptr), _filepath() {
@@ -43,67 +39,128 @@ FileStream::FileStream(const char* filepath, const char* mode, const int shared)
 FileStream::FileStream(const wchar_t* filepath, const char* mode, const int shared) : Stream(getIOFlags(mode)), _file(nullptr), _filepath() {
     open(filepath, mode, shared);
 }
+
+FileStream::FileStream(const FileStream& other) : Stream(other._flags, other._length, other._capacity), _filepath(other._filepath), _file(nullptr) {
+    _position = other._position;
+}
+
+FileStream::FileStream(FileStream&& other) noexcept :
+    Stream(std::exchange(other._flags, 0), other._length, other._capacity),
+    _file(std::exchange(other._file, nullptr)), 
+    _filepath(std::move(other._filepath))
+{
+    _position = other._position;
+}
 FileStream::~FileStream() { close(); }
+
+FileStream& FileStream::operator=(FileStream&& other) noexcept {
+    _flags = std::move(other._flags);
+    _position = std::move(other._position);
+    _length = std::move(other._length);
+    _capacity = std::move(other._capacity);
+    _filepath = std::move(other._filepath);
+    _file = std::exchange(other._file, nullptr);
+    return *this;
+}
+
+void FileStream::setFilepath(const char* filePath, size_t size) const {
+    if (filePath) {
+        _filepath.clear();
+        _filepath.append(filePath, size);
+    }
+}
+
+void FileStream::setFilepath(const char* filePath) const {
+    if (filePath) {
+        _filepath.clear();
+        _filepath.append(filePath);
+    }
+}
+
+void FileStream::setFilepath(const std::string& filePath) const {
+    _filepath = filePath;
+}
+
+void FileStream::setFilepath(const wchar_t* filePath, size_t size) const {
+    if (filePath && size > 0) {
+        size_t len = WideCharToMultiByte(CP_UTF8, 0, filePath, int32_t(size), NULL, 0, NULL, NULL);
+        char* temp = reinterpret_cast<char*>(_malloca(len + 1));
+        if (!temp) { return; }
+        temp[len] = 0;
+
+        WideCharToMultiByte(CP_UTF8, 0, filePath, size, temp, int32_t(len), NULL, NULL);
+        setFilepath(temp);
+        _freea(temp);
+    }
+}
+
+void FileStream::setFilepath(const wchar_t* filePath) const {
+    setFilepath(filePath, wcslen(filePath));
+}
+
+void FileStream::setFilepath(const std::wstring& filePath) const {
+    setFilepath(filePath.c_str(), filePath.length());
+}
 
 const std::string& FileStream::getFilePath() const { return _filepath; }
 
 bool FileStream::isOpen() const { return _file != nullptr; }
-bool FileStream::open(const char* filepath, const char* mode, const int shared) const {
+bool FileStream::open(const char* filepath, const char* mode, const int shared, bool keepPosition) const {
     if (isOpen()) { return false; }
 
     _length = 0;
     _capacity = 0;
-    _filepath.clear();
-    _filepath.append(filepath);
+    setFilepath(filepath);
 
     if (!mode) { return false; }
-    return open(mode, shared);
+    return open(mode, shared, keepPosition);
 }
 
-bool FileStream::open(const wchar_t* filepath, const char* mode, const int shared) const {
-    int len = WideCharToMultiByte(CP_UTF8, 0, filepath, -1, NULL, 0, NULL, NULL);
-    char* temp = reinterpret_cast<char*>(_malloca(len + 1));
-    if (!temp) { return false; }
-    temp[len] = 0;
+bool FileStream::open(const wchar_t* filepath, const char* mode, const int shared, bool keepPosition) const {
+    if (isOpen()) { return false; }
 
-    WideCharToMultiByte(CP_UTF8, 0, filepath, -1, temp, len, NULL, NULL);
-    const bool ret = open(temp, mode);
-    _freea(temp);
-    return ret;
+    _length = 0;
+    _capacity = 0;
+    setFilepath(filepath);
+
+    if (!mode) { return false; }
+    return open(mode, shared, keepPosition);
 }
 
-bool FileStream::open(const char* mode, const int shared) const {
+bool FileStream::open(const char* mode, const int shared, bool keepPosition) const {
     if (isOpen()) { return true; }
 
     _flags &= uint8_t(~0x3);
     _flags |= getIOFlags(mode);
 
-    const bool isRead = (mode[0] == 'r');
     _length = 0;
     _capacity = 0;
-    _position = 0;
+    size_t oldPos = _position;
 
-    if (isRead) {
-        if (access(_filepath.c_str(), F_OK) == 0) {
+    if (access(_filepath.c_str(), F_OK) == 0) {
+        if (shared) {
+            _file = _fsopen(_filepath.c_str(), mode, shared);
+        }
+        else {
             fopen_s(&_file, _filepath.c_str(), mode);
-            if (_file) {
+        }
+
+        _position = 0;
+        if (_file) {
+            if (_flags & READ_FLAG) {
                 _fseeki64_nolock(_file, 0, SEEK_END);
                 _length = _ftelli64_nolock(_file);
                 _capacity = _length;
                 _fseeki64_nolock(_file, 0, SEEK_SET);
-                return true;
+                _position = keepPosition ? std::min(oldPos, _capacity) : 0;
             }
+            else {
+                _position = keepPosition ? oldPos : 0;
+            }
+            return true;
         }
-        return false;
     }
-
-    if (shared) {
-        _file = _fsopen(_filepath.c_str(), mode, shared);
-        return bool(_file);
-    }
-
-    fopen_s(&_file, _filepath.c_str(), mode);
-    return bool(_file);
+    return false;
 }
 
 bool FileStream::flush() const {

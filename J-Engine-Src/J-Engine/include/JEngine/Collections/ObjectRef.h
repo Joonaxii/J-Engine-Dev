@@ -6,6 +6,17 @@
 
 namespace JEngine {
     static constexpr uint32_t MAX_UINT_24 = 0xFFFFFFU;
+    static constexpr uint32_t UINT_20_MAX = 0x1FFFFFU;
+    struct RefID {
+        RefID() {};
+        RefID(uint32_t i, uint32_t v) {};
+
+        void setVersion(uint32_t v) const { return; }
+        void setId(uint32_t v) const { return; }
+
+        uint32_t getVersion() const { return 0; }
+        uint32_t getId() const { return 0; }
+    };
 
     namespace priv {
         struct IndexData {
@@ -58,7 +69,7 @@ namespace JEngine {
     template<typename T, bool isArray = false>
     class ObjectRef {
     public:
-        static constexpr uint32_t NULL_ID = UINT_20_MAX;
+        static constexpr uint32_t NULL_ID = 0xFFFFFFF;
 
         ObjectRef() : _data(MAX_UINT_24, 0), _idData(NULL_ID, 0), _obj(nullptr) {}
         ObjectRef(const int32_t id) : ObjectRef(id, false) {}
@@ -71,24 +82,13 @@ namespace JEngine {
         ObjectRef(T* ptr, const bool ownedByThis) :
             _data(MAX_UINT_24, (ownedByThis ? OWNS_PTR_FLAG : 0)), _idData(NULL_ID, 0), _obj(ptr) { }
 
-        ObjectRef(const int32_t id, IReferenceProvider<T>& referenceProvider) :ObjectRef(id, referenceProvider, false) {}
-        ObjectRef(const int32_t id, IReferenceProvider<T>& referenceProvider, const bool ownedByThis) :
-            _data(MAX_UINT_24, (ownedByThis ? OWNS_PTR_FLAG : 0) | IS_FROM_PROVIDER), _idData(NULL_ID, 0), _obj(nullptr) {
-            setPtr(id, referenceProvider);
-        }
-
         ObjectRef(const ObjectRef<T>& other) : 
             _data(MAX_UINT_24, uint8_t(other._data.getFlags()) & ~OWNS_PTR_FLAG), _idData(other._idData), _obj(other._obj) { }
 
         ~ObjectRef() {
             T* ptr = getPtr();
             if (ownsPointer() && isValid()) {
-                if (_data.getFlags() & IS_FROM_PROVIDER) {
-                    IReferenceProvider<T>* refProv = _obj.getAs<IReferenceProvider<T>>();
-                    if (refProv) {
-                        refProv->removeById(_idData.getId());
-                    }
-                }
+          
 
                 if (isArray) {
                     delete[] ptr;
@@ -140,25 +140,11 @@ namespace JEngine {
         }
 
         T* getPtr() {
-            if (!(_data.getFlags() & IS_FROM_PROVIDER)) { return _obj.getAs<T>(); }
-            IReferenceProvider<T>* refProv = _obj.getAs<IReferenceProvider<T>>();
-
-            if (!refProv) { return nullptr; }
-            if (refProv->hasToUpdate(_idData.getVersion()) || _data.getIndex() == MAX_UINT_24) {
-                _data.setIndex(refProv->indexOfID(_idData.getId(), MAX_UINT_24));
-            }
-            return refProv->getPtrByIndex(_data.getIndex(), _idData);
+            return nullptr;
         }
 
         const T* getPtr() const {
-            if (!(_data.getFlags() & IS_FROM_PROVIDER)) { return _obj.getAs<T>(); }
-            IReferenceProvider<T>* refProv = _obj.getAs<IReferenceProvider<T>>();
-
-            if (!refProv) { return nullptr; }
-            if (refProv->hasToUpdate(_idData.getVersion()) || _data.getIndex() == MAX_UINT_24) {
-                _data.setIndex(refProv->indexOfID(_idData.getId(), MAX_UINT_24));
-            }
-            return refProv->getPtrByIndex(_data.getIndex(), _idData);
+            return nullptr;
         }
 
         void setPtr(T* refe) {
@@ -179,12 +165,6 @@ namespace JEngine {
                 _obj = _idData.getId() == NULL_ID ? nullptr : _obj.ptr;
                 return;
             }
-        }
-
-        void setPtr(const uint32_t id, IReferenceProvider<T>& refProvider) {
-            _data.getFlags() |= IS_FROM_PROVIDER;
-            _obj = &refProvider;
-            this->setPtr(id);
         }
 
         const uint32_t getVersion() const { return _idData.getVersion(); }

@@ -1,5 +1,6 @@
 #include <JEngine/Assets/Graphics/Texture/RenderTexture.h>
 #include <JEngine/Rendering/OpenGL/GLHelpers.h>
+#include <JEngine/Utility/DataFormatUtils.h>
 
 namespace JEngine {
    /* static const TextureFormat getValidRenderTextureFormat(const TextureFormat tex) {

@@ -66,4 +66,3 @@ namespace JEngine {
         void applyProperties(Shader& shader) const;
     };
 }
-REGISTER_ASSET(JEngine::Material);

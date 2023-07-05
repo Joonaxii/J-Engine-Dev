@@ -1,9 +1,7 @@
 #include <JEngine/Rendering/Renderer.h>
 #include <JEngine/Algorithm/BinarySearch.h>
 #include <JEngine/Rendering/SortingLayer.h>
-#include <imgui.h>
-#include <imgui_impl_opengl3.h>
-#include <imgui_impl_glfw.h>
+#include <JEngine/Rendering/ImGui/ImGuiUtils.h>
 #include <algorithm>
 
 namespace JEngine {
@@ -201,12 +199,17 @@ namespace JEngine {
         JENGINE_CORE_INFO(" - Renderer       : {0}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
         JENGINE_CORE_INFO(" - Shader Version : {0}", reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
         JENGINE_CORE_INFO(" - Version        : {0}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
-
         ImGui::CreateContext();
-        ImGui_ImplGlfw_InitForOpenGL(_window.getWindowPtr(), true);
-        ImGui_ImplOpenGL3_Init();
+        auto& io = ImGui::GetIO();
 
         ImGui::StyleColorsDark();
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+        io.ConfigWindowsMoveFromTitleBarOnly = true;
+        io.ConfigDockingTransparentPayload = true;
+
+        ImGui_ImplGlfw_InitForOpenGL(_window.getWindowPtr(), true);
+        ImGui_ImplOpenGL3_Init("#version 330");
+
         _initialized = true;
         return true;
     }
@@ -236,100 +239,108 @@ namespace JEngine {
         return _renderStats.renderInfo;
     }
 
-    bool Renderer::doRender() {
-        if (!_window.isInitialized()) { return false; }
-        if (_window.isMinimized()) { 
-            _window.pollEvents();
-            return true; 
-        }
+    bool Renderer::doRender(IGuiPanel* panel) {
+        if (!_initialized) { return false; }
+       //if (_window.isMinimized()) {
+       //    _window.pollEvents();
+       //    return true;
+       //}
         if (!_window.tick()) { return false; }
 
-        for (size_t i = 0; i < 33; i++) {
-            _activeRenderers[i].clear();
+        //for (size_t i = 0; i < 33; i++) {
+        //    _activeRenderers[i].clear();
+        //}
+
+        ////Normal Renderers
+        //for (auto& rend : _renderers) {
+        //    if (rend->canRender()) {
+        //        rend->markOutOfView();
+        //        rend->updateRenderer();
+        //        const int32_t ind = Math::potToIndex(rend->getObjectLayer()) + 1;
+        //        _activeRenderers[ind].push_back(rend);
+        //    }
+        //}
+
+        //for (size_t i = 0; i < 33; i++) {
+        //    std::sort(_activeRenderers[i].begin(), _activeRenderers[i].end(), priv::sortRenderers);
+        //}
+
+        ////TODO: Add UI Renderers etc
+        //////////////////////////////
+
+        //std::vector<ICamera*> cameras;
+        //_firstCam = nullptr;
+        //for (std::pair<ICamera*, RenderInfoGroup> cam : _camerasToDraw) {
+        //    if (cam.first->getLayerMask() && !cam.first->isCameraDisabled()) {
+        //        cameras.push_back(cam.first);
+        //    }
+        //}
+        //std::sort(cameras.begin(), cameras.end(), priv::sortCameras);
+
+        //_renderStats.clear();
+
+        //_window.resetViewport();
+        //GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        //_window.clear(JColor32::Clear, ICamera::Clear_None);
+
+        //for (ICamera* cam : cameras) {
+        //    if (!_firstCam && !cam->getManualRenderModeState()) {
+        //        _firstCam = cam;
+        //    }
+
+        //    auto& stats = _camerasToDraw[cam];
+        //    stats.clear();
+        //    cam->renderInternal();
+        //    _renderStats += stats;
+        //}
+
+        //renderNull(_renderStats.renderInfo, _renderStats.uiRenderInfo);
+
+        //_renderStats.renderInfo.activeRenderers = 0;
+        //for (size_t i = 0; i < 33; i++) {
+        //    for (auto& rend : _activeRenderers[i]) {
+        //        if (rend->isVisible()) {
+        //            _renderStats.renderInfo.activeRenderers++;
+        //        }
+        //    }
+        //}
+
+        ////Process GuiElements
+        //_activeImGuiDrawables.clear();
+        //for (auto& draw : _imGuiDrawables) {
+        //    if (draw->canRenderGui()) {
+        //        _activeImGuiDrawables.push_back(draw);
+        //    }
+        //}
+        //std::sort(_activeImGuiDrawables.begin(), _activeImGuiDrawables.end(), priv::sortGuiDrawables);
+
+        //GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        //_window.resetViewport();
+        //_window.clear(JColor32::Black);
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        if (panel && (panel->isInitialized() || panel->initGui())) {
+            panel->drawGui();
         }
 
-        //Normal Renderers
-        for (auto& rend : _renderers) {
-            if (rend->canRender()) {
-                rend->markOutOfView();
-                rend->updateRenderer();
-                const int32_t ind = Math::potToIndex(rend->getObjectLayer()) + 1;
-                _activeRenderers[ind].push_back(rend);
-            }
-        }
-
-        for (size_t i = 0; i < 33; i++) {
-            std::sort(_activeRenderers[i].begin(), _activeRenderers[i].end(), priv::sortRenderers);
-        }
-
-        //TODO: Add UI Renderers etc
-        ////////////////////////////
-
-        std::vector<ICamera*> cameras;
-        _firstCam = nullptr;
-        for (std::pair<ICamera*, RenderInfoGroup> cam : _camerasToDraw) {
-            if (cam.first->getLayerMask() && !cam.first->isCameraDisabled()) {
-                cameras.push_back(cam.first);
-            }
-        }
-        std::sort(cameras.begin(), cameras.end(), priv::sortCameras);
-
-        _renderStats.clear();
-
-        _window.resetViewport();
-        GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-        _window.clear(JColor32::Clear, ICamera::Clear_None);
-
-        for (ICamera* cam : cameras) {
-            if (!_firstCam && !cam->getManualRenderModeState()) {
-                _firstCam = cam;
-            }
-
-            auto& stats = _camerasToDraw[cam];
-            stats.clear();
-            cam->renderInternal();
-            _renderStats += stats;
-        }
-
-        renderNull(_renderStats.renderInfo, _renderStats.uiRenderInfo);
-
-        _renderStats.renderInfo.activeRenderers = 0;
-        for (size_t i = 0; i < 33; i++) {
-            for (auto& rend : _activeRenderers[i]) {
-                if (rend->isVisible()) {
-                    _renderStats.renderInfo.activeRenderers++;
-                }
-            }
-        }
-
-        //Process GuiElements
-        _activeImGuiDrawables.clear();
-        for (auto& draw : _imGuiDrawables) {
-            if (draw->canRenderGui()) {
-                _activeImGuiDrawables.push_back(draw);
-            }
-        }
-        std::sort(_activeImGuiDrawables.begin(), _activeImGuiDrawables.end(), priv::sortGuiDrawables);
-
-        GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-        _window.resetViewport();
-        //Render ImGui
-        if (_activeImGuiDrawables.size() > 0) {
-            _window.resetViewport();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui::NewFrame();
-
-            for (auto& draw : _activeImGuiDrawables) {
-                ImGui::PushID(draw);
-                draw->onImGui();
-                ImGui::PopID();
-            }
-
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        for (auto& draw : _activeImGuiDrawables) {
+            ImGui::PushID(draw);
+            draw->onImGui();
+            ImGui::PopID();
         }
         _window.finalizeFrame();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+
+        GLFWwindow* win = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(win);
 
         _tick++;
         _window.pollEvents();
@@ -452,10 +463,10 @@ namespace JEngine {
     }
 
     void Renderer::prepareCameraRender(const JColor32& clearColor, const uint32_t clearFlags, ICamera::CameraRenderData& renderInfo) {
-       renderInfo.projection = _window.getWorldProjectionMatrix();
-       renderInfo.worldRect = _window.getWorldRect();
-       renderInfo.reso = { int32_t(_window.getWidth()), int32_t(_window.getHeight()) };
-       renderInfo.frameBuffer = &_window.getScreenBuffer();
+        renderInfo.projection = _window.getWorldProjectionMatrix();
+        renderInfo.worldRect = _window.getWorldRect();
+        renderInfo.reso = { int32_t(_window.getWidth()), int32_t(_window.getHeight()) };
+        renderInfo.frameBuffer = &_window.getScreenBuffer();
 
         renderInfo.frameBuffer->bind();
         bool noColor = (clearFlags & GL_COLOR_BUFFER_BIT) == 0;
@@ -562,7 +573,7 @@ namespace JEngine {
             GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
             _window.updateViewport(srcMin + dstMin, srcSiz, 0x2);
- 
+
             matBlend->setFrameBuffer(renderInfo.frameBuffer);
 
             matBlend->getShaderPtr()->bind();

@@ -1,9 +1,9 @@
 #include <JEngine/Assets/Graphics/Material/Material.h>
 
 namespace JEngine {
-    Material::Material() : _mainTex(), _shader(){ }
-    Material::Material(const ObjectRef<Shader>& shader) : _shader(shader), _mainTex() { }
-    Material::Material(const ObjectRef<Texture>& texture, const ObjectRef<Shader>& shader) : _mainTex(texture), _shader(shader) { }
+    Material::Material() : IAsset(), _mainTex(), _shader() { }
+    Material::Material(const ObjectRef<Shader>& shader) : IAsset(), _shader(shader), _mainTex() { }
+    Material::Material(const ObjectRef<Texture>& texture, const ObjectRef<Shader>& shader) : IAsset(), _mainTex(texture), _shader(shader) { }
 
     void Material::addProperty(const MaterialProperty& prop) {
         const int32_t index = indexOfProperty(prop.getName());
@@ -41,7 +41,7 @@ namespace JEngine {
         }
 
         end:
-        return getId() < other.getId();
+        return getUUID() < other.getUUID();
     }
 
     bool Material::operator>(const Material& other) const {
@@ -65,7 +65,7 @@ namespace JEngine {
         }
 
     end:
-        return getId() > other.getId();
+        return getUUID() > other.getUUID();
     }
 
     bool Material::operator==(const Material& other) const {

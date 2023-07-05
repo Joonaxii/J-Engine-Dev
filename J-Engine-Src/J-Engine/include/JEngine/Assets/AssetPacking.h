@@ -8,5 +8,5 @@ namespace JEngine::AssetPacking {
     static constexpr const char* PakExtension = ".jpak";
     static const JVersion PakVersion = JVersion(0, 0, 0);
 
-    const bool packAssets(const FileEntry& folder, std::ofstream& stream, const uint32_t flags = 0U);
+    //const bool packAssets(const FileEntry& folder, std::ofstream& stream, const uint32_t flags = 0U);
 }

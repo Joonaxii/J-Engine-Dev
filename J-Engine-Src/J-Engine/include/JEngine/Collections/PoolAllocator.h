@@ -4,11 +4,7 @@
 #include <JEngine/Math/Math.h>
 
 namespace JEngine {
-    struct IPoolObj {
-        virtual void dCtor() {};
-    };
-
-    template<typename T> 
+    template<typename T>
     struct PoolChunk {
     public:
         static constexpr size_t CHUNK_SHIFT = 6;
@@ -24,10 +20,7 @@ namespace JEngine {
         constexpr bool hasFreeSlots() const { return _inUse != UINT64_MAX; }
 
         size_t countFreeSlots() const { return Math::countBits(_inUse); }
-
-        void clear() {
-            _inUse = 0;
-        }
+        void clear() { _inUse = 0; }
 
         T* allocateSlot() {
             if (isFull()) { return nullptr; }
@@ -53,7 +46,6 @@ namespace JEngine {
     public:
         PoolAllocator() : _chunk(nullptr), _chunkCount(0) {
             PoolChunk<T>* prev = _chunk;
-
             _chunkCount = init;
             for (size_t i = 0; i < init; i++) {
                 PoolChunk<T>* chunk = new PoolChunk<T>();
@@ -123,12 +115,41 @@ namespace JEngine {
             return cChnk->allocateSlot();
         }
 
+        template<class... Args>
+        T* allocate(Args&&... args) {
+            PoolChunk<T>* prev = nullptr;
+            PoolChunk<T>* cChnk = _chunk;
+            while (cChnk) {
+                if (cChnk->hasFreeSlots()) {
+                    break;
+                }
+                prev = cChnk;
+                cChnk = cChnk->next;
+            }
+
+            if (!cChnk) {
+                cChnk = new PoolChunk<T>();
+                _chunkCount++;
+                if (prev) {
+                    prev->next = cChnk;
+                }
+                else {
+                    _chunk = cChnk;
+                }
+            }
+            T* ptrOut = cChnk->allocateSlot();
+            if (!ptrOut) { return nullptr; }
+
+            *ptrOut = T(args...);
+            return ptrOut;
+        }
+
         bool deallocate(T* obj) {
             if (obj) {
                 PoolChunk<T>* ptr = _chunk;
                 while (ptr) {
                     if (ptr->tryDeallocate(obj)) {
-                        obj->dCtor();
+                        obj->~T();
                         return true;
                     }
                     ptr = ptr->next;
@@ -169,7 +190,7 @@ namespace JEngine {
                     T* buffer = temp->getBuffer();
                     for (uint64_t i = 0, j = 1; i < PoolChunk<T>::CHUNK_SIZE; i++, j <<= 1) {
                         if (chunkMsk & j) {
-                            (buffer + i)->dCtor();
+                            (buffer + i)->~T();
                         }
                     }
                     temp->clear();
@@ -195,4 +216,14 @@ namespace JEngine {
 
     template<typename T, uint32_t init>
     PoolAllocator<T, init> PoolAllocator<T, init>::Global{};
+
+    template<typename T, size_t init = 0>
+    void clearPoolAllocator(bool full) {
+        PoolAllocator<T, init>::getGlobal().clear(full);
+    }
+
+    template<typename T, size_t init = 0>
+    void trimPoolAllocator() {
+        PoolAllocator<T, init>::getGlobal().trim();
+    }
 }
