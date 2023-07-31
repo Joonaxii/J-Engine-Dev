@@ -354,8 +354,10 @@ namespace JEngine {
         template<typename T>
         bool serialize(const T* itemRef, const size_t count, yamlEmit& yamlOut) {
             yamlOut << YAML::BeginSeq;
-            for (size_t i = 0; i < count; i++) {
-                yamlOut << itemRef[i];
+            if (itemRef) {
+                for (size_t i = 0; i < count; i++) {
+                    yamlOut << itemRef[i];
+                }
             }
             yamlOut << YAML::EndSeq;
             return true;

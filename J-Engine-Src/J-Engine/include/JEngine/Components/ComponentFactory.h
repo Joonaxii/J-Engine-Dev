@@ -99,23 +99,8 @@ inline JEngine::Comp* JEngine::ComponentFactory::getComp<TYPE>() { \
 #define VALIDATE_COMPONENT(x) template<> \
 inline const JEngine::Comp* ValidatedComp<x>::Value = JEngine::ComponentFactory::getComp<x>(); \
 
-#ifndef JENGINE_AUTO_VALID_COMPS
-#define JENGINE_AUTO_VALID_COMPS
-#endif
-
-#ifdef JENGINE_AUTO_VALID_COMPS
-
 #define REGISTER_COMPONENT(x) \
 DEFINE_TYPE(x); \
 DEFINE_COMPONENT(x); \
 VALIDATE_COMPONENT(x); \
-
-#else
-
-#define REGISTER_COMPONENT(x) \
-DEFINE_TYPE(x); \
-DEFINE_COMPONENT(x); \
-
-#endif
-
 

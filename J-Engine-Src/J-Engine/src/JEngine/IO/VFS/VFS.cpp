@@ -117,7 +117,11 @@ namespace JEngine {
         return true;
     }
 
-    int32_t VFS::addEntry(int32_t source, bool isFile, const char* path, size_t len, EntryInfo dataInfo) {
+    int32_t VFS::addEntry(int32_t source, bool isFile, const char* path, size_t len, EntryInfo dataInfo, bool* addedNew) {
+        if (addedNew) {
+            *addedNew = false;
+        }
+        
         char* tempBuf = reinterpret_cast<char*>(_malloca(len + 1));
         if (!tempBuf) { return false; }
         tempBuf[len] = 0;
@@ -136,7 +140,7 @@ namespace JEngine {
         UUID8 uuid = UUID8::Empty;
         HashState state{};
 
-        if (source < 0 && isFile) {
+        if (source < 0 && isFile && dataInfo != RUNTIME_EINF) {
             JENGINE_CORE_WARN("[J-Engine - VFS] Warning: Given path '{0}' couldn't be added! (File source is invalid, if part of a JPAK add the file beforehand)", tempBuf);
             goto failure;
         }
@@ -165,6 +169,10 @@ namespace JEngine {
                 uuid.updateHash(state, pathParts[0].get(), pathParts[0].length(), FileEntry::PATH_HASH_BLOCK_SIZE);
                 current->setup(_root, pathParts[0], uuid, lastInd, source, isLast ? dataInfo : FOLDER_EINF);
                 _fileEntryLUT.insert(std::make_pair(uuid, lastInd));
+
+                if (isLast && addedNew) {
+                    *addedNew = true;
+                }
             }
 
             if (current) {
@@ -179,6 +187,10 @@ namespace JEngine {
                         uuid.updateHash(state, part.get(), part.length(), FileEntry::PATH_HASH_BLOCK_SIZE);
                         find->setup(current, part, uuid, lastInd, source, isLast ? dataInfo : FOLDER_EINF);
                         _fileEntryLUT.insert(std::make_pair(uuid, lastInd));
+
+                        if (isLast && addedNew) {
+                            *addedNew = true;
+                        }
                     }
                     else if (isLast) {
                         lastInd = _entries.indexOf(find);
@@ -203,12 +215,12 @@ namespace JEngine {
         return -1;
     }
 
-    int32_t VFS::addEntry(int32_t source, bool isFile, const char* path, EntryInfo dataInfo) {
-        return addEntry(source, isFile, path, strlen(path), dataInfo);
+    int32_t VFS::addEntry(int32_t source, bool isFile, const char* path, EntryInfo dataInfo, bool* addedNew) {
+        return addEntry(source, isFile, path, strlen(path), dataInfo, addedNew);
     }
 
-    int32_t VFS::addEntry(int32_t source, bool isFile, const std::string& path, EntryInfo dataInfo) {
-        return addEntry(source, isFile, path.c_str(), path.size(), dataInfo);
+    int32_t VFS::addEntry(int32_t source, bool isFile, const std::string& path, EntryInfo dataInfo, bool* addedNew) {
+        return addEntry(source, isFile, path.c_str(), path.size(), dataInfo, addedNew);
     }
 
     bool VFS::removeEntry(const char* path, size_t length, uint8_t fileAction) {
@@ -243,16 +255,11 @@ namespace JEngine {
     }
 
     int32_t VFS::indexOfFileEntry(ConstSpan<char> path) const {
-        char* tempBuf = reinterpret_cast<char*>(_malloca(path.length() + 1));
-        if (!tempBuf) { return false; }
-        tempBuf[path.length()] = 0;
-        memcpy(tempBuf, path.get(), path.length());
-        IO::fixPath(tempBuf);
+        return indexOfFileEntry(pathToCleanAndHash(path));
+    }
 
-        path = ConstSpan<char>(tempBuf, path.length());
-        UUID8 pathHash = pathToHash(path);
-        _freea(tempBuf);
-        auto find = _fileEntryLUT.find(pathHash);
+    int32_t VFS::indexOfFileEntry(UUID8 pathUUID) const {
+        auto find = _fileEntryLUT.find(pathUUID);
         return find != _fileEntryLUT.end() ? find->second : -1;
     }
 
@@ -296,6 +303,19 @@ namespace JEngine {
             }
         }
         return uuid;
+    }
+
+    UUID8 VFS::pathToCleanAndHash(ConstSpan<char> path, bool autoAppendRoot) const {
+        char* tempBuf = reinterpret_cast<char*>(_malloca(path.length() + 1));
+        if (!tempBuf) { return UUID8::Empty; }
+        tempBuf[path.length()] = 0;
+        memcpy(tempBuf, path.get(), path.length());
+        IO::fixPath(tempBuf);
+
+        path = ConstSpan<char>(tempBuf, path.length());
+        UUID8 pathHash = pathToHash(path, autoAppendRoot);
+        _freea(tempBuf);
+        return pathHash;
     }
 
     void VFS::removeMissing() {

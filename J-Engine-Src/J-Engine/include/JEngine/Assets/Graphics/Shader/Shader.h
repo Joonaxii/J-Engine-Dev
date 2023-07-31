@@ -22,6 +22,7 @@ namespace JEngine {
         uint16_t blendFunc;
     };
 
+    class ShaderSerializer;
     class Texture;
     class Shader : public IAsset {
     public:
@@ -88,6 +89,8 @@ namespace JEngine {
         static void addShaderToLUT(const ObjectRef<Shader>& shader);
         static bool removeShaderFromLUT(const ObjectRef<Shader>& shader);
     private:
+        friend class ShaderSerializer;
+
         typedef std::unordered_map<UUID16, ObjectRef<Shader>, std::hash<UUID16>> ShaderLUT;
 
         static uint64_t CURRENT_BLENDING_MODE;
@@ -95,10 +98,10 @@ namespace JEngine {
 
         uint16_t _blendingModes[4];
         uint32_t _shaderID;
+        std::vector<char> _shader{};
         std::unordered_map<std::string, int32_t> _uniformCache;
 
-        ShaderSources parseShader(const std::string& filePath);
-        ShaderSources parseShader(std::istream& stream);
+        ShaderSources parseShader();
         uint32_t compileShader(const uint32_t type, const char* shader);
         uint32_t createShader(const char* vertShader, const char* fragShader);
 

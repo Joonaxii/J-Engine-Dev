@@ -27,6 +27,7 @@ namespace JEngine {
     };
     static constexpr EntryInfo FOLDER_EINF(EntryInfo::NPOS, EntryInfo::NPOS);
     static constexpr EntryInfo FILE_EINF(0, EntryInfo::NPOS);
+    static constexpr EntryInfo RUNTIME_EINF(EntryInfo::NPOS, 0);
 
     struct FileEntry {
         static constexpr size_t PATH_HASH_BLOCK_SIZE = 8;
@@ -159,9 +160,9 @@ namespace JEngine {
 
         bool buildFromRoot();
 
-        int32_t addEntry(int32_t source, bool isFile, const char* path, size_t length, EntryInfo dataInfo = EntryInfo());
-        int32_t addEntry(int32_t source, bool isFile, const char* path, EntryInfo dataInfo = EntryInfo());
-        int32_t addEntry(int32_t source, bool isFile, const std::string& path, EntryInfo dataInfo = EntryInfo());
+        int32_t addEntry(int32_t source, bool isFile, const char* path, size_t length, EntryInfo dataInfo = EntryInfo(), bool* addedNew = nullptr);
+        int32_t addEntry(int32_t source, bool isFile, const char* path, EntryInfo dataInfo = EntryInfo(), bool* addedNew = nullptr);
+        int32_t addEntry(int32_t source, bool isFile, const std::string& path, EntryInfo dataInfo = EntryInfo(), bool* addedNew = nullptr);
 
         bool removeEntry(const char* path, size_t length, uint8_t fileAction = F_ACT_REMOVE);
         bool removeEntry(const char* path, uint8_t fileAction = F_ACT_REMOVE);
@@ -186,6 +187,7 @@ namespace JEngine {
         void closeSourceFile(int32_t index);
 
         int32_t indexOfFileEntry(ConstSpan<char> path) const;
+        int32_t indexOfFileEntry(UUID8 pathUUID) const;
         int32_t indexOfSourceFile(ConstSpan<char> path) const;
 
         bool pathExists(ConstSpan<char> path) const;
@@ -194,6 +196,7 @@ namespace JEngine {
         bool pathExists(const std::string& path) const;
 
         UUID8 pathToHash(ConstSpan<char> path, bool autoAppendRoot = true) const;
+        UUID8 pathToCleanAndHash(ConstSpan<char> path, bool autoAppendRoot = true) const;
 
         void removeMissing();
 

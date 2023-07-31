@@ -169,6 +169,9 @@ set(JENGINE_ASSETS_SRC
 	 "include/JEngine/Assets/IAsset.h"
      "src/JEngine/Assets/IAsset.cpp"
 	 
+	 "include/JEngine/Assets/DataAsset.h"
+	 "src/JEngine/Assets/DataAsset.cpp"
+	 
 	 "include/JEngine/Assets/IAssetSerializer.h"
 	
 	 "include/JEngine/Assets/AssetPacking.h"
@@ -176,6 +179,18 @@ set(JENGINE_ASSETS_SRC
 )
 source_group("JEngine/Assets" FILES ${JENGINE_ASSETS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_ASSETS_SRC})
+
+# JEngine Algorithm files
+set(JENGINE_ASSET_SERIALIZER_SRC
+	 "include/JEngine/Assets/Serializers/DataAssetSerializer.h"
+	 "src/JEngine/Assets/Serializers/DataAssetSerializer.cpp"
+	 
+	 "include/JEngine/Assets/Serializers/ShaderSerializer.h"
+	 "src/JEngine/Assets/Serializers/ShaderSerializer.cpp"
+)
+source_group("JEngine/Assets/Serializers" FILES ${JENGINE_ASSET_SERIALIZER_SRC})
+list(APPEND JENGINE_SOURCES ${JENGINE_ASSET_SERIALIZER_SRC})
+
 
 # JEngine Scene Assets files
 set(JENGINE_SCENE_ASSETS_SRC 
@@ -400,12 +415,6 @@ set(JENGINE_RENDERING_CORE_SRC
 	 
 	 "include/JEngine/Rendering/FrameBuffer.h"
 	 "src/JEngine/Rendering/FrameBuffer.cpp"
-	 
-	 "include/JEngine/Rendering/RenderContext.h"
-	 "src/JEngine/Rendering/RenderContext.cpp"
-	 
-	 "include/JEngine/Rendering/RenderAPI.h"
-	 "src/JEngine/Rendering/RenderAPI.cpp"
 )
 source_group("JEngine/Rendering" FILES ${JENGINE_RENDERING_CORE_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_RENDERING_CORE_SRC})

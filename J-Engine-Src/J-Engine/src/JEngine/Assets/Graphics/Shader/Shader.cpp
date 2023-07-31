@@ -295,26 +295,24 @@ namespace JEngine {
         return location;
     }
 
-    ShaderSources Shader::parseShader(const std::string& filePath) {
-        std::ifstream stream(filePath);
-        return parseShader(stream);
-    }
-
-    ShaderSources Shader::parseShader(std::istream& stream)  {
+    ShaderSources Shader::parseShader()  {
         enum class ShaderType {
             NONE = -1,
             VERTEX = 0,
             FRAGMENT = 1,
         };
 
-        std::string line;
-        std::stringstream ss[2];
+        std::string line{};
+        ShaderSources srcs{};
 
         ShaderType type = ShaderType::NONE;
         uint16_t blendSrc = GL_SRC_ALPHA;
         uint16_t blendDst = GL_ONE_MINUS_SRC_ALPHA;
         uint16_t blendFunc = GL_FUNC_ADD;
-        while (getline(stream, line)) {
+
+        const char* data = _shader.data();
+        size_t strLen = _shader.size();
+        while (Helpers::getLine(data, strLen, line)) {
             if (line.find("#shader") != std::string::npos) {
                 if (line.find("vertex") != std::string::npos) {
                     type = ShaderType::VERTEX;
@@ -356,9 +354,23 @@ namespace JEngine {
             }
             if (type == ShaderType::NONE) { continue; }
 
-            ss[(int)type] << line << '\n';
+            switch (type)
+            {
+                case ShaderType::VERTEX:
+                    srcs.vertexSource.append(line.c_str());
+                    srcs.vertexSource.append(1, '\n');
+                    break;
+                case ShaderType::FRAGMENT:
+                    srcs.fragmentSource.append(line.c_str());
+                    srcs.fragmentSource.append(1, '\n');
+                    break;
+            }
         }
-        return { ss[0].str(), ss[1].str(), blendSrc, blendDst, blendFunc };
+
+        srcs.blendSrc = blendSrc;
+        srcs.blendFunc = blendFunc;
+        srcs.blendDst = blendDst;
+        return srcs;
     }
 
     uint32_t Shader::compileShader(const uint32_t type, const char* shader) {

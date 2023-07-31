@@ -112,6 +112,28 @@ namespace JEngine::Helpers {
         sprintf_s(buffer, size, "%.3f %s", val, SIZES[ind]);
     }
 
+	bool getLine(const char*& buffer, size_t& len, std::string& line) {
+		if (len == 0) { return false; }
+
+		size_t start = 0;
+		line.clear();
+
+		while (--len > 0) {
+			char c = *buffer++;
+			switch (c)
+			{
+				case '\0':
+				case '\n':
+					goto end;
+				case '\r':
+					continue;
+			}
+			line.append(1, c);
+		}
+		end:
+		return true;
+	}
+
 	int32_t strCmpNoCase(const char* a, const char* b) {
 		for (;; a++, b++) {
 			const int32_t d = tolower((unsigned char)*a) - tolower((unsigned char)*b);

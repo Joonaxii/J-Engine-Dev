@@ -6,7 +6,15 @@
 namespace JEngine {
     class IAsset : public INamedObject {
     public:
-
+        virtual ~IAsset() = 0;
+        virtual bool unload() {
+            UI16Flags& flags = getFlags();
+            if (flags & FLAG_IS_LOADED) {
+                flags &= ~FLAG_IS_LOADED;
+                return true;
+            }
+            return false;
+        }
     protected:
         friend class AssetDB;
 
@@ -19,5 +27,6 @@ namespace JEngine {
         virtual void destroyAsset() {}
     private:
     };
+
 }
 REGISTER_UUID_FACTORY(JEngine::IAsset)

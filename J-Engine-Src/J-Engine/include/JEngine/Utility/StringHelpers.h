@@ -84,4 +84,5 @@ namespace JEngine::Helpers {
 
     void formatDataSize(char* buffer, size_t size);
 
+    bool getLine(const char*& buffer, size_t& len, std::string& line);
 }
