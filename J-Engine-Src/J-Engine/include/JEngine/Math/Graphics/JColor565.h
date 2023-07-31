@@ -64,7 +64,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<JColor565>::deserializeJson(JColor565& itemRef, json& jsonF, const JColor565& defaultValue) {
+    inline bool Serializable<JColor565>::deserializeJson(JColor565& itemRef, const json& jsonF, const JColor565& defaultValue) {
         itemRef.data = jsonF.is_number_integer() ? jsonF.get<uint16_t>() : 0;
         return true;
     }

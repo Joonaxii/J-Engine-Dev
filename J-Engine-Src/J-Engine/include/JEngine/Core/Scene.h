@@ -38,7 +38,7 @@ namespace JEngine {
         Scene(Scene&& other) = delete;
         Scene& operator=(const Scene&) = delete;
 
-        void* operator new(size_t size) noexcept;
-        void operator delete(void* ptr) noexcept;
+        void* operator new(size_t size) noexcept { return malloc(size); };
+        void operator delete(void* ptr) noexcept { free(ptr); };
     };
 }

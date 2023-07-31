@@ -241,10 +241,10 @@ namespace JEngine {
 
     bool Renderer::doRender(IGuiPanel* panel) {
         if (!_initialized) { return false; }
-       //if (_window.isMinimized()) {
-       //    _window.pollEvents();
-       //    return true;
-       //}
+        if (_window.isMinimized()) {
+            _window.pollEvents();
+            return true;
+        }
         if (!_window.tick()) { return false; }
 
         //for (size_t i = 0; i < 33; i++) {

@@ -15,9 +15,9 @@ namespace JEngine {
     };
 
     template<>
-    inline static IAssetSerializer<DataAsset>& IAssetSerializer<DataAsset>::getSerializer() {
+    inline static IAssetSerializer<DataAsset>* IAssetSerializer<DataAsset>::getSerializer() {
         static DataAssetSerializer serializer{};
-        return serializer;
+        return &serializer;
     }
 
     template<>

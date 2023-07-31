@@ -969,7 +969,7 @@ namespace YAML {
 namespace JEngine {
     template<typename T, typename P>
     struct Serializable<JVector2<T, P>> {
-        static bool deserializeJson(JVector2<T, P>& itemRef, json& jsonF, const JVector2<T, P>& defaultVal);
+        static bool deserializeJson(JVector2<T, P>& itemRef, const json& jsonF, const JVector2<T, P>& defaultVal);
         static bool serializeJson(const JVector2<T, P>& itemRef, json& jsonF);
 
         static bool deserializeBinary(JVector2<T, P>& itemRef, const Stream& stream);
@@ -977,7 +977,7 @@ namespace JEngine {
     };
 
     template<typename T, typename P>
-    inline bool Serializable<JVector2<T, P>>::deserializeJson(JVector2<T, P>& itemRef, json& jsonF, const JVector2<T, P>& defaultVal) {
+    inline bool Serializable<JVector2<T, P>>::deserializeJson(JVector2<T, P>& itemRef, const json& jsonF, const JVector2<T, P>& defaultVal) {
         Serialization::deserialize(itemRef.x, jsonF["x"], defaultVal.x);
         Serialization::deserialize(itemRef.y, jsonF["y"], defaultVal.y);
         return true;
@@ -1044,7 +1044,7 @@ namespace YAML {
 namespace JEngine {
     template<typename T, typename P>
     struct Serializable<JVector3<T, P>> {
-        static bool deserializeJson(JVector3<T, P>& itemRef, json& jsonF, const JVector3<T, P>& defaultVal);
+        static bool deserializeJson(JVector3<T, P>& itemRef, const json& jsonF, const JVector3<T, P>& defaultVal);
         static bool serializeJson(const JVector3<T, P>& itemRef, json& jsonF);
 
         static bool deserializeBinary(JVector3<T, P>& itemRef, const Stream& stream);
@@ -1052,7 +1052,7 @@ namespace JEngine {
     };
 
     template<typename T, typename P>
-    inline bool Serializable<JVector3<T, P>>::deserializeJson(JVector3<T, P>& itemRef, json& jsonF, const JVector3<T, P>& defaultVal) {
+    inline bool Serializable<JVector3<T, P>>::deserializeJson(JVector3<T, P>& itemRef, const json& jsonF, const JVector3<T, P>& defaultVal) {
         Serialization::deserialize(itemRef.x, jsonF["x"], defaultVal.x);
         Serialization::deserialize(itemRef.y, jsonF["y"], defaultVal.y);
         Serialization::deserialize(itemRef.z, jsonF["z"], defaultVal.z);
@@ -1122,7 +1122,7 @@ namespace YAML {
 namespace JEngine {
     template<typename T, typename P>
     struct Serializable<JVector4<T, P>> {
-        static bool deserializeJson(JVector4<T, P>& itemRef, json& jsonF, const JVector4<T, P>& defaultVal);
+        static bool deserializeJson(JVector4<T, P>& itemRef, const json& jsonF, const JVector4<T, P>& defaultVal);
         static bool serializeJson(const JVector4<T, P>& itemRef, json& jsonF);
 
         static bool deserializeBinary(JVector4<T, P>& itemRef, const Stream& stream);
@@ -1130,7 +1130,7 @@ namespace JEngine {
     };
 
     template<typename T, typename P>
-    inline bool Serializable<JVector4<T, P>>::deserializeJson(JVector4<T, P>& itemRef, json& jsonF, const JVector4<T, P>& defaultVal) {
+    inline bool Serializable<JVector4<T, P>>::deserializeJson(JVector4<T, P>& itemRef, const json& jsonF, const JVector4<T, P>& defaultVal) {
         Serialization::deserialize(itemRef.x, jsonF["x"], defaultVal.x);
         Serialization::deserialize(itemRef.y, jsonF["y"], defaultVal.y);
         Serialization::deserialize(itemRef.z, jsonF["z"], defaultVal.z);

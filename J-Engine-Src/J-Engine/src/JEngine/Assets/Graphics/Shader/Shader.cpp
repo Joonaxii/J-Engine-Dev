@@ -61,13 +61,13 @@ namespace JEngine {
 
     Shader::Shader() : IAsset(), _shaderID(0), _blendingModes {GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD} { }
     Shader::Shader(const std::string& fileath) :IAsset(),  _shaderID(0), _blendingModes { GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD } {
-        ShaderSources source = parseShader(fileath);
+        //ShaderSources source = parseShader(fileath);
 
-        _blendingModes[0] = source.blendSrc;
-        _blendingModes[1] = source.blendDst;
-        _blendingModes[2] = source.blendFunc;
-        _blendingModes[3] = 0;
-        _shaderID = source.vertexSource.length() > 1 && source.fragmentSource.length() > 1 ?  createShader(source.vertexSource.c_str(), source.fragmentSource.c_str()) : 0;
+        //_blendingModes[0] = source.blendSrc;
+        //_blendingModes[1] = source.blendDst;
+        //_blendingModes[2] = source.blendFunc;
+        //_blendingModes[3] = 0;
+        //_shaderID = source.vertexSource.length() > 1 && source.fragmentSource.length() > 1 ?  createShader(source.vertexSource.c_str(), source.fragmentSource.c_str()) : 0;
     }
     Shader::~Shader() {
         if (_shaderID) {

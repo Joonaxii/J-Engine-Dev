@@ -532,7 +532,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<Input::DeviceIndex>::deserializeJson(Input::DeviceIndex& itemRef, json& jsonF, const Input::DeviceIndex& defaultValue) {
+    inline bool Serializable<Input::DeviceIndex>::deserializeJson(Input::DeviceIndex& itemRef, const json& jsonF, const Input::DeviceIndex& defaultValue) {
         itemRef = jsonF.is_number_integer() ? Input::DeviceIndex(jsonF.get<uint8_t>()) : defaultValue;
         return true;
     }
@@ -545,7 +545,7 @@ namespace JEngine {
 
 
     template<>
-    inline bool Serializable<Input::InputCode>::deserializeJson(Input::InputCode& itemRef, json& jsonF, const Input::InputCode& defaultValue) {
+    inline bool Serializable<Input::InputCode>::deserializeJson(Input::InputCode& itemRef, const json& jsonF, const Input::InputCode& defaultValue) {
         itemRef = jsonF.is_number_integer() ? Input::InputCode(jsonF.get<uint16_t>()) : defaultValue;
         return true;
     }

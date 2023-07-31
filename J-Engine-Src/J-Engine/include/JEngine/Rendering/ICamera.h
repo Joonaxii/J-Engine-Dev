@@ -142,7 +142,7 @@ namespace JEngine {
     };
 
     template<>
-    inline bool Serializable<ICamera::ClearFlags>::deserializeJson(ICamera::ClearFlags& itemRef, json& jsonF, const ICamera::ClearFlags& defaultValue) {
+    inline bool Serializable<ICamera::ClearFlags>::deserializeJson(ICamera::ClearFlags& itemRef, const json& jsonF, const ICamera::ClearFlags& defaultValue) {
         itemRef = jsonF.is_number_integer() ? ICamera::ClearFlags(jsonF.get<uint32_t>()) : defaultValue;
         return true;
     }

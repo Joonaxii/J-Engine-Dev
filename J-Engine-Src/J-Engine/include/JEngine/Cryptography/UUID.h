@@ -169,7 +169,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<UUID8>::deserializeJson(UUID8& itemRef, json& jsonF, const UUID8& defaultValue) {
+    inline bool Serializable<UUID8>::deserializeJson(UUID8& itemRef, const json& jsonF, const UUID8& defaultValue) {
         itemRef = jsonF.is_string() ? itemRef.parse(jsonF.get<std::string>(), defaultValue) : defaultValue;
         return true;
     }
@@ -182,7 +182,7 @@ namespace JEngine {
 
 
     template<>
-    inline bool Serializable<UUID16>::deserializeJson(UUID16& itemRef, json& jsonF, const UUID16& defaultValue) {
+    inline bool Serializable<UUID16>::deserializeJson(UUID16& itemRef, const json& jsonF, const UUID16& defaultValue) {
         itemRef = jsonF.is_string() ? itemRef.parse(jsonF.get<std::string>(), defaultValue) : defaultValue;
         return true;
     }

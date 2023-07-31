@@ -76,7 +76,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<SortingLayer>::deserializeJson(SortingLayer& itemRef, json& jsonF, const SortingLayer& defaultValue) {
+    inline bool Serializable<SortingLayer>::deserializeJson(SortingLayer& itemRef, const json& jsonF, const SortingLayer& defaultValue) {
         Serialization::deserialize(itemRef._order, jsonF["order"], defaultValue._order);
         auto& layer = jsonF["layer"];
         itemRef._layer = layer.is_string() ? SortingLayer::nameToLayer(layer.get<std::string>()) : layer.is_number_integer() ? layer.get<uint16_t>() : defaultValue._layer;

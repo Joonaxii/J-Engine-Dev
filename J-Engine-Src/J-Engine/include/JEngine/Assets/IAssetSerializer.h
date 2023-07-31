@@ -1,4 +1,5 @@
 #pragma once
+#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Assets/IAsset.h>
 #include <JEngine/Helpers/TypeHelpers.h>
 #include <JEngine/Collections/PoolAllocator.h>
@@ -52,36 +53,39 @@ namespace JEngine {
             types[SER_TYPE_YAML] = SER_TYPE_YAML;
         }
 
-        static IAssetSerializer<T>& getSerializer() {
+        static IAssetSerializer<T>* getSerializer() {
             static_assert("Must be implemented for given type!");
+            return nullptr;
         }
 
         static IAsset* createNewAsset(const char* name, UUID8 uuid, uint8_t flags) {
             static_assert("Must be implemented for given type!");
+            return nullptr;
         }
 
         static IAsset* destroyAsset(IAsset* asset) {
             static_assert("Must be implemented for given type!");
+            return asset;
         }
 
-        static void deserialize(FileEntry* entry, IAsset* asset, const Stream& stream, uint8_t flags) {
-            getSerializer<T>().deserializeImpl(entry, asset, stream, flags);       
+        static void deserializeBin(FileEntry* entry, IAsset* asset, const Stream& stream, uint8_t flags) {
+            getSerializer()->deserializeImpl(entry, asset, stream, flags);       
         }
-        static void deserialize(FileEntry* entry, IAsset* asset, const json& jsonF, uint8_t flags) {
-            getSerializer<T>().deserializeImpl(entry, asset, jsonF, flags);      
+        static void deserializeJson(FileEntry* entry, IAsset* asset, const json& jsonF, uint8_t flags) {
+            getSerializer()->deserializeImpl(entry, asset, jsonF, flags);      
         }
-        static void deserialize(FileEntry* entry, IAsset* asset, const yamlNode& node, uint8_t flags) {
-            getSerializer<T>().deserializeImpl(entry, asset, node, flags);
+        static void deserializeYaml(FileEntry* entry, IAsset* asset, const yamlNode& node, uint8_t flags) {
+            getSerializer()->deserializeImpl(entry, asset, node, flags);
         }
 
-        static void serialize(FileEntry* entry, const IAsset* asset, const Stream& stream, uint8_t flags) {
-            getSerializer<T>().serializeImpl(entry, asset, stream, flags);
+        static void serializeBin(FileEntry* entry, const IAsset* asset, const Stream& stream, uint8_t flags) {
+            getSerializer()->serializeImpl(entry, asset, stream, flags);
         }
-        static void serialize(FileEntry* entry, const IAsset* asset, json& jsonF, uint8_t flags) {
-            getSerializer<T>().serializeImpl(entry, asset, jsonF, flags);
+        static void serializeJson(FileEntry* entry, const IAsset* asset, json& jsonF, uint8_t flags) {
+            getSerializer()->serializeImpl(entry, asset, jsonF, flags);
         }
-        static void serialize(FileEntry* entry, const IAsset* asset, yamlEmit& emit, uint8_t flags) {
-            getSerializer<T>().serializeImpl(entry, asset, emit, flags);
+        static void serializeYaml(FileEntry* entry, const IAsset* asset, yamlEmit& emit, uint8_t flags) {
+            getSerializer()->serializeImpl(entry, asset, emit, flags);
         }
 
     protected:
@@ -102,13 +106,13 @@ namespace JEngine {
 
             SerializerType serializeTypes[3]{};
 
-            void (*serBin)(IAsset*, const Stream&, uint8_t) = nullptr;
-            void (*serJSON)(IAsset*, json&, uint8_t) = nullptr;
-            void (*serYAML)(IAsset*, yamlEmit&, uint8_t) = nullptr;
+            void (*serBin)(FileEntry*, const IAsset*, const Stream&, uint8_t) = nullptr;
+            void (*serJSON)(FileEntry*, const IAsset*, json&, uint8_t) = nullptr;
+            void (*serYAML)(FileEntry*, const IAsset*, yamlEmit&, uint8_t) = nullptr;
 
-            void (*deserBin)(const IAsset*, const Stream&, uint8_t) = nullptr;
-            void (*deserJSON)(const IAsset*, json&, uint8_t) = nullptr;
-            void (*deserYAML)(const IAsset*, yamlNode&, uint8_t) = nullptr;
+            void (*deserBin)(FileEntry*, IAsset*, const Stream&, uint8_t) = nullptr;
+            void (*deserJSON)(FileEntry*, IAsset*, const json&, uint8_t) = nullptr;
+            void (*deserYAML)(FileEntry*, IAsset*, const yamlNode&, uint8_t) = nullptr;
 
             template<typename T> static Asset* getAsset();
             static std::vector<Asset*>& getAssets() {
@@ -128,7 +132,7 @@ namespace JEngine {
 
             template<typename T>
             static void addAsset(Asset* asset, Type* type) {
-                if (comp->type != nullptr) { return; }
+                if (asset->type != nullptr) { return; }
                 asset->type = type;
 
                 IAssetSerializer<T>::getSerializerTypes(asset->serializeTypes);
@@ -136,13 +140,13 @@ namespace JEngine {
                 asset->createAsset = IAssetSerializer<T>::createNewAsset;
                 asset->destroyAsset = IAssetSerializer<T>::destroyAsset;
 
-                asset->serBin = IAssetSerializer<T>::serialize;
-                asset->serJSON = IAssetSerializer<T>::serialize;
-                asset->serYAML = IAssetSerializer<T>::serialize;
+                asset->serBin = IAssetSerializer<T>::serializeBin;
+                asset->serJSON = IAssetSerializer<T>::serializeJson;
+                asset->serYAML = IAssetSerializer<T>::serializeYaml;
 
-                asset->deserBin = IAssetSerializer<T>::deserialize;
-                asset->deserJSON = IAssetSerializer<T>::deserialize;
-                asset->deserYAML = IAssetSerializer<T>::deserialize;
+                asset->deserBin = IAssetSerializer<T>::deserializeBin;
+                asset->deserJSON = IAssetSerializer<T>::deserializeJson;
+                asset->deserYAML = IAssetSerializer<T>::deserializeYaml;
                 getAssets().push_back(asset);
             }
         };

@@ -59,7 +59,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<GizmoLayer>::deserializeJson(GizmoLayer& itemRef, json& jsonF, const GizmoLayer& defaultValue) {
+    inline bool Serializable<GizmoLayer>::deserializeJson(GizmoLayer& itemRef, const json& jsonF, const GizmoLayer& defaultValue) {
         if (jsonF.is_string()) {
             itemRef._value = GizmoLayer::nameToLayer(jsonF.get<std::string>());
             return true;

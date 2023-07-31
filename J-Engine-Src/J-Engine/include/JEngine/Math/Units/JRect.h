@@ -110,7 +110,7 @@ namespace YAML {
 namespace JEngine {
     template<typename T>
     struct Serializable<JRect<T>> {
-        static bool deserializeJson(JRect<T>& itemRef, json& jsonF, const JRect<T>& defaultValue);
+        static bool deserializeJson(JRect<T>& itemRef, const json& jsonF, const JRect<T>& defaultValue);
         static bool serializeJson(const JRect<T>& itemRef, json& jsonF);
 
         static bool deserializeBinary(JRect<T>& itemRef, const Stream& stream);
@@ -118,7 +118,7 @@ namespace JEngine {
     };
 
     template<typename T>
-    inline bool Serializable<JRect<T>>::deserializeJson(JRect<T>& itemRef, json& jsonF, const JRect<T>& defaultValue) {
+    inline bool Serializable<JRect<T>>::deserializeJson(JRect<T>& itemRef, const json& jsonF, const JRect<T>& defaultValue) {
         Serialization::deserialize(itemRef._min, jsonF["min"], defaultValue._min);
         Serialization::deserialize(itemRef._max, jsonF["max"], defaultValue._max);
         return true;

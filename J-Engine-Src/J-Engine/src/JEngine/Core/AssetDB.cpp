@@ -60,7 +60,7 @@ namespace JEngine {
         FileEntry* fEntry = vfs->getFileEntry(ind);
         const char* namePtr = fEntry->name.c_str();
         char* temp = nullptr;
-        int32_t ind = ConstSpan<char>(namePtr, fEntry->name.length()).indexOfLast('.');
+        ind = ConstSpan<char>(namePtr, fEntry->name.length()).indexOfLast('.');
 
         if (ind > -1) {
             size_t newLen = ind + 1;

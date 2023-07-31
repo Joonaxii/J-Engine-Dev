@@ -164,7 +164,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<JTimeIndex>::deserializeJson(JTimeIndex& itemRef, json& jsonF, const JTimeIndex& defaultValue) {
+    inline bool Serializable<JTimeIndex>::deserializeJson(JTimeIndex& itemRef, const json& jsonF, const JTimeIndex& defaultValue) {
         Serialization::deserialize(itemRef._value, jsonF, defaultValue._value);
         return true;
     }

@@ -21,9 +21,10 @@ namespace JEngine {
         auto shader = asAsset(asset);
 
         if (flags & SER_FullData) {
-            if (shader->_data) {
-                stream.write(shader->_data, shader->_length, false);
-            }
+
+            size_t len = shader->_shader.size();
+            stream.write(&len, 4, false);
+            stream.write(shader->_shader.data(), len, false);
         }
     }
 }

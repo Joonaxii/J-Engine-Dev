@@ -125,7 +125,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<JMatrix4f>::deserializeJson(JMatrix4f& itemRef, json& jsonF, const JMatrix4f& defaultValue) {
+    inline bool Serializable<JMatrix4f>::deserializeJson(JMatrix4f& itemRef, const json& jsonF, const JMatrix4f& defaultValue) {
         itemRef = defaultValue;
         const size_t size = jsonF.size() > 16 ? 16 : jsonF.size();
         if (size > 0) {

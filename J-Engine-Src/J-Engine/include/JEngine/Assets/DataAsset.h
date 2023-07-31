@@ -40,3 +40,42 @@ namespace JEngine {
     };
 }
 REGISTER_ASSET(JEngine::DataAsset);
+
+
+#pragma region Serialization
+//YAML
+namespace YAML {
+    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::DataAsset::DataType& itemRef) {
+        yamlOut << YAML::Dec << static_cast<const uint16_t>(itemRef);
+        return yamlOut;
+    }
+
+    template<>
+    struct convert<JEngine::DataAsset::DataType> {
+        static Node encode(const JEngine::DataAsset::DataType& rhs) {
+            Node node;
+            node.push_back(static_cast<const uint16_t>(rhs));
+            return node;
+        }
+
+        static bool decode(const Node& node, JEngine::DataAsset::DataType& rhs) {
+            rhs = JEngine::DataAsset::DataType(node.as<uint16_t>());
+            return true;
+        }
+    };
+}
+//JSON
+namespace JEngine {
+    template<>
+    inline bool Serializable<DataAsset::DataType>::deserializeJson(DataAsset::DataType& itemRef, const json& jsonF, const DataAsset::DataType& defaultVal) {
+        itemRef = jsonF.is_number() ? DataAsset::DataType(jsonF.get<uint8_t>()) : defaultVal;
+        return true;
+    }
+
+    template<>
+    inline bool Serializable<DataAsset::DataType>::serializeJson(const DataAsset::DataType& itemRef, json& jsonF) {
+        jsonF = uint8_t(itemRef);
+        return true;
+    }
+}
+#pragma endregion

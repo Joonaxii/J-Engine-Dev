@@ -183,7 +183,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<TextureFormat>::deserializeJson(TextureFormat& itemRef, json& jsonF, const TextureFormat& defaultVal) {
+    inline bool Serializable<TextureFormat>::deserializeJson(TextureFormat& itemRef, const json& jsonF, const TextureFormat& defaultVal) {
         itemRef = jsonF.is_number() ? TextureFormat(jsonF.get<uint8_t>()) : defaultVal;
         return true;
     }
@@ -195,7 +195,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<FilterMode>::deserializeJson(FilterMode& itemRef, json& jsonF, const FilterMode& defaultVal) {
+    inline bool Serializable<FilterMode>::deserializeJson(FilterMode& itemRef, const json& jsonF, const FilterMode& defaultVal) {
         itemRef = jsonF.is_number() ? FilterMode(jsonF.get<uint8_t>()) : defaultVal;
         return true;
     }

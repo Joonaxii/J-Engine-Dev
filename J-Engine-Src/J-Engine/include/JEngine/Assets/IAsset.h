@@ -6,7 +6,7 @@
 namespace JEngine {
     class IAsset : public INamedObject {
     public:
-        virtual ~IAsset() = 0;
+        virtual ~IAsset() {};
         virtual bool unload() {
             UI16Flags& flags = getFlags();
             if (flags & FLAG_IS_LOADED) {

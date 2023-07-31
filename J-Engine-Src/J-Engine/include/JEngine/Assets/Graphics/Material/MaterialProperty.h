@@ -351,7 +351,7 @@ namespace YAML {
 //JSON and Binary
 namespace JEngine {
     template<>
-    inline bool Serializable<MaterialProperty::PropertyType>::deserializeJson(MaterialProperty::PropertyType& itemRef, json& jsonF, const MaterialProperty::PropertyType& defaultValue) {
+    inline bool Serializable<MaterialProperty::PropertyType>::deserializeJson(MaterialProperty::PropertyType& itemRef, const json& jsonF, const MaterialProperty::PropertyType& defaultValue) {
         itemRef = jsonF.is_number() ? MaterialProperty::PropertyType(jsonF.get<uint8_t>()) : defaultValue;
         return true;
     }
@@ -363,7 +363,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<MaterialProperty>::deserializeJson(MaterialProperty& itemRef, json& jsonF, const MaterialProperty& defaultValue) {
+    inline bool Serializable<MaterialProperty>::deserializeJson(MaterialProperty& itemRef, const json& jsonF, const MaterialProperty& defaultValue) {
         Serialization::deserialize(itemRef._name, jsonF["name"], defaultValue._name);
         Serialization::deserialize(itemRef._type, jsonF["type"], defaultValue._type);
 

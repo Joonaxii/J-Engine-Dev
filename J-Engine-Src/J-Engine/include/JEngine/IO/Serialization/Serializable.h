@@ -123,7 +123,7 @@ namespace JEngine {
 
     template<typename T>
     struct Serializable {
-        static bool deserializeJson(T& itemRef, json& jsonF, const T& defaultVal) {
+        static bool deserializeJson(T& itemRef, const json& jsonF, const T& defaultVal) {
             static_assert("JSON Deserialization not implemented for this type!");
             return false;
         }
@@ -147,7 +147,7 @@ namespace JEngine {
 #pragma region Primitive Values
 
     template<>
-    inline bool Serializable<float>::deserializeJson(float& itemRef, json& jsonF, const float& defaultValue) {
+    inline bool Serializable<float>::deserializeJson(float& itemRef, const json& jsonF, const float& defaultValue) {
         itemRef = jsonF.is_number_float() ? jsonF.get<float>() : defaultValue;
         return true;
     }
@@ -159,7 +159,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<double>::deserializeJson(double& itemRef, json& jsonF, const double& defaultValue) {
+    inline bool Serializable<double>::deserializeJson(double& itemRef, const json& jsonF, const double& defaultValue) {
         itemRef = jsonF.is_number_float() ? jsonF.get<double>() : defaultValue;
         return true;
     }
@@ -171,7 +171,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<uint8_t>::deserializeJson(uint8_t& itemRef, json& jsonF, const uint8_t& defaultValue) {
+    inline bool Serializable<uint8_t>::deserializeJson(uint8_t& itemRef, const json& jsonF, const uint8_t& defaultValue) {
         itemRef = jsonF.is_number_integer() ? jsonF.get<uint8_t>() : defaultValue;
         return true;
     }
@@ -183,7 +183,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<uint16_t>::deserializeJson(uint16_t& itemRef, json& jsonF, const uint16_t& defaultValue) {
+    inline bool Serializable<uint16_t>::deserializeJson(uint16_t& itemRef, const json& jsonF, const uint16_t& defaultValue) {
         itemRef = jsonF.is_number_integer() ? jsonF.get<uint16_t>() : defaultValue;
         return true;
     }
@@ -195,7 +195,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<uint32_t>::deserializeJson(uint32_t& itemRef, json& jsonF, const uint32_t& defaultValue) {
+    inline bool Serializable<uint32_t>::deserializeJson(uint32_t& itemRef, const json& jsonF, const uint32_t& defaultValue) {
         itemRef = jsonF.is_number_integer() ? jsonF.get<uint32_t>() : defaultValue;
         return true;
     }
@@ -207,7 +207,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<uint64_t>::deserializeJson(uint64_t& itemRef, json& jsonF, const uint64_t& defaultValue) {
+    inline bool Serializable<uint64_t>::deserializeJson(uint64_t& itemRef, const json& jsonF, const uint64_t& defaultValue) {
         itemRef = jsonF.is_number_integer() ? jsonF.get<uint64_t>() : defaultValue;
         return true;
     }
@@ -219,7 +219,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<int8_t>::deserializeJson(int8_t& itemRef, json& jsonF, const int8_t& defaultValue) {
+    inline bool Serializable<int8_t>::deserializeJson(int8_t& itemRef, const json& jsonF, const int8_t& defaultValue) {
         itemRef = jsonF.is_number_integer() ? jsonF.get<int8_t>() : defaultValue;
         return true;
     }
@@ -231,7 +231,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<int16_t>::deserializeJson(int16_t& itemRef, json& jsonF, const int16_t& defaultValue) {
+    inline bool Serializable<int16_t>::deserializeJson(int16_t& itemRef, const json& jsonF, const int16_t& defaultValue) {
         itemRef = jsonF.is_number_integer() ? jsonF.get<int16_t>() : defaultValue;
         return true;
     }
@@ -243,7 +243,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<int32_t>::deserializeJson(int32_t& itemRef, json& jsonF, const int32_t& defaultValue) {
+    inline bool Serializable<int32_t>::deserializeJson(int32_t& itemRef, const json& jsonF, const int32_t& defaultValue) {
         itemRef = jsonF.is_number_integer() ? jsonF.get<int32_t>() : defaultValue;
         return true;
     }
@@ -255,7 +255,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<int64_t>::deserializeJson(int64_t& itemRef, json& jsonF, const int64_t& defaultValue) {
+    inline bool Serializable<int64_t>::deserializeJson(int64_t& itemRef, const json& jsonF, const int64_t& defaultValue) {
         itemRef = jsonF.is_number_integer() ? jsonF.get<int64_t>() : defaultValue;
         return true;
     }
@@ -267,7 +267,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<bool>::deserializeJson(bool& itemRef, json& jsonF, const bool& defaultValue) {
+    inline bool Serializable<bool>::deserializeJson(bool& itemRef, const json& jsonF, const bool& defaultValue) {
         itemRef = jsonF.is_boolean() ? jsonF.get<bool>() : defaultValue;
         return true;
     }
@@ -279,7 +279,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<std::string>::deserializeJson(std::string& itemRef, json& jsonF, const std::string& defaultValue) {
+    inline bool Serializable<std::string>::deserializeJson(std::string& itemRef, const json& jsonF, const std::string& defaultValue) {
         itemRef = jsonF.is_string() ? jsonF.get<std::string>() : defaultValue;
         return true;
     }
@@ -303,7 +303,7 @@ namespace JEngine {
     }
 
     template<>
-    inline bool Serializable<std::wstring>::deserializeJson(std::wstring& itemRef, json& jsonF, const std::wstring& defaultValue) {
+    inline bool Serializable<std::wstring>::deserializeJson(std::wstring& itemRef, const json& jsonF, const std::wstring& defaultValue) {
         itemRef = jsonF.is_string() ? jsonF.get<std::wstring>() : defaultValue;
         return true;
     }

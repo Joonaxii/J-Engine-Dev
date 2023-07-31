@@ -22,9 +22,9 @@ namespace JEngine {
     }
 
     template<>
-    inline static IAssetSerializer<Shader>& IAssetSerializer<Shader>::getSerializer() {
+    inline static IAssetSerializer<Shader>* IAssetSerializer<Shader>::getSerializer() {
         static ShaderSerializer serializer{};
-        return serializer;
+        return &serializer;
     }
 
     template<>

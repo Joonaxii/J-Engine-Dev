@@ -178,7 +178,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<LayerMask>::deserializeJson(LayerMask& itemRef, json& jsonF, const LayerMask& defaultValue) {
+    inline bool Serializable<LayerMask>::deserializeJson(LayerMask& itemRef, const json& jsonF, const LayerMask& defaultValue) {
         itemRef._value = jsonF.is_number_integer() ? jsonF.get<uint32_t>() : defaultValue._value;
         return true;
     }

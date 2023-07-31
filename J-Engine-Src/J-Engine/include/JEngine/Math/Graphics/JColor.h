@@ -128,7 +128,7 @@ namespace YAML {
 //JSON
 namespace JEngine {
     template<>
-    inline bool Serializable<JColor>::deserializeJson(JColor& itemRef, json& jsonF, const JColor& defaultValue) {
+    inline bool Serializable<JColor>::deserializeJson(JColor& itemRef, const json& jsonF, const JColor& defaultValue) {
         Serialization::deserialize(itemRef.r, jsonF["r"], defaultValue.r);
         Serialization::deserialize(itemRef.g, jsonF["g"], defaultValue.g);
         Serialization::deserialize(itemRef.b, jsonF["b"], defaultValue.b);
