@@ -14,8 +14,8 @@ add_subdirectory("ext/zlib")
 add_subdirectory("ext/spdlog")
 add_subdirectory("ext/nlohmann/json")
 
-set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 add_compile_definitions(GLEW_STATIC)
@@ -137,6 +137,15 @@ set(JENGINE_MATH_GFX_SRC
 	
 	"include/JEngine/Math/Graphics/JColor565.h"
 	"src/JEngine/Math/Graphics/JColor565.cpp"
+	
+	"include/JEngine/Math/Graphics/JColor4444.h"
+	"src/JEngine/Math/Graphics/JColor4444.cpp"
+	
+	"include/JEngine/Math/Graphics/JColor48.h"
+	"src/JEngine/Math/Graphics/JColor48.cpp"
+	
+	"include/JEngine/Math/Graphics/JColor64.h"
+	"src/JEngine/Math/Graphics/JColor64.cpp"
 )
 source_group("JEngine/Math/Graphics" FILES ${JENGINE_MATH_GFX_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_MATH_GFX_SRC})

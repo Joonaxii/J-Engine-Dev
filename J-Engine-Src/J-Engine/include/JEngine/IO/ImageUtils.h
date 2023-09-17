@@ -28,6 +28,9 @@ namespace JEngine {
         R8,
         RGB24,
         RGBA32,
+        RGBA4444,
+        RGB48,
+        RGBA64,
         Indexed8,
         Indexed16,
     };
@@ -77,28 +80,165 @@ namespace JEngine {
 
     size_t calculateTextureSize(int32_t width, int32_t height, TextureFormat format, int32_t paletteSize);
 
+    constexpr uint8_t multUI8(uint32_t a, uint32_t b) {
+        return uint8_t((a * b * 0x10101U + 0x800000U) >> 24);
+    }
+
+    inline uint8_t divUI8(int32_t a, int32_t b) {
+        static bool init{ false };
+        static uint8_t LUT[256 * 256]{ 0 };
+        if (!init) {
+            for (int32_t i = 0; i < 256; i++) {
+                for (int32_t j = 0; j < 256; j++) {
+                    LUT[i | (j << 8)] = uint8_t(j < 1 ? 0xFF : (i / float(j)) * 255.0f);
+                }
+            }
+            init = true;
+        }
+        return LUT[(a & 0xFF) | ((b & 0xFF) << 8)];
+    }
+
+    uint8_t remapUI16ToUI8(uint16_t value);
+    uint8_t remapUI8ToUI4(uint8_t value) {
+        static bool init{ false };
+        static uint8_t MAP[256]{};
+        if (!init) {
+            for (size_t i = 0; i < 256; i++)   {
+                MAP[i] = (i * 15) / 255;
+            }
+            init = true;
+        }
+        return MAP[value];
+    }
+
+    inline uint8_t remapUI4ToUI8(uint8_t value) {
+        static uint8_t LUT[16]{
+            0,
+            (1 * 255) / 15,
+            (2 * 255) / 15,
+            (3 * 255) / 15,
+            (4 * 255) / 15,
+            (5 * 255) / 15,
+            (6 * 255) / 15,
+            (7 * 255) / 15,
+            (8 * 255) / 15,
+            (9 * 255) / 15,
+            (10 * 255) / 15,
+            (11 * 255) / 15,
+            (12 * 255) / 15,
+            (13 * 255) / 15,
+            (14 * 255) / 15,
+            (15 * 255) / 15,
+        };
+        return LUT[value & 0xF];
+    }
+
     enum : uint8_t {
         IMG_FLAG_HAS_ALPHA = 0x1,
     };
 
     struct ImageData {
+    public:
         int32_t width{ 0 };
         int32_t height{ 0 };
-        FilterMode filter{FilterMode::Nearest};
         TextureFormat format{ TextureFormat::Unknown };
         int32_t paletteSize{ 0 };
         uint8_t* data{ nullptr };
-        uint8_t flags{0};
+        uint8_t flags{ 0 };
 
-        ImageData() : width(), height(), format(), paletteSize(), data(), flags(), filter(FilterMode::Nearest) {}
-        ImageData(int32_t width, int32_t height, TextureFormat format, int32_t paletteSize, uint8_t* data, uint8_t flags) : 
-            width(width), height(height), format(format), paletteSize(paletteSize), data(data), flags(flags), filter(FilterMode::Nearest) {}
+        ImageData() : width(), height(), format(), paletteSize(), data(), flags() {}
+        ImageData(int32_t width, int32_t height, TextureFormat format, int32_t paletteSize, uint8_t* data, uint8_t flags) :
+            width(width), height(height), format(format), paletteSize(paletteSize), data(data), flags(flags) {}
 
-        ImageData(int32_t width, int32_t height, TextureFormat format, int32_t paletteSize, uint8_t* data) : 
-            width(width), height(height), format(format), paletteSize(paletteSize), data(data), flags(0), filter(FilterMode::Nearest) {}
+        ImageData(int32_t width, int32_t height, TextureFormat format, int32_t paletteSize, uint8_t* data) :
+            width(width), height(height), format(format), paletteSize(paletteSize), data(data), flags(0) {}
+
+        bool isIndexed() const { return format >= TextureFormat::Indexed8 && format <= TextureFormat::Indexed16; }
+        bool hasAlpha() const {
+            switch (format) {
+                default: return false;
+
+                case TextureFormat::Indexed8:
+                case TextureFormat::Indexed16:
+                case TextureFormat::RGBA4444:
+                case TextureFormat::RGBA32:
+                case TextureFormat::RGBA64:
+                    return true;
+            }
+        }
+
+        const uint8_t* getData() const {
+            return isIndexed() ? data + (paletteSize * 4) : data;
+        }
+
+        uint8_t* getData() {
+            return isIndexed() ? data + (paletteSize * 4) : data;
+        }
+
+        size_t getSize() const {
+            size_t required = width * height;
+            required *= (getBitsPerPixel(format) >> 3);
+            if (isIndexed()) {
+                required += paletteSize * sizeof(JColor32);
+            }
+            return required;
+        }
+
+        bool doAllocate() {
+            size_t required = getSize();
+            if (data) {
+                if (required <= _bufferSize) { return true; }
+                void* reloc = realloc(data, required);
+                if (!reloc) { return false; }
+                data = reinterpret_cast<uint8_t*>(reloc);
+            }
+            else
+            {
+                data = reinterpret_cast<uint8_t*>(malloc(required));
+            }
+
+            _bufferSize = required;
+            if (data) {
+                memset(data, 0, required);
+            }
+            return data != nullptr;
+        }
+
+        bool doAllocate(size_t size, bool clear = true) {
+
+            size_t required = size;
+            if (data) {
+                if (required <= _bufferSize)
+                {
+                    if (clear) {
+                        memset(data, 0, size);
+                    }
+                    return true;
+                }
+
+                void* reloc = realloc(data, required);
+                if (!reloc) { return false; }
+                data = reinterpret_cast<uint8_t*>(reloc);
+                _bufferSize = required;
+            }
+            else
+            {
+                data = reinterpret_cast<uint8_t*>(malloc(required));
+                _bufferSize = required;
+            }
+
+            if (data && clear) {
+                memset(data, 0, required);
+            }
+            return data != nullptr;
+        }
+
+        void resize(int32_t newWidth, int32_t newHeight, uint8_t* buffer = nullptr);
 
         void replaceData(uint8_t* newData, bool destroy);
         void clear(bool destroy);
+    private:
+        size_t _bufferSize{ 0 };
     };
 
     struct ImageBuffers {

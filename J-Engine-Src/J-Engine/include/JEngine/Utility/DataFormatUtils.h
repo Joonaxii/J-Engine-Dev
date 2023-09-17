@@ -8,6 +8,7 @@
 
 namespace JEngine {
     enum DataFormat : uint8_t {
+        FMT_UNKNOWN = 0xFF,
         FMT_BINARY,
         FMT_TEXT,
 
@@ -19,6 +20,7 @@ namespace JEngine {
         //Texture formats
         FMT_PNG,
         FMT_BMP,
+        FMT_DDS,
         FMT_JPEG,
         FMT_GIF87,
         FMT_GIF89,
@@ -93,19 +95,19 @@ namespace JEngine {
         FMT_F_ANALYSIS_COMPLEX = 2 << FMT_F_ANALYZE_SHIFT,
     };
 
-    const char* getDataFormatStr(DataFormat format);
-    const FormatInfo* getDataFormats();
-    size_t getLargestFormat();
-    DataFormat getDataFormat(const Stream& stream, int64_t size = -1, DataFormatFlags flags = DataFormatFlags(0));
-    DataFormat getDataFormat(const void* data, size_t size, DataFormatFlags flags = DataFormatFlags(0), bool containsData = false);
+    namespace Format {
+        const char* getFormatStr(DataFormat format);
+        const FormatInfo* getFormats();
+        size_t getLargest();
+        DataFormat getFormat(const Stream& stream, int64_t size = -1, DataFormatFlags flags = DataFormatFlags(0));
+        DataFormat getFormat(const void* data, size_t size, DataFormatFlags flags = DataFormatFlags(0), bool containsData = false);
+        size_t getHeaderSize(DataFormat fmt);
 
-    size_t getDataHeaderSize(DataFormat fmt);
+        void writeHeader(const Stream& stream, DataFormat format);
 
-    void writeHeader(const Stream& stream, DataFormat format);
-
-    bool formatMatch(const Stream& stream, DataFormat format);
-    bool formatMatch(const void* data, size_t size, DataFormat format);
-
+        bool formatMatch(const Stream& stream, DataFormat format);
+        bool formatMatch(const void* data, size_t size, DataFormat format);
+    };
     template<DataFormat format>
     struct DataHeader {
         static constexpr uint64_t Value = 0;
@@ -127,6 +129,7 @@ namespace JEngine {
 
             "PNG",
             "BMP",
+            "DDS",
             "JPEG",
             "GIF87",
             "GIF89",
@@ -162,7 +165,6 @@ namespace JEngine {
         if (index < 2 || index >= Count || !names) { return true; }
         return isNoName(names[index]);
     }
-
 }
 
 #define S_TO_UINT16(val) uint16_t(val[0] | (val[1] << 8))

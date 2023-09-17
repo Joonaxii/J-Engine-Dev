@@ -317,6 +317,18 @@ namespace JEngine {
         }
     }
 
+    uint8_t remapUI16ToUI8(uint16_t value) {
+        static uint8_t REMAPPED[UINT16_MAX + 1]{ 0 };
+        static bool init{ false };
+        if (!init) {
+            for (size_t i = 0; i <= UINT16_MAX; i++) {
+                REMAPPED[i] = uint8_t(i / 256);
+            }
+            init = true;
+        }
+        return REMAPPED[value];
+    }
+
     bool tryBuildPalette(const uint8_t* pixelData, int32_t start, int32_t length, int32_t& colors, int32_t bpp, uint8_t* newTexture, int32_t alphaClip) {
         JColor32 buffer{ 0,0,0,0xFF };
 
@@ -388,6 +400,48 @@ namespace JEngine {
             _buffers[i].clear((_flags & j));
         }
     }
+
+    void ImageData::resize(int32_t newWidth, int32_t newHeight, uint8_t* buffer) {
+        if ((newWidth == width && newHeight == height) || ((newHeight & newWidth) & 0x7FFFFFFF) == 0 || !data) { return; }
+
+        int32_t oldW = width;
+        int32_t oldH = height;
+
+        int32_t bpp = (getBitsPerPixel(format) >> 3);
+        int32_t resoNew = newWidth * newHeight;
+        int32_t resoOld = width * height;
+
+        bool newBuf = buffer == nullptr;
+
+        size_t offset = isIndexed() ? paletteSize * sizeof(JColor32) : 0;
+        uint8_t* selfBuf = data + offset;
+
+        if (newBuf) {
+            buffer = reinterpret_cast<uint8_t*>(_malloca(resoOld * bpp));
+            if (!buffer) { return; }
+        }
+        memcpy(buffer, selfBuf, resoOld * bpp);
+
+        width = newWidth;
+        height = newHeight;
+
+        if (resoNew > resoOld) { doAllocate(); }
+
+        int32_t off = newWidth * bpp;
+        int32_t offOld = oldW * bpp;
+        for (size_t y = 0, yP = 0; y < newHeight; y++, yP += off) {
+            int32_t srY = Math::lerp<int32_t>(0, (oldH - 1), y / float(newHeight - 1.0f)) * offOld;
+            for (size_t x = 0, xP = yP; x < newWidth; x++, xP += bpp) {
+                int32_t srX = Math::lerp<int32_t>(0, (oldW - 1), x / float(newWidth - 1.0f)) * bpp;
+                memcpy(data + xP, buffer + srY + srX, bpp);
+            }
+        }
+
+        if (newBuf) {
+            _freea(buffer);
+        }
+    }
+
 
     void ImageData::replaceData(uint8_t* newData, bool destroy) {
         if (destroy && data) {

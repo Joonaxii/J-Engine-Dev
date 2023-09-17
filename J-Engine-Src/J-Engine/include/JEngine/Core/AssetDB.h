@@ -12,7 +12,7 @@ namespace JEngine {
             RT_GAME_ADD     = 0x04,
             RT_GAME_RUNTIME = 0x08,
 
-            RT_ANY_GAME     = ~RT_EDITOR,
+            RT_ANY_GAME     = RT_GAME | RT_GAME_ADD | RT_GAME_RUNTIME,
             RT_ANY          = 0xFF,
         };
 
