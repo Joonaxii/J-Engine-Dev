@@ -1,6 +1,6 @@
 #pragma once
 #include <JEngine/Math/Units/JVector.h>
-#include <JEngine/Helpers/EnumMacros.h>
+#include <JEngine/Utility/EnumUtils.h>
 #include <JEngine/Math/Math.h>
 #include <JEngine/IO/Serialization/Serializable.h>
 
@@ -381,13 +381,11 @@ namespace JEngine {
 
             void update(bool state, bool toggled, float value, uint64_t tick, bool autoToggle = false) {
                 _axisVal = value;
-
-                const bool down = isDown();
                 const bool held = isHeld();
 
                 _flags = 0;
 
-                if (down && !state) { _flags |= KEY_UP; }
+                if (held && !state) { _flags |= KEY_UP; }
                 if (!held && state)
                 {
                     _flags |= KEY_DOWN;
@@ -410,77 +408,238 @@ namespace JEngine {
             float _axisVal;
         };
 
-        static void init();
 
-        static void clear();
+#pragma region Static Methods
+private:
+        template<size_t instance = 0>
+        static Input& getInstance() {
+            static Input inputs;
+            return inputs;
+        }
 
-        static void update(bool hasFocus);
-        static void update(const MouseData& mouseData, bool hasFocus);
+        template<size_t instance = 0>
+        static const Input& getInstance_C() {
+            return const_cast<const Input&>(getInstance<instance>());
+        }
+public:
+        template<size_t instance>
+        static void init() {
+            Input::getInstance<instance>().INTERNAL_init();
+        }
 
-        static InputState getInputState(DeviceIndex device, InputCode code);
+        template<size_t instance>
+        static void update(bool hasFocus) {
+            Input::getInstance<instance>().INTERNAL_update(hasFocus);
+        }
 
-        static const JVector2f& getMousePosition();
-        static const JVector2f& getMouseWheel();
+        template<size_t instance>
+        static void update(const MouseData& mouseData, bool hasFocus) {
+            Input::getInstance<instance>().INTERNAL_update(mouseData, hasFocus);
+        }
 
-        static const JVector2f& getMousePositionDelta();
-        static const JVector2f& getMouseWheelDelta();
+        template<size_t instance>
+        static void clear() {
+            Input::getInstance<instance>().INTERNAL_clear();
+        }
 
-        static uint64_t addDeviceConnectionCB(const Action<DeviceIndex, bool>::Func& func);
-        static void removeDeviceConnectionCB(uint64_t id);
+        template<size_t instance>
+        static InputState getInputState(DeviceIndex device, InputCode code) {
+            return Input::getInstance_C<instance>().INTERNAL_getInputState(device, code);
+        }
 
-        static Gamepad getGamepad(DeviceIndex device);
-        static Gamepad getGamepad(int32_t device);
-        static void getGamepads(DeviceIndex devices, Gamepad* pads);
+        template<size_t instance>
+        static const JVector2f& getMousePosition() {
+            return Input::getInstance_C<instance>().getMousePosition();
+        }
+        template<size_t instance>
+        static const JVector2f& getMouseWheel() {
+            return Input::getInstance_C<instance>().INTERNAL_getMouseWheel();
+        }
 
-        static void setDeadZone(DeviceIndex devices, const float deadZone);
-        static void setDeadZones(DeviceIndex devices, const float* deadZones);
+        template<size_t instance>
+        static const JVector2f& getMousePositionDelta() {
+            return Input::getInstance_C<instance>().INTERNAL_getMousePositionDelta();
+        }
+        template<size_t instance>
+        static const JVector2f& getMouseWheelDelta() {
+            return Input::getInstance_C<instance>().INTERNAL_getMouseWheelDelta();
+        }
+        template<size_t instance>
+        static uint64_t addDeviceConnectionCB(const Action<DeviceIndex, bool>::Func& func) {
+            return Input::getInstance<instance>().INTERNAL_addDeviceConnectionCB(func);
+        }
+        template<size_t instance>
+        static void removeDeviceConnectionCB(uint64_t id) {
+            Input::getInstance<instance>().INTERNAL_removeDeviceConnectionCB(id);
+        }
 
-        static float getDeadZone(DeviceIndex device);
-        static void getDeadZones(DeviceIndex devices, float* deadZones);
+        template<size_t instance>
+        static Gamepad getGamepad(DeviceIndex device) {
+            return Input::getInstance<instance>().INTERNAL_getGamepad(device);
+        }
+        template<size_t instance>
+        static Gamepad getGamepad(int32_t device) {
+            return Input::getInstance_C<instance>().INTERNAL_getGamepad(device);
+        }
+        template<size_t instance>
+        static void getGamepads(DeviceIndex devices, Gamepad* pads) {
+            Input::getInstance_C<instance>().INTERNAL_getGamepads(devices, pads);
+        }
 
-        static void vibrateDevices(DeviceIndex devices, double left, double right);
-        static void vibrateDevices(DeviceIndex devices, uint16_t left, uint16_t right);
+        template<size_t instance>
+        static void setDeadZone(DeviceIndex device, float deadZone) {
+            Input::getInstance<instance>().INTERNAL_setDeadZone(device, deadZone);
+        }
+        template<size_t instance>
+        static void setDeadZones(DeviceIndex devices, const float* deadZones) {
+            Input::getInstance<instance>().INTERNAL_getDeadZones(devices, deadZones);
+        }
 
-        static void vibrateDevice(int32_t device, double left, double right);
-        static void vibrateDevice(int32_t device, uint16_t left, uint16_t right);
+        template<size_t instance>
+        static float getDeadZone(DeviceIndex device) {
+            Input::getInstance_C<instance>().INTERNAL_getDeadZone(device);
+        }
+        template<size_t instance>
+        static void getDeadZones(DeviceIndex devices, float* deadZones) {
+            Input::getInstance_C<instance>().INTERNAL_getDeadZones(devices, deadZones);
+        }
 
-        static bool isDown(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any);
-        static bool isHeld(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any);
-        static bool isUp(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any);
-        static bool isToggled(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any);
+        template<size_t instance>
+        static void vibrateDevices(DeviceIndex devices, double left, double right) {
+            Input::getInstance_C<instance>().INTERNAL_vibrateDevices(devices, left, right);
+        }
+        template<size_t instance>
+        static void vibrateDevices(DeviceIndex devices, uint16_t left, uint16_t right) {
+            Input::getInstance_C<instance>().INTERNAL_vibrateDevices(devices, left, right);
+        }
 
-        static bool anyDown(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
-        static bool anyHeld(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
-        static bool anyUp(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
-        static bool anyToggled(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
+        template<size_t instance>
+        static void vibrateDevice(int32_t device, double left, double right) {
+            Input::getInstance_C<instance>().INTERNAL_vibrateDevice(device, left, right);
+        }
+        template<size_t instance>
+        static void vibrateDevice(int32_t device, uint16_t left, uint16_t right) {
+            Input::getInstance_C<instance>().INTERNAL_vibrateDevice(device, left, right);
+        }
 
-        static float getAxis(InputCode neg, InputCode pos, DeviceIndex devices = DeviceIndex::DEV_Any);
+        template<size_t instance>
+        static bool isDown(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any) {
+            return Input::getInstance_C<instance>().INTERNAL_isDown(code, index);
+        }
+        template<size_t instance>
+        static bool isHeld(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any) {
+            return Input::getInstance_C<instance>().INTERNAL_isHeld(code, index);
+        }
+        template<size_t instance>
+        static bool isUp(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any) {
+            return Input::getInstance_C<instance>().INTERNAL_isUp(code, index);
+        }
+        template<size_t instance>
+        static bool isToggled(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any) {
+            return Input::getInstance_C<instance>().INTERNAL_isToggled(code, index);
+        }
+
+        template<size_t instance>
+        static bool anyDown(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0) {
+            return Input::getInstance_C<instance>().INTERNAL_anyDown(devices, result, ignored, ignoredLength);
+        }
+        template<size_t instance>
+        static bool anyHeld(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0) {
+            return Input::getInstance_C<instance>().INTERNAL_anyHeld(devices, result, ignored, ignoredLength);
+        }
+        template<size_t instance>
+        static bool anyUp(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0) {
+            return Input::getInstance_C<instance>().INTERNAL_anyUp(devices, result, ignored, ignoredLength);
+        }
+        template<size_t instance>
+        static bool anyToggled(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0) {
+            return Input::getInstance_C<instance>().INTERNAL_anyToggled(devices, result, ignored, ignoredLength);
+        }
+
+        template<size_t instance>
+        static float getAxis(InputCode neg, InputCode pos, DeviceIndex devices = DeviceIndex::DEV_Any) {
+            return Input::getInstance_C<instance>().INTERNAL_getAxis(neg, pos, devices);
+        }
+        template<size_t instance>
         static JVector2f getVector(
             InputCode negX, InputCode posX,
-            InputCode negY, InputCode posY, DeviceIndex devices = DeviceIndex::DEV_Any);
+            InputCode negY, InputCode posY, DeviceIndex devices = DeviceIndex::DEV_Any) {
+            return Input::getInstance_C<instance>().INTERNAL_getVector(negX, posX, negY, posY, devices);
+        }
+
+#pragma endregion
 
     private:
-        static bool HAS_FOCUS;
+        bool HAS_FOCUS;
         static constexpr uint8_t KEY_DOWN = 0x1;
         static constexpr uint8_t KEY_HELD = 0x2;
         static constexpr uint8_t KEY_UP = 0x4;
         static constexpr uint8_t KEY_TOGGLE = 0x8;
 
-        static float _deadZones[MAX_CONTROLLERS + 1];
-        static InputState _inputs[KEYBOARD_INPUTS + CONTROLLER_INPUTS * MAX_CONTROLLERS];
-        static Gamepad _gamePads[MAX_CONTROLLERS];
-        static uint64_t _frame;
-        static MouseData _mData;
-        static MouseData _mDelta;
+        float _deadZones[MAX_CONTROLLERS + 1];
+        InputState _inputs[KEYBOARD_INPUTS + CONTROLLER_INPUTS * MAX_CONTROLLERS];
+        Gamepad _gamePads[MAX_CONTROLLERS];
+        uint64_t _frame;
+        MouseData _mData;
+        MouseData _mDelta;
 
-        static Action<const DeviceIndex, const bool> _onDeviceConnectionChange;
+        Action<const DeviceIndex, const bool> _onDeviceConnectionChange;
 
-        static bool isKeyDown(const InputCode code);
-        static int32_t getInputStates(InputCode code, DeviceIndex devices, InputState* states);
+        Input();
+        int32_t getInputStates(InputCode code, DeviceIndex devices, InputState* states) const;
 
-        static void updateMouseData(const MouseData& mData);
+        void updateMouseData(const MouseData& mData);
 
-        static bool any(int32_t mode, DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0);
+        bool any(int32_t mode, DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0) const;
+
+
+        void INTERNAL_init();
+        void INTERNAL_clear();
+
+        void INTERNAL_update(bool hasFocus);
+        void INTERNAL_update(const MouseData& mouseData, bool hasFocus);
+
+        InputState INTERNAL_getInputState(DeviceIndex device, InputCode code) const;
+
+        const JVector2f& INTERNAL_getMousePosition() const;
+        const JVector2f& INTERNAL_getMouseWheel() const;
+
+        const JVector2f& INTERNAL_getMousePositionDelta() const;
+        const JVector2f& INTERNAL_getMouseWheelDelta() const;
+
+        uint64_t INTERNAL_addDeviceConnectionCB(const Action<DeviceIndex, bool>::Func& func);
+        void INTERNAL_removeDeviceConnectionCB(uint64_t id);
+
+        Gamepad INTERNAL_getGamepad(DeviceIndex device) const;
+        Gamepad INTERNAL_getGamepad(int32_t device) const;
+        void INTERNAL_getGamepads(DeviceIndex devices, Gamepad* pads) const;
+
+        void INTERNAL_setDeadZone(DeviceIndex devices, float deadZone);
+        void INTERNAL_setDeadZones(DeviceIndex devices, const float* deadZones);
+
+        float INTERNAL_getDeadZone(DeviceIndex device) const;
+        void INTERNAL_getDeadZones(DeviceIndex devices, float* deadZones) const;
+
+        void INTERNAL_vibrateDevices(DeviceIndex devices, double left, double right) const;
+        void INTERNAL_vibrateDevices(DeviceIndex devices, uint16_t left, uint16_t right) const;
+
+        void INTERNAL_vibrateDevice(int32_t device, double left, double right) const;
+        void INTERNAL_vibrateDevice(int32_t device, uint16_t left, uint16_t right) const;
+
+        bool INTERNAL_isDown(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any) const;
+        bool INTERNAL_isHeld(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any) const;
+        bool INTERNAL_isUp(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any) const;
+        bool INTERNAL_isToggled(InputCode code, DeviceIndex index = DeviceIndex::DEV_Any) const;
+
+        bool INTERNAL_anyDown(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0) const;
+        bool INTERNAL_anyHeld(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0) const;
+        bool INTERNAL_anyUp(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0) const;
+        bool INTERNAL_anyToggled(DeviceIndex devices, InputResult& result, const InputCode* ignored = nullptr, size_t ignoredLength = 0) const;
+
+        float INTERNAL_getAxis(InputCode neg, InputCode pos, DeviceIndex devices = DeviceIndex::DEV_Any) const;
+        JVector2f INTERNAL_getVector(
+            InputCode negX, InputCode posX,
+            InputCode negY, InputCode posY, DeviceIndex devices = DeviceIndex::DEV_Any) const;
     };
 }
 

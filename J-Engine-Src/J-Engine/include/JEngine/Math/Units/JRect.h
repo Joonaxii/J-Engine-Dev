@@ -99,8 +99,8 @@ namespace YAML {
 
         static bool decode(const Node& node, JEngine::JRect<T>& rhs) {
             if (!node.IsSequence() || node.size() < 2) { return false; }
-            rhs._min = node[0].as<JEngine::JRect<T>>();
-            rhs._max = node[1].as<JEngine::JRect<T>>();
+            rhs._min = node[0].as<JEngine::JVector2<T>>();
+            rhs._max = node[1].as<JEngine::JVector2<T>>();
             return true;
         }
     };

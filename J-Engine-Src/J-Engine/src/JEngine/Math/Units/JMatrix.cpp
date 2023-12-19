@@ -1,52 +1,34 @@
 #include <JEngine/Math/Units/JMatrix.h>
 #include <JEngine/Math/Math.h>
+#include <xmmintrin.h>
 
 namespace JEngine {
-    const JMatrix4f JMatrix4f::Zero = JMatrix4f({
-        0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.0f });
-
-    const JMatrix4f JMatrix4f::Identity = JMatrix4f({
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1 });
-
-    JMatrix4f::JMatrix4f() : _mat{ 0.0f } {
-        _mat[0] = 1.0f;
-        _mat[5] = 1.0f;
-        _mat[10] = 1.0f;
-        _mat[15] = 1.0f;
-    }
-
-    JMatrix4f::JMatrix4f(const float* input) {
-        memcpy(_mat, input, 16 * sizeof(float));
-    }
-
-    JMatrix4f::JMatrix4f(const std::array<float, 16>& input) {
-        memcpy(_mat, input.data(), 16 * sizeof(float));
-    }
-
-    JMatrix4f::JMatrix4f(const JVector2f& position, const float rotation, const JVector2f& scale) : JMatrix4f(JMatrix4f::Identity) {
+    JMatrix4f::JMatrix4f(const JVector2f& position, float rotation, const JVector2f& scale) : JMatrix4f(1.0f) {
         this->translate(position);
         this->rotate(rotation);
         this->scale(scale);
     }
 
-    JMatrix4f& JMatrix4f::setTRS(const JVector2f& position, const float rotation, const JVector2f& scale) {
-        *this = JMatrix4f(JMatrix4f::Identity);
-
+    JMatrix4f::JMatrix4f(const JVector3f& position, const JVector3f& rotation, const JVector3f& scale) : JMatrix4f(1.0f) {
         this->translate(position);
         this->rotate(rotation);
         this->scale(scale);
+    }
 
+    JMatrix4f& JMatrix4f::setTRS(const JVector2f& position, float rotation, const JVector2f& scale) {
+        *this = JMatrix4f(1.0f);
+        this->translate(position);
+        this->rotate(rotation);
+        this->scale(scale);
         return *this;
     }
 
-    const float* JMatrix4f::getMatrix() const {
-        return _mat;
+    JMatrix4f& JMatrix4f::setTRS(const JVector3f& position, const JVector3f& rotation, const JVector3f& scale) {
+        *this = JMatrix4f(1.0f);
+        this->translate(position);
+        this->rotate(rotation);
+        this->scale(scale);
+        return *this;
     }
 
     JMatrix4f JMatrix4f::getInverse() const {
@@ -68,68 +50,32 @@ namespace JEngine {
                 -(_mat[7] * _mat[0] - _mat[3] * _mat[4]) * mult,
                 (_mat[5] * _mat[0] - _mat[1] * _mat[4]) * mult);
         }
-        return Identity;
-
+        return JMatrix4f(1.0f);
     }
 
-    JMatrix4f::JMatrix4f(
-        const float a00, const float a01, const float a02,
-        const float a10, const float a11, const float a12,
-        const float a20, const float a21, const float a22) {
-        _mat[0] = a00; _mat[4] = a01; _mat[8] = 0.f; _mat[12] = a02;
-        _mat[1] = a10; _mat[5] = a11; _mat[9] = 0.f; _mat[13] = a12;
-        _mat[2] = 0.f; _mat[6] = 0.f; _mat[10] = 1.f; _mat[14] = 0.f;
-        _mat[3] = a20; _mat[7] = a21; _mat[11] = 0.f; _mat[15] = a22;
+    float& JMatrix4f::operator[](int32_t i) {
+        JENGINE_CORE_ASSERT(i > -1 && i < 16 && "Index out of range of matrix!");
+        return _mat[i];
     }
-
-    float& JMatrix4f::operator[](const int32_t i) {
+    const float& JMatrix4f::operator[](int32_t i) const {
         JENGINE_CORE_ASSERT(i > -1 && i < 16 && "Index out of range of matrix!");
         return _mat[i];
     }
 
-    const float& JMatrix4f::operator[](const int32_t i) const {
-        JENGINE_CORE_ASSERT(i > -1 && i < 16 && "Index out of range of matrix!");
-        return _mat[i];
-    }
-
-    Span<float> JMatrix4f::asSpan() {
-        return Span<float>(_mat, 16);
-    }
-
-    const ConstSpan<float> JMatrix4f::asConstSpan() const {
-        return ConstSpan<float>(_mat, 16);
-    }
-
-    float& JMatrix4f::at(const int32_t column, const int32_t row) {
+    float& JMatrix4f::at(int32_t column, int32_t row) {
         JENGINE_CORE_ASSERT(column > -1 && column < 4 && "Column outside the range of matrix!");
         JENGINE_CORE_ASSERT(row > -1 && row < 4 && "Row outside the range of matrix!");
-        return (*this)[row * 4 + column];
+        return _mat[row * 4 + column];
     }
-
-    const float& JMatrix4f::at(const int32_t column, const int32_t row) const {
+    const float& JMatrix4f::at(int32_t column, int32_t row) const {
         JENGINE_CORE_ASSERT(column > -1 && column < 4 && "Column outside the range of matrix!");
         JENGINE_CORE_ASSERT(row > -1 && row < 4 && "Row outside the range of matrix!");
-        return (*this)[row * 4 + column];
-    }
-
-    const bool operator==(const JMatrix4f& lhs, const JMatrix4f& rhs) {
-        auto matLhs = lhs.getMatrix();
-        auto matRhs = rhs.getMatrix();
-        for (size_t i = 0; i < 16; i++)
-        {
-            if (matLhs[i] != matRhs[i]) { return false; }
-        }
-        return true;
-    }
-
-    const bool operator!=(const JMatrix4f& lhs, const JMatrix4f& rhs) {
-        return !(lhs == rhs);
+        return _mat[row * 4 + column];
     }
 
     const JVector2f operator*(const JMatrix4f& lhs, const JVector2f& rhs) {
         return lhs.transformPoint(rhs);
     }
-
     const JMatrix4f operator*(const JMatrix4f& lhs, const JMatrix4f& rhs) {
         return JMatrix4f(lhs).combine(rhs);
     }
@@ -139,39 +85,82 @@ namespace JEngine {
     }
 
     JMatrix4f& JMatrix4f::combine(const JMatrix4f& matrix) {
-        const float* a = _mat;
-        const float* b = matrix._mat;
+        //__m128 row1 = _mm_load_ps(matrix._mat + 0);
+        //__m128 row2 = _mm_load_ps(matrix._mat + 4);
+        //__m128 row3 = _mm_load_ps(matrix._mat + 8);
+        //__m128 row4 = _mm_load_ps(matrix._mat + 12);
+        //for (int i = 0, j = 0; i < 4; i++, j += 4) {
+        //    __m128 brod1 = _mm_set1_ps(_mat[j + 0]);
+        //    __m128 brod2 = _mm_set1_ps(_mat[j + 1]);
+        //    __m128 brod3 = _mm_set1_ps(_mat[j + 2]);
+        //    __m128 brod4 = _mm_set1_ps(_mat[j + 3]);
+        //    __m128 row = _mm_add_ps(
+        //        _mm_add_ps(
+        //            _mm_mul_ps(brod1, row1),
+        //            _mm_mul_ps(brod2, row2)),
+        //        _mm_add_ps(
+        //            _mm_mul_ps(brod3, row3),
+        //            _mm_mul_ps(brod4, row4)));
+        //    _mm_store_ps(&_mat[j], row);
+        //}
 
-        *this = JMatrix4f(
-            a[0] * b[0 ] + a[4] * b[1 ] + a[12] * b[3],
-            a[0] * b[4 ] + a[4] * b[5 ] + a[12] * b[7],
-            a[0] * b[12] + a[4] * b[13] + a[12] * b[15],
-            a[1] * b[0 ] + a[5] * b[1 ] + a[13] * b[3],
-            a[1] * b[4 ] + a[5] * b[5 ] + a[13] * b[7],
-            a[1] * b[12] + a[5] * b[13] + a[13] * b[15],
-            a[3] * b[0 ] + a[7] * b[1 ] + a[15] * b[3],
-            a[3] * b[4 ] + a[7] * b[5 ] + a[15] * b[7],
-            a[3] * b[12] + a[7] * b[13] + a[15] * b[15]);
+       const float* a = _mat;
+       const float* b = matrix._mat;
+       
+       *this = JMatrix4f(
+           a[0x0] * b[0x0] + a[0x4] * b[0x1] + a[0xC] * b[0x3],
+           a[0x0] * b[0x4] + a[0x4] * b[0x5] + a[0xC] * b[0x7],
+           a[0x0] * b[0xC] + a[0x4] * b[0xD] + a[0xC] * b[0xF],
+           a[0x1] * b[0x0] + a[0x5] * b[0x1] + a[0xD] * b[0x3],
+           a[0x1] * b[0x4] + a[0x5] * b[0x5] + a[0xD] * b[0x7],
+           a[0x1] * b[0xC] + a[0x5] * b[0xD] + a[0xD] * b[0xF],
+           a[0x3] * b[0x0] + a[0x7] * b[0x1] + a[0xF] * b[0x3],
+           a[0x3] * b[0x4] + a[0x7] * b[0x5] + a[0xF] * b[0x7],
+           a[0x3] * b[0xC] + a[0x7] * b[0xD] + a[0xF] * b[0xF]);
         return *this;
     }
 
-    JVector2f JMatrix4f::transformPoint(const float x, const float y) const {
-        return JVector2f(_mat[0] * x + _mat[4] * y + _mat[12],
-                         _mat[1] * x + _mat[5] * y + _mat[13]);
+    JVector2f JMatrix4f::transformPoint(float x, float y) const {
+        return {
+            _mat[0x0] * x + _mat[0x1] * y + _mat[0x3],
+            _mat[0x4] * x + _mat[0x5] * y + _mat[0x7]
+        };
     }
-    JVector2f JMatrix4f::transformPoint(const JVector2f vec) const {
+    JVector2f JMatrix4f::transformPoint(const JVector2f& vec) const {
         return transformPoint(vec.x, vec.y);
     }
 
-    JVector2f JMatrix4f::transformVector(const float x, const float y) const {
-        return JVector2f(_mat[0] * x + _mat[4] * y ,
-            _mat[1] * x + _mat[5] * y);
+    JVector3f JMatrix4f::transformPoint(float x, float y, float z) const {
+        return {
+             _mat[0x0] * x + _mat[0x1] * y + _mat[0x2] * z + _mat[0x3],
+             _mat[0x4] * x + _mat[0x5] * y + _mat[0x6] * z + _mat[0x7],
+             _mat[0x8] * x + _mat[0x9] * y + _mat[0xA] * z + _mat[0xB],
+        };
+    }
+    JVector3f JMatrix4f::transformPoint(const JVector3f& vec) const {
+        return transformPoint(vec.x, vec.y, vec.z);
     }
 
-    JVector2f JMatrix4f::transformVector(const JVector2f vec) const {
+    JVector2f JMatrix4f::transformVector(float x, float y) const {
+        return {
+            _mat[0x0] * x + _mat[0x1] * y,
+            _mat[0x4] * x + _mat[0x5] * y
+        };
+    }
+    JVector2f JMatrix4f::transformVector(const JVector2f& vec) const {
         return transformVector(vec.x, vec.y);
     }
-  
+
+    JVector3f JMatrix4f::transformVector(float x, float y, float z) const {
+        return {
+            _mat[0x0] * x + _mat[0x1] * y + _mat[0x2] * z,
+            _mat[0x4] * x + _mat[0x5] * y + _mat[0x6] * z,
+            _mat[0x8] * x + _mat[0x9] * y + _mat[0xA] * z
+        };
+    }
+    JVector3f JMatrix4f::transformVector(const JVector3f& vec) const {
+        return transformVector(vec.x, vec.y, vec.z);
+    }
 
     JRectf JMatrix4f::transformRect(const JVector2f& min, const JVector2f& max) const {
         const JVector2f points[4] {
@@ -193,27 +182,9 @@ namespace JEngine {
         }
         return JRectf(minO, maxO);
     }
-
     JRectf JMatrix4f::transformRect(const JRectf& rectangle) const {
         return transformRect(rectangle.getMin(), rectangle.getMax());
     }
-
-    void JMatrix4f::decompose(JVector2f& position, float& rotation, JVector2f& scale) const {
-        position.x = _mat[12];
-        position.y = _mat[13];
-
-        const float m00 = _mat[0];
-        const float m01 = _mat[1];
-
-        const float m10 = _mat[4];
-        const float m11 = _mat[5];
-
-        scale.x = Math::sign(m00) * std::sqrtf((m00 * m00) + (m01 * m01));
-        scale.y = Math::sign(m11) * std::sqrtf((m10 * m10) + (m11 * m11));
-
-        rotation = std::atan2f(m10, m11);
-    }
-
     JRectf& JMatrix4f::transformRect(JRectf& rectangle) const {
         auto& min = rectangle.getMin();
         auto& max = rectangle.getMax();
@@ -237,77 +208,104 @@ namespace JEngine {
         return rectangle.setMinMax(minO, maxO);
     }
 
-    JMatrix4f& JMatrix4f::translate(const float x, const float y) {
-        JMatrix4f translation(1, 0, x,
-                            0, 1, y,
-                            0, 0, 1);
+    JMatrix4f& JMatrix4f::translate(float x, float y) {
+        JMatrix4f translation(
+            1, 0, 0, x,
+            0, 1, 0, y,
+            0, 0, 1, 0,
+            0, 0, 0, 1);
         return combine(translation);
     }
-
     JMatrix4f& JMatrix4f::translate(const JVector2f& offset) {
         return translate(offset.x, offset.y);
     }
 
-    JMatrix4f& JMatrix4f::rotate(const float angle) {
+    JMatrix4f& JMatrix4f::translate(float x, float y, float z) {
+        JMatrix4f translation(
+            1, 0, 0, x,
+            0, 1, 0, y,
+            0, 0, 1, z,
+            0, 0, 0, 1);
+        return combine(translation);
+    }
+    JMatrix4f& JMatrix4f::translate(const JVector3f& offset) {
+        return translate(offset.x, offset.y, offset.z);
+    }
+
+    JMatrix4f& JMatrix4f::rotate(float angle) {
         const float rad = angle * DEG_2_RAD;
         const float cos = std::cos(rad);
         const float sin = std::sin(rad);
 
-        JMatrix4f rotation(cos, -sin, 0,
-                         sin, cos , 0,
-                         0  , 0   , 1);
-
+        JMatrix4f rotation(
+            cos, -sin, 0,
+            sin, cos , 0,
+            0  , 0   , 1);
         return combine(rotation);
     }
 
-    JMatrix4f& JMatrix4f::rotate(const float angle, const float centerX, const float centerY) {
-        const float rad = angle * DEG_2_RAD;
-        const float cos = std::cos(rad);
-        const float sin = std::sin(rad);
+    JMatrix4f& JMatrix4f::rotate(float x, float y, float z) {
+        float rad = x * DEG_2_RAD;
+        float cos = std::cos(rad);
+        float sin = std::sin(rad);
 
-        JMatrix4f rotation(cos, -sin, centerX * (1 - cos) + centerY * sin,
-                         sin,  cos, centerY * (1 - cos) - centerX * sin,
-                         0, 0, 1);
-        return combine(rotation);
+        JMatrix4f rotationX(
+            1, 0, 0, 0,
+            0, cos, -sin, 0,
+            0, sin, cos, 0,
+            0, 0, 0, 1);
+
+        rad = y * DEG_2_RAD;
+        cos = std::cos(rad);
+        sin = std::sin(rad);
+
+        JMatrix4f rotationY(
+            cos, 0, -sin, 0,
+            0, 1, 0, 0,
+            sin, 0, cos, 0,
+            0, 0, 0, 1);
+
+        rad = z * DEG_2_RAD;
+        cos = std::cos(rad);
+        sin = std::sin(rad);
+
+        JMatrix4f rotationZ(
+            cos, -sin, 0, 0,
+            sin, cos, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1);
+        return combine(rotationX * rotationY * rotationZ);
+    }
+    JMatrix4f& JMatrix4f::rotate(const JVector3f& eulers) {
+        return rotate(eulers.x, eulers.y, eulers.z);
     }
 
-    JMatrix4f& JMatrix4f::rotate(const float angle, const JVector2f& offset) {
-        return rotate(angle, offset.x, offset.y);
-    }
-
-    JMatrix4f& JMatrix4f::scale(const float scaleX, const float scaleY) {
-        JMatrix4f scaling(scaleX, 0,      0,
-                        0,      scaleY, 0,
-                        0,      0,      1);
+    JMatrix4f& JMatrix4f::scale(float scaleX, float scaleY) {
+        JMatrix4f scaling(
+            scaleX, 0, 0, 0,
+            0, scaleY, 0, 0,
+            0, 0, 1.0f, 0,
+            0, 0, 0, 1);
         return combine(scaling);
     }
-
     JMatrix4f& JMatrix4f::scale(const JVector2f& scale) {
         return this->scale(scale.x, scale.y);
     }
 
-    JMatrix4f& JMatrix4f::scale(const float scaleX, const float scaleY, const float centerX, const float centerY) {
-        JMatrix4f scaling(scaleX, 0,      centerX * (1 - scaleX),
-                        0,      scaleY, centerY * (1 - scaleY),
-                        0,      0,      1);
-
+    JMatrix4f& JMatrix4f::scale(float scaleX, float scaleY, float scaleZ) {
+        JMatrix4f scaling(
+            scaleX, 0, 0, 0,
+            0, scaleY, 0, 0,
+            0, 0, scaleZ, 0,
+            0, 0, 0, 1);
         return combine(scaling);
     }
-
-    JMatrix4f& JMatrix4f::scale(const float scaleX, const float scaleY, const JVector2f& center) {
-        return scale(scaleX, scaleY, center.x, center.y);
-    }
-
-    JMatrix4f& JMatrix4f::scale(const JVector2f& scale, const float centerX, const float centerY) {
-        return this->scale(scale.x, scale.y, centerX, centerY);
-    }
-
-    JMatrix4f& JMatrix4f::scale(const JVector2f& scale, const JVector2f& center) {
-        return this->scale(scale.x, scale.y, center.x, center.y);
+    JMatrix4f& JMatrix4f::scale(const JVector3f& scale) {
+        return this->scale(scale.x, scale.y, scale.z);
     }
 
     JMatrix4f JMatrix4f::ortho(const float left, const float right, const float bottom, const float top) {
-        JMatrix4f mat = JMatrix4f::Identity;
+        JMatrix4f mat(1.0f);
 
         mat.at(0, 0) = 2.0f / (right - left);
         mat.at(1, 1) = 2.0f / (top - bottom);
@@ -318,7 +316,7 @@ namespace JEngine {
     }
 
     JMatrix4f JMatrix4f::ortho(const float left, const float right, const float bottom, const float top, const float zNear, const float zFar) {
-        JMatrix4f mat = JMatrix4f::Identity;
+        JMatrix4f mat(1.0f);
 
         mat.at(0, 0) = 2.0f / (right - left);
         mat.at(1, 1) = 2.0f / (top - bottom);

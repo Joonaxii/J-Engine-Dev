@@ -3,38 +3,37 @@
 
 namespace JEngine::Helpers {
 
-
 	//Based on http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
 	bool validateUtf8(uint32_t& state, const void* data, size_t size){
-		static constexpr uint8_t utf8d[] = {
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
-			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
-			7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
-			8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
-			0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
-			0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
-			0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
-			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
-			1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
-			1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
-			1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
+		static constexpr uint8_t UTF8_TABLE[] = {
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+			7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+			8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+			0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3,
+			0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,
+			0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1,
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1,
+			1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,
+			1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1,
+			1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 		};
 
 		uint32_t type;
 
 		const uint8_t* str = reinterpret_cast<const uint8_t*>(data);
 		for (size_t i = 0; i < size; i++) {
-			type = utf8d[(uint8_t)str[i]];
-			state = utf8d[256 + state * 16 + type];
+			type = UTF8_TABLE[str[i]];
+			state = UTF8_TABLE[256 + state * 16 + type];
 			if (state == 1) { return false; }
 		}
 		return true;
 	}
-
-	size_t strIIndexOf(const std::string_view& strA, const std::string_view& strB) {
+    
+    size_t strIIndexOf(ConstSpan<char>  strA, ConstSpan<char>  strB) {
         if (strB.length() < 1) { return 0; }
         size_t c = 0;
         size_t ind = 0;
@@ -57,10 +56,7 @@ namespace JEngine::Helpers {
         return std::string::npos;
     }
 
-    bool strIEquals(const char* strA, const size_t lenA, const char* strB, const size_t lenB) {
-        return strIEquals(std::string_view(strA, lenA), std::string_view(strB, lenB));
-    }
-    bool strIEquals(const std::string_view& strA, const std::string_view& strB) {
+    bool strIEquals(ConstSpan<char>  strA, ConstSpan<char> strB) {
         if (strA.length() != strB.length()) { return false; }
         for (size_t i = 0; i < strA.length(); i++) {
             if (tolower(strA[i]) != tolower(strB[i])) { return false; }
@@ -68,10 +64,23 @@ namespace JEngine::Helpers {
         return true;
     }
 
-    bool strEquals(const char* strA, const size_t lenA, const char* strB, const size_t lenB) {
-        return strIEquals(std::string_view(strA, lenA), std::string_view(strB, lenB));
+    bool strIContains(ConstSpan<char> strA, ConstSpan<char> strB) {
+        if (strB.length() < 1) { return true; }
+
+        if (strB.length() > strA.length()) { return false; }
+        size_t inRow = 0;
+        for (size_t i = 0; i < strA.length(); i++) {
+            if (tolower(strA[i]) == tolower(strB[inRow++]))
+            {
+                if (inRow >= strB.length()) { return true; }
+                continue;
+            }
+            inRow = 0;
+        }
+        return false;
     }
-    bool strEquals(const std::string_view& strA, const std::string_view& strB) {
+
+    bool strEquals(ConstSpan<char> strA, ConstSpan<char> strB) {
         if (strA.length() != strB.length()) { return false; }
         for (size_t i = 0; i < strA.length(); i++) {
             if (strA[i] != strB[i]) { return false; }
@@ -79,7 +88,7 @@ namespace JEngine::Helpers {
         return true;
     }
 
-    bool shouldBeWide(const wchar_t* str, int32_t len)  {
+    bool shouldBeWide(const wchar_t* str, int32_t len) {
         for (size_t i = 0; i < len; i++) {
             if (str[i] > 255) { return true; }
         }
@@ -94,273 +103,236 @@ namespace JEngine::Helpers {
         return false;
     }
 
-    void formatDataSize(char* buffer, size_t size) {
-        static constexpr const char* SIZES[] {
-            "byte",
-            "KB",
-            "MB",
-            "GB",
-            "TB",
-        };
+    bool getLine(const char*& buffer, size_t& size, std::string& line) {
+        line.clear();
+        while (size > 0) {
+            char c = *buffer++;
+            size--;
+            if (c == '\n') { break; }
 
-        double val = double(size);
-        int32_t ind = 0;
-        while (val >= 1024 && ind < (sizeof(SIZES) / sizeof(char*) - 1)) {
-            val /= 1024.0;
-            ind++;
+            if (c != '\r') {
+                line.push_back(c);
+            }
         }
-        sprintf_s(buffer, size, "%.3f %s", val, SIZES[ind]);
+        return line.length() > 0;
     }
 
-	bool getLine(const char*& buffer, size_t& len, std::string& line) {
-		if (len == 0) { return false; }
+    bool endsWith(ConstSpan<char> str, ConstSpan<char> end, bool caseSensitive) {
+        size_t len = str.length();
+        size_t lenB = end.length();
 
-		size_t start = 0;
-		line.clear();
+        if (len < lenB) { return false; }
 
-		while (--len > 0) {
-			char c = *buffer++;
-			switch (c)
-			{
-				case '\0':
-				case '\n':
-					goto end;
-				case '\r':
-					continue;
-			}
-			line.append(1, c);
-		}
-		end:
-		return true;
-	}
+        int32_t lnA = int32_t(len - 1);
+        int32_t lnB = int32_t(lenB - 1);
+        for (int32_t i = lnA, j = lnB; j >= 0; i--, j--) {
+            char cA = str[i];
+            char cB = end[j];
 
-	int32_t strCmpNoCase(const char* a, const char* b) {
-		for (;; a++, b++) {
-			const int32_t d = tolower((unsigned char)*a) - tolower((unsigned char)*b);
-			if (d != 0 || !*a) { return d; }
-		}
-	}
+            if (!caseSensitive) {
+                cA = char(tolower(cA));
+                cB = char(tolower(cB));
+            }
 
-	bool equalsNoCase(const ConstSpan<char>& a, const ConstSpan<char>& b) {
-		const auto len = a.length();
-		if (len != b.length()) { return false; }
-		if (len == 0) { return true; }
-		const uint8_t* aP = reinterpret_cast<const uint8_t*>(a.get());
-		const uint8_t* bP = reinterpret_cast<const uint8_t*>(b.get());
-		for (size_t i = 0; i < len; i++, aP++, bP++) {
-			if (tolower(*aP) != tolower(*bP)) { return false; }
-		}
-		return true;
-	}
+            if (cA != cB) { return false; }
+        }
+        return true;
+    }
 
-	bool equalsNoCase(const Span<char>& a, const Span<char>& b) {
-		return equalsNoCase(reinterpret_cast<const ConstSpan<char>&>(a), reinterpret_cast<const ConstSpan<char>&>(b));
-	}
+    bool startsWith(ConstSpan<char> str, ConstSpan<char> end, bool caseSensitive) {
+        size_t len = str.length();
+        size_t lenB = end.length();
 
-	int32_t findNotIndexOf(const std::string& str, char c, size_t offset, size_t len) {
-		return findNotIndexOf(str.c_str(), str.length(), c, offset, len);
-	}
+        if (len < lenB) { return false; }
 
-	int32_t findNotIndexOf(const char* str, size_t length, char c, size_t offset, size_t len) {
-		size_t end = std::min(length, offset + len);
-		for (size_t i = offset; i < end; i++) {
-			if (str[i] != c) { return int32_t(i); }
-		}
-		return -1;
-	}
+        for (size_t i = 0, j = 0; j < lenB; i++, j++) {
+            char cA = str[i];
+            char cB = end[j];
+            if (!caseSensitive) {
+                cA = char(tolower(cA));
+                cB = char(tolower(cB));
+            }
+            if (cA != cB) { return false; }
+        }
+        return true;
+    }
 
-	int32_t findNotIndexOf(const char* str, size_t length, const char* c, size_t offset, size_t len) {
-		size_t end = std::min(length, offset + len);
-		size_t lInp = strlen(c);
-		const char* endPtr = c + lInp;
-		for (size_t i = offset; i < end; i++) {
-			if (std::find(c, endPtr, str[i]) == endPtr) { return int32_t(i); }
-		}
-		return -1;
-	}
+    size_t lastIndexOf(ConstSpan<char> str, ConstSpan<char> end, bool caseSensitive) {
+        size_t len = str.length();
 
-	int32_t indexOf(const char* str, const size_t length, const char c) {
-		for (size_t i = 0; i < length; i++, str++) {
-			if (*str == c) { return int32_t(i); }
-		}
-		return -1;
-	}
+        if (len < 1) { return std::string::npos; }
+        size_t bufSize = end.length();
+        size_t i = len;
+        size_t j = bufSize;
+        size_t sI = 0;
+        while (i > 0) {
+            char cA = str[--i];
+            char cB = end[--j];
 
-	int32_t indexOf(const std::string& str, const char c) {
-		for (size_t i = 0; i < str.length(); i++) {
-			if (str[i] == c) { return int32_t(i); }
-		}
-		return -1;
-	}
+            if (!caseSensitive) {
+                cA = tolower(cA);
+                cB = tolower(cB);
+            }
 
-	int32_t indexOf(const char* str, const size_t length, const std::string& search) {
-		const size_t sSize = search.length();
-		int32_t index = -1;
-		for (size_t i = 0, j = 0; i < length; i++, str++) {
-			if (*str == search[j]) {
-				if (j == 0) { index = int32_t(i); }
-				j++;
-				if (j >= sSize) { break; }
-			}
-		}
-		return index;
-	}
+            if (cA == cB)
+            {
+                if (j <= 0) {
+                    return i;
+                }
+                continue;
+            }
+            if (j != bufSize) { j = bufSize; }
+        }
+        return std::string::npos;
+    }
+    size_t indexOf(ConstSpan<char> str, ConstSpan<char> end, bool caseSensitive) {
+        size_t len = str.length();
+        if (len < 1) { return std::string::npos; }
 
-	int32_t indexOf(const std::string& str, const std::string& search) {
-		const size_t sSize = search.length();
-		int32_t index = -1;
-		for (size_t i = 0, j = 0; i < str.length(); i++) {
-			if (str[i] == search[j]) {
-				if (j == 0) { index = int32_t(i); }
-				j++;
-				if (j >= sSize) { break; }
-			}
-		}
-		return index;
-	}
+        size_t j = 0;
+        size_t sI = 0;
+        size_t bufSize = end.length();
+        for (size_t i = 0; i < len; i++) {
+            char cA = str[i++];
+            char cB = end[j++];
 
-	uint32_t parseHexColorInt(const std::string& str, const int start, const int length) {
-		int padding = 0;
-		int len = length;
+            if (!caseSensitive) {
+                cA = tolower(cA);
+                cB = tolower(cB);
+            }
 
-		uint8_t rgba[4]{ 0, 0, 0, 0xFF };
+            if (cA == cB)
+            {
+                if (j == 1) {
+                    sI = i;
+                }
+                if (j >= bufSize) { return sI; }
+                continue;
+            }
 
-		char byteBuf[2];
-		const char* cPtr = str.c_str();
+            if (j != 0) { j = 0; }
+        }
+        return std::string::npos;
+    }
 
-		size_t k = start;
-		if (length >= 7) {
-			len = length > 8 ? 8 : length;
-			padding = 8 - len;
+    size_t lastIndexNotOf(ConstSpan<char> str, ConstSpan<char> end, bool caseSensitive) {
+        size_t len = str.length();
+        if (len < 1) { return std::string::npos; }
+        size_t bufSize = end.length();
+        size_t i = len;
+        size_t j = bufSize;
+        size_t sI = 0;
+        while (i > 0)
+        {
+            char cA = str[--i];
+            char cB = end[--j];
 
-			for (size_t i = 0; i < 2; i++)
-			{
-				if (padding-- > 0) {
-					byteBuf[i] = '0';
-					continue;
-				}
-				byteBuf[i] = cPtr[k++];
-			}
+            if (!caseSensitive) {
+                cA = tolower(cA);
+                cB = tolower(cB);
+            }
 
-			rgba[3] = std::stoi(byteBuf, 0, 16);
-			len -= (2 - padding);
-			padding = 0;
-		}
-		padding = 6 - len;
+            if (cA != cB)
+            {
+                if (j <= 0) {
+                    return i;
+                }
+                continue;
+            }
+            if (j != bufSize) { j = bufSize; }
+        }
+        return std::string::npos;
+    }
+    size_t indexNotOf(ConstSpan<char> str, ConstSpan<char> end, bool caseSensitive) {
+        size_t len = str.length();
+        if (len < 1) { return std::string::npos; }
 
-		for (size_t i = 0; i < 3; i++)
-		{
-			if (padding > 0) {
-				for (size_t j = 0; j < 2; j++)
-				{
-					if (padding-- > 0) {
-						byteBuf[j] = '0';
-						continue;
-					}
-					byteBuf[j] = cPtr[k++];
-				}
-			}
-			else {
-				for (size_t j = 0; j < 2; j++)
-				{
-					byteBuf[j] = cPtr[k++];
-				}
-			}
-			rgba[2 - i] = std::stoi(byteBuf, 0, 16);
-		}
-		return *(uint32_t*)rgba;
-	}
+        size_t bufSize = end.length();
+        size_t j = 0;
+        size_t sI = 0;
+        for (size_t i = 0; i < len; i++) {
+            char cA = str[i++];
+            char cB = end[j++];
 
-	void parseString(const std::string& input, std::string& output) {
-		size_t inQuote = 0;
+            if (!caseSensitive) {
+                cA = tolower(cA);
+                cB = tolower(cB);
+            }
 
-		for (size_t i = 0; i < input.length(); i++) {
-			auto c = input[i];
-			if (c == '\\') {
-				i++;
-				continue;
-			}
-			if (c == '\"') { inQuote = i + 1; break; }
-		}
+            if (cA != cB)
+            {
+                if (j == 1) {
+                    sI = i;
+                }
+                if (j >= bufSize) { return sI; }
+                continue;
+            }
 
-		size_t endQuote = std::string::npos;
-		for (size_t i = inQuote; i < input.length(); i++) {
-			auto c = input[i];
-			if (c == '\\') {
-				i++;
-				continue;
-			}
+            if (j != 0) { j = 0; }
+        }
+        return std::string::npos;
+    }
 
-			if (c == '\"') { endQuote = i; }
-		}
+    size_t lastIndexOf(ConstSpan<char> str, const char* const* end, size_t endCount, bool caseSensitive) {
+        if (endCount < 1 || !end) { return std::string::npos; }
+        size_t ind = lastIndexOf(str, end[0], caseSensitive);
+        for (size_t i = 1; i < endCount; i++) {
+            auto ii = lastIndexOf(str, end[i], caseSensitive);
+            ind = (ind == std::string::npos) ? ii : ii != std::string::npos ? std::max(ii, ind) : ind;
+        }
+        return ind;
+    }
+    size_t indexOf(ConstSpan<char> str, const char* const* end, size_t endCount, bool caseSensitive) {
+        if (endCount < 1 || !end) { return std::string::npos; }
+        size_t ind = indexOf(str, end[0], caseSensitive);
+        for (size_t i = 1; i < endCount; i++) {
+            ind = std::min(indexOf(str, end[i], caseSensitive), ind);
+        }
+        return ind;
+    }
 
-		endQuote = endQuote != std::string::npos ? input.length() : endQuote;
-		*&output = input.substr(inQuote, endQuote - inQuote);
-	}
+    size_t indexOfNonNum(ConstSpan<char> str) {
+        for (size_t i = 0; i < str.length(); i++) {
+            if (str[i] < '0' || str[i] > '9') { return i; }
+        }
+        return std::string::npos;
+    }
 
-	void strSplit(const std::string& str, std::vector<std::string>& strs, const std::string& delim, const bool ignoreEmpty) {
-		if (delim.length() < 1) {
-			strs.push_back(str);
-			return;
-		}
+    void wideToUTF8(const wchar_t* strIn, size_t size, std::string& strOut) {
+        strOut.clear();
+        uint32_t codepoint = 0;
+        for (size_t i = 0; i < size; i++) {
+            wchar_t cur = strIn[i];
+            if (cur >= 0xd800 && cur <= 0xdbff) {
+                codepoint = ((*strIn - 0xd800) << 10) + 0x10000;
+            }
+            else
+            {
+                if (cur >= 0xdc00 && cur <= 0xdfff)
+                    codepoint |= cur - 0xdc00;
+                else {
+                    codepoint = cur;
+                }
 
-		size_t start = 0;
-		size_t end = str.find(delim, start);
-
-		while (end != std::string::npos) {
-			size_t count = end - start;
-
-			if (ignoreEmpty && count < 1) {
-				start++;
-				continue;
-			}
-
-			end = str.find(delim, start + count + 1);
-			strs.push_back(count < 1 ? "" : str.substr(start, count));
-			start += count + 1;
-		}
-
-		if (str.length() <= start) { return; }
-		const size_t c = str.length() - start;
-		strs.push_back(str.substr(start, c));
-	}
-
-
-	void strSplit(const std::string& str, std::vector<std::string_view>& strs, const std::string& delim, const bool ignoreEmpty) {
-		if (delim.length() < 1) {
-			strs.push_back(std::string_view(str.c_str(), str.length()));
-			return;
-		}
-
-		int32_t start = 0;
-		int32_t end = indexOf(str.c_str() + start, str.length() - start, delim);
-
-		while (end > -1) {
-			int32_t count = end - start;
-
-			const int32_t startP = start + count + 1;
-			end = indexOf(str.c_str() + startP, str.length() - startP, delim);
-			if (ignoreEmpty && count < 1) {
-				start++;
-				continue;
-			}
-
-			strs.push_back(count < 1 ? std::string_view() : std::string_view(str.c_str() + start, count));
-			start += count + 1;
-		}
-
-		size_t c = str.length() - start;
-		if (c < 1) { return; }
-		strs.push_back(std::string_view(str.c_str() + start, c));
-	}
-
-	void addCommandArg(std::string& cmd, const std::string& arg) {
-		cmd += arg + " ";
-	}
-
-	void addCommandArgString(std::string& cmd, const std::string& arg) {
-		cmd.append("\"");
-		cmd.append(arg);
-		cmd.append("\" ");
-	}
+                if (codepoint <= 0x7f) {
+                    strOut.append(1, static_cast<char>(codepoint));
+                }
+                else if (codepoint <= 0x7ff) {
+                    strOut.append(1, static_cast<char>(0xc0 | ((codepoint >> 6) & 0x1f)));
+                    strOut.append(1, static_cast<char>(0x80 | (codepoint & 0x3f)));
+                }
+                else if (codepoint <= 0xffff) {
+                    strOut.append(1, static_cast<char>(0xe0 | ((codepoint >> 12) & 0x0f)));
+                    strOut.append(1, static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f)));
+                    strOut.append(1, static_cast<char>(0x80 | (codepoint & 0x3f)));
+                } else {
+                    strOut.append(1, static_cast<char>(0xf0 | ((codepoint >> 18) & 0x07)));
+                    strOut.append(1, static_cast<char>(0x80 | ((codepoint >> 12) & 0x3f)));
+                    strOut.append(1, static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f)));
+                    strOut.append(1, static_cast<char>(0x80 | (codepoint & 0x3f)));
+                }
+                codepoint = 0;
+            }
+        }
+    }
 }

@@ -15,12 +15,8 @@ namespace JEngine {
         const char* name;
         const uint16_t value;
 
-        bool isEqual(const Span<char>& str) const {
-            return Helpers::equalsNoCase(ConstSpan<char>(str), ConstSpan<char>(name, strlen(name)));
-        }
-
-        bool isEqual(const ConstSpan<char>& str) const {
-            return Helpers::equalsNoCase(str, ConstSpan<char>(name, strlen(name)));
+        bool isEqual(ConstSpan<char> str) const {
+            return Helpers::strIEquals(str, ConstSpan<char>(name));
         }
     };
 
@@ -49,7 +45,7 @@ namespace JEngine {
     };
     static constexpr size_t BLEND_COUNT = sizeof(BLEND_MODES) / sizeof(BLEND_MODES[0]);
 
-    uint16_t strToGLBlendingMode(const Span<char>& str, const bool isSrc = true) {
+    uint16_t strToGLBlendingMode(ConstSpan<char> str, const bool isSrc = true) {
         for (size_t i = 0; i < BLEND_COUNT; i++) {
             const auto& blend = BLEND_MODES[i];
             if (blend.isEqual(str)) { 
@@ -60,7 +56,7 @@ namespace JEngine {
     }
 
     Shader::Shader() : IAsset(), _shaderID(0), _blendingModes {GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD} { }
-    Shader::Shader(const std::string& fileath) :IAsset(),  _shaderID(0), _blendingModes { GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD } {
+    Shader::Shader(std::string_view fileath) : IAsset(),  _shaderID(0), _blendingModes { GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA, GL_ADD } {
         //ShaderSources source = parseShader(fileath);
 
         //_blendingModes[0] = source.blendSrc;
@@ -90,7 +86,7 @@ namespace JEngine {
 
     uint32_t Shader::getNativeHandle() const { return _shaderID; }
 
-    uint32_t Shader::setTextures(const std::string& name, const Texture* texture, const uint32_t position) {
+    uint32_t Shader::setTextures(std::string_view name, TAssetRef<Texture> texture, const uint32_t position) {
         if (!texture || !_shaderID) { return position; }
 
         uint32_t pos = position;
@@ -99,10 +95,13 @@ namespace JEngine {
         if (uId < 0) { return pos; }
         GLCall(glUniform1i(uId, pos++));
 
+        char palette[256]{ 0 };
+        sprintf_s(palette, "%.*s%s", int(name.length()), name.data(), "_Pal");
+
         switch (texture->getFormat()) {
             case TextureFormat::Indexed8:
             case TextureFormat::Indexed16:
-                uId = getUniformLocation(name + "_Pal");
+                uId = getUniformLocation(palette);
                 if (uId > -1) {
                     GLCall(glUniform1i(uId, pos++));
                 }
@@ -138,7 +137,7 @@ namespace JEngine {
         return *reinterpret_cast<const uint64_t*>(_blendingModes);
     }
 
-    bool Shader::tryFindShader(const char* name, ObjectRef<Shader>& shader) {
+    bool Shader::tryFindShader(std::string_view name, TAssetRef<Shader>& shader) {
         UUID16 hash(name);
 
         auto find = SHADER_LUT.find(hash);
@@ -148,28 +147,24 @@ namespace JEngine {
         return true;
     }
 
-    Shader* Shader::findShader(const char* name) {
+    TAssetRef<Shader> Shader::findShader(std::string_view name) {
         UUID16 hash(name);
         auto find = SHADER_LUT.find(hash);
 
         if (find == SHADER_LUT.end()) { return nullptr; }
-        return find->second.getPtr();
+        return find->second;
     }
 
-    void Shader::addShaderToLUT(const ObjectRef<Shader>& shader) {
-        const Shader* shaderPtr = shader.getPtr();
-
-        if (shaderPtr) {
-            UUID16 hash(shaderPtr->getName().c_str());
-            SHADER_LUT.insert(std::make_pair(hash, ObjectRef<Shader>(shader)));
+    void Shader::addShaderToLUT(TAssetRef<Shader> shader) {
+        if (shader) {
+            UUID16 hash(shader->getName());
+            SHADER_LUT.insert(std::make_pair(hash, TAssetRef<Shader>(shader)));
         }
     }
 
-    bool Shader::removeShaderFromLUT(const ObjectRef<Shader>& shader) {
-        const Shader* shaderPtr = shader.getPtr();
-
-        if (shaderPtr) {
-            UUID16 hash(shaderPtr->getName().c_str());
+    bool Shader::removeShaderFromLUT(TAssetRef<Shader> shader) {
+        if (shader) {
+            UUID16 hash(shader->getName());
             auto find = SHADER_LUT.find(hash);
 
             if (find == SHADER_LUT.end()) { return false; }
@@ -180,119 +175,128 @@ namespace JEngine {
         return false;
     }
 
-    void Shader::setUniform1i(const std::string& name, const int32_t value) {
+    void Shader::setUniform1i(std::string_view name, int32_t value) {
         if (!_shaderID) { return; }
         GLCall(glUniform1i(getUniformLocation(name), value));
     }
 
-    void Shader::setUniform1ui(const std::string& name, const uint32_t value) {
+    void Shader::setUniform1ui(std::string_view name, uint32_t value) {
         if (!_shaderID) { return; }
         GLCall(glUniform1ui(getUniformLocation(name), value));
     }
 
-    void Shader::setUniform1f(const std::string& name, const float value) {
+    void Shader::setUniform1f(std::string_view name, float value) {
         if (!_shaderID) { return; }
         GLCall(glUniform1f(getUniformLocation(name), value));
     }
 
-    void Shader::setUniformV2f(const std::string& name, const JVector2f& vector) {
+    void Shader::setUniformV2f(std::string_view name, const JVector2f& vector) {
         setUniformV2f(name, vector.x, vector.y);
     }
-    void Shader::setUniformV2f(const std::string& name, const float v0, const float v1) {
+    void Shader::setUniformV2f(std::string_view name, float v0, float v1) {
         if (!_shaderID) { return; }
         GLCall(glUniform2f(getUniformLocation(name), v0, v1));
     }
 
-    void Shader::setUniformV2i(const std::string& name, const JVector2i& vector) {
+    void Shader::setUniformV2i(std::string_view name, const JVector2i& vector) {
         setUniformV2i(name, vector.x, vector.y);
     }
-    void Shader::setUniformV2i(const std::string& name, const int32_t v0, const int32_t v1) {
+    void Shader::setUniformV2i(std::string_view name, int32_t v0, int32_t v1) {
         if (!_shaderID) { return; }
         GLCall(glUniform2i(getUniformLocation(name), v0, v1));
     }
 
-    void Shader::setUniformV2ui(const std::string& name, const JVector2u& vector) {
+    void Shader::setUniformV2ui(std::string_view name, const JVector2u& vector) {
         setUniformV2ui(name, vector.x, vector.y);
     }
-    void Shader::setUniformV2ui(const std::string& name, const uint32_t v0, const uint32_t v1) {
+    void Shader::setUniformV2ui(std::string_view name, uint32_t v0, uint32_t v1) {
         if (!_shaderID) { return; }
         GLCall(glUniform2ui(getUniformLocation(name), v0, v1));
     }
 
-    void Shader::setUniformV3f(const std::string& name, const JVector3f& vector) {
+    void Shader::setUniformV3f(std::string_view name, const JVector3f& vector) {
         setUniformV3f(name, vector.x, vector.y, vector.z);
     }
-    void Shader::setUniformV3f(const std::string& name, const float v0, const float v1, const float v2) {
+    void Shader::setUniformV3f(std::string_view name, float v0, float v1, float v2) {
         if (!_shaderID) { return; }
         GLCall(glUniform3f(getUniformLocation(name), v0, v1, v2));
     }
 
-    void Shader::setUniformV3i(const std::string& name, const JVector3i& vector) {
+    void Shader::setUniformV3i(std::string_view name, const JVector3i& vector) {
         setUniformV3i(name, vector.x, vector.y, vector.z);
     }
-    void Shader::setUniformV3i(const std::string& name, const int32_t v0, const int32_t v1, const int32_t v2) {
+    void Shader::setUniformV3i(std::string_view name, int32_t v0, int32_t v1, int32_t v2) {
         if (!_shaderID) { return; }
         GLCall(glUniform3i(getUniformLocation(name), v0, v1, v2));
     }
 
-    void Shader::setUniformColor24(const std::string& name, const JColor24& color) {
+    void Shader::setUniformColor24(std::string_view name, JColor24 color) {
         setUniformV3ui(name, color.r, color.g, color.b);
     }
-    void Shader::setUniformV3ui(const std::string& name, const JVector3u& vector) {
+    void Shader::setUniformV3ui(std::string_view name, const JVector3u& vector) {
         setUniformV3ui(name, vector.x, vector.y, vector.z);
     }
-    void Shader::setUniformV3ui(const std::string& name, const uint32_t v0, const uint32_t v1, const uint32_t v2) {
+    void Shader::setUniformV3ui(std::string_view name, uint32_t v0, uint32_t v1, uint32_t v2) {
         if (!_shaderID) { return; }
         GLCall(glUniform3ui(getUniformLocation(name), v0, v1, v2));
     }
 
-    void Shader::setUniformColor(const std::string& name, const JColor& color) {
+    void Shader::setUniformColor(std::string_view name, const JColor& color) {
         setUniformV4f(name, color.r, color.g, color.b, color.a);
     }
-    void Shader::setUniformV4f(const std::string& name, const JVector4f& vector) {
+    void Shader::setUniformV4f(std::string_view name, const JVector4f& vector) {
         setUniformV4f(name, vector.x, vector.y, vector.z, vector.w);
     }
-    void Shader::setUniformV4f(const std::string& name, const float v0, const float v1, const float v2, const float v3) {
+    void Shader::setUniformV4f(std::string_view name, float v0, float v1, float v2, float v3) {
         if (!_shaderID) { return; }
         GLCall(glUniform4f(getUniformLocation(name), v0, v1, v2, v3));
     }
 
-    void Shader::setUniformV4i(const std::string& name, const JVector4i& vector) {
+    void Shader::setUniformV4i(std::string_view name, const JVector4i& vector) {
         setUniformV4i(name, vector.x, vector.y, vector.z, vector.w);
     }
-    void Shader::setUniformV4i(const std::string& name, const int32_t v0, const int32_t v1, const int32_t v2, const int32_t v3) {
+    void Shader::setUniformV4i(std::string_view name, int32_t v0, int32_t v1, int32_t v2, int32_t v3) {
         if (!_shaderID) { return; }
         GLCall(glUniform4i(getUniformLocation(name), v0, v1, v2, v3));
     }
 
-    void Shader::setUniformColor32(const std::string& name, const JColor32& color) {
+    void Shader::setUniformColor32(std::string_view name, JColor32 color) {
         setUniformV4ui(name, color.r, color.g, color.b, color.a);
     }
-    void Shader::setUniformV4ui(const std::string& name, const JVector4u& vector) {
+    void Shader::setUniformV4ui(std::string_view name, const JVector4u& vector) {
         setUniformV4ui(name, vector.x, vector.y, vector.z, vector.w);
     }
-    void Shader::setUniformV4ui(const std::string& name, const uint32_t v0, const uint32_t v1, const uint32_t v2, const uint32_t v3) {
+    void Shader::setUniformV4ui(std::string_view name, uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3) {
         if (!_shaderID) { return; }
         GLCall(glUniform4ui(getUniformLocation(name), v0, v1, v2, v3));
     }
 
-
-    void Shader::setUniformMat4f(const std::string& name, const JMatrix4f& mat) {
+    void Shader::setUniformMat4f(std::string_view name, const JMatrix4f& mat) {
         if (!_shaderID) { return; }
         GLCall(glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &mat[0]));
     }
 
-    int32_t Shader::getUniformLocation(const std::string& name) {
+    int32_t Shader::getUniformLocation(std::string_view name) {
         if (!_shaderID) { return -1; }
-        if (_uniformCache.find(name) != _uniformCache.end()) { return _uniformCache[name]; }
 
-        GLCall(int32_t location = glGetUniformLocation(_shaderID, name.c_str()));
-        if (location == -1) {
+        UUID16 hash(name);
+        if (_uniformCache.find(hash) != _uniformCache.end()) { return _uniformCache[hash]; }
 
-            JENGINE_CORE_WARN("Shader", "Warning: Uniform", name, "doesn't exist");
+        char* temp = reinterpret_cast<char*>(_malloca(name.length() + 1));
+        if (temp) {
+            memcpy(temp, name.data(), name.length());
+            temp[name.length()] = 0;
+
+            GLCall(int32_t location = glGetUniformLocation(_shaderID, temp));
+            if (location == -1) {
+                JENGINE_CORE_WARN("Shader", "Warning: Uniform", name, "doesn't exist");
+            }
+            _uniformCache[hash] = location;
+
+            _freea(temp);
+            return location;
         }
-        _uniformCache[name] = location;
-        return location;
+        return -1;
     }
 
     ShaderSources Shader::parseShader()  {
@@ -333,23 +337,26 @@ namespace JEngine {
                 temp = temp.slice(ind + 1);
                 ind = temp.indexOf(' ');
 
+                ConstSpan<char> cTemp(temp);
                 if (ind > -1) {
-                    blendSrc = strToGLBlendingMode(temp.slice(0, ind), true);
+                    blendSrc = strToGLBlendingMode(cTemp.slice(0, ind), true);
 
                     temp = temp.slice(ind + 1);
                     ind = temp.indexOf(' ');
 
+                    cTemp = ConstSpan<char>(temp);
+
                     if (ind > -1) {
-                        blendDst = strToGLBlendingMode(temp.slice(0, ind), false);
-                        blendFunc = strToGLBlendingMode(temp.slice(ind + 1), false);
+                        blendDst = strToGLBlendingMode(cTemp.slice(0, ind), false);
+                        blendFunc = strToGLBlendingMode(cTemp.slice(ind + 1), false);
                     }
                     else {
-                        blendDst = strToGLBlendingMode(temp, false);
+                        blendDst = strToGLBlendingMode(cTemp, false);
                     }
                     continue;
                 }
 
-                blendSrc = strToGLBlendingMode(temp, true);
+                blendSrc = strToGLBlendingMode(cTemp, true);
                 continue;
             }
             if (type == ShaderType::NONE) { continue; }

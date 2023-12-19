@@ -9,6 +9,7 @@
 #include <JEngine/IO/FileStream.h>
 #include <JEngine/IO/Compression/ZLib.h>
 #include <JEngine/IO/MemoryStream.h>
+#include <JEngine/Math/Graphics/JColor4444.h>
 
 namespace JEngine {
     int32_t calcualtePadding(const int32_t width, const int32_t bpp) {
@@ -58,6 +59,20 @@ namespace JEngine {
             int32_t numOfColors;
         };
 #pragma pack(pop, 1)
+
+        bool decode(const std::string& path, ImageData& imgData, const ImageDecodeParams params) {
+            return decode(path.c_str(), imgData, params);
+        }
+
+        bool getInfo(const std::string& path, ImageData& imgData) {
+            return getInfo(path.c_str(), imgData);
+        }
+
+        bool encode(const std::string& path, const ImageData& imgData, uint32_t dpi) {
+            return encode(path.c_str(), imgData, dpi);
+        }
+
+
         bool getInfo(const char* path, ImageData& imgData) {
             FileStream stream(path, "rb");
 
@@ -540,6 +555,18 @@ namespace JEngine {
 
             //TODO: Maybe adding some validation here to return true or false?
             return true;
+        }
+
+        bool decode(const std::string& path, ImageData& imgData, const ImageDecodeParams params) {
+            return decode(path.c_str(), imgData, params);
+        }
+
+        bool getInfo(const std::string& path, ImageData& imgData) {
+            return getInfo(path.c_str(), imgData);
+        }
+
+        bool encode(const std::string& path, const ImageData& imgData, uint32_t compression) {
+            return encode(path.c_str(), imgData, compression);
         }
 
         bool decode(const char* path, ImageData& imgData, const ImageDecodeParams params) {
@@ -1345,6 +1372,18 @@ namespace JEngine {
         };
 #pragma pack(pop, 1)
 
+        bool decode(const std::string& path, ImageData& imgData, const ImageDecodeParams params) {
+            return decode(path.c_str(), imgData, params);
+        }
+
+        bool getInfo(const std::string& path, ImageData& imgData) {
+            return getInfo(path.c_str(), imgData);
+        }
+
+        bool encode(const std::string& path, const ImageData& imgData) {
+            return encode(path.c_str(), imgData);
+        }
+
         bool getInfo(const char* path, ImageData& imgData) {
             FileStream stream(path, "rb");
 
@@ -1549,7 +1588,7 @@ namespace JEngine {
                     JColor4444* cPtr = reinterpret_cast<JColor4444*>(imgData.data);
                     for (size_t i = 0, j = 0; i < reso; i++, j++) {
                         auto& color = cPtr[i];
-                        const uint32_t data = color.data;
+                        const uint32_t data = uint16_t(color);
                         color = JColor4444(
                             uint16_t((data & fmt.compMasks[0]) >> maskOffsets[0]),
                             uint16_t((data & fmt.compMasks[1]) >> maskOffsets[1]),

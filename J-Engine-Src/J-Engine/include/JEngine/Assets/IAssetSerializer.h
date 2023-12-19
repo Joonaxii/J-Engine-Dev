@@ -5,6 +5,7 @@
 #include <JEngine/Collections/PoolAllocator.h>
 #include <JEngine/Utility/DataFormatUtils.h>
 #include <JEngine/IO/VFS/VFS.h>
+#include <JEngine/Core/Ref.h>
 
 namespace JEngine {
 
@@ -101,18 +102,18 @@ namespace JEngine {
     namespace detail {
         struct Asset {
             Type* type = nullptr;
-            IAsset* (*createAsset)(const char*, UUID8, uint8_t) = nullptr;
-            IAsset* (*destroyAsset)(IAsset*) = nullptr;
+            AssetRef (*createAsset)(uint32_t, uint8_t) = nullptr;
+            AssetRef (*destroyAsset)(AssetRef) = nullptr;
 
             SerializerType serializeTypes[3]{};
 
-            void (*serBin)(FileEntry*, const IAsset*, const Stream&, uint8_t) = nullptr;
-            void (*serJSON)(FileEntry*, const IAsset*, json&, uint8_t) = nullptr;
-            void (*serYAML)(FileEntry*, const IAsset*, yamlEmit&, uint8_t) = nullptr;
+            void (*serBin)(FileEntry*, AssetRef, const Stream&, uint8_t) = nullptr;
+            void (*serJSON)(FileEntry*, AssetRef, json&, uint8_t) = nullptr;
+            void (*serYAML)(FileEntry*, AssetRef, yamlEmit&, uint8_t) = nullptr;
 
-            void (*deserBin)(FileEntry*, IAsset*, const Stream&, uint8_t) = nullptr;
-            void (*deserJSON)(FileEntry*, IAsset*, const json&, uint8_t) = nullptr;
-            void (*deserYAML)(FileEntry*, IAsset*, const yamlNode&, uint8_t) = nullptr;
+            void (*deserBin)(FileEntry*, AssetRef, const Stream&, uint8_t) = nullptr;
+            void (*deserJSON)(FileEntry*, AssetRef, const json&, uint8_t) = nullptr;
+            void (*deserYAML)(FileEntry*, AssetRef, const yamlNode&, uint8_t) = nullptr;
 
             template<typename T> static Asset* getAsset();
             static std::vector<Asset*>& getAssets() {
@@ -120,7 +121,7 @@ namespace JEngine {
                 return assets;
             }
 
-            static Asset* getAssetByHash(const UUID16& hash) {
+            static Asset* getAssetByHash(uint32_t hash) {
                 auto& assets = getAssets();
                 for (size_t i = 0; i < assets.size(); i++) {
                     if (assets[i]->type->hash == hash) {
@@ -135,18 +136,18 @@ namespace JEngine {
                 if (asset->type != nullptr) { return; }
                 asset->type = type;
 
-                IAssetSerializer<T>::getSerializerTypes(asset->serializeTypes);
+                //IAssetSerializer<T>::getSerializerTypes(asset->serializeTypes);
 
-                asset->createAsset = IAssetSerializer<T>::createNewAsset;
-                asset->destroyAsset = IAssetSerializer<T>::destroyAsset;
-
-                asset->serBin = IAssetSerializer<T>::serializeBin;
-                asset->serJSON = IAssetSerializer<T>::serializeJson;
-                asset->serYAML = IAssetSerializer<T>::serializeYaml;
-
-                asset->deserBin = IAssetSerializer<T>::deserializeBin;
-                asset->deserJSON = IAssetSerializer<T>::deserializeJson;
-                asset->deserYAML = IAssetSerializer<T>::deserializeYaml;
+                //asset->createAsset = IAssetSerializer<T>::createNewAsset;
+                //asset->destroyAsset = IAssetSerializer<T>::destroyAsset;
+                //
+                //asset->serBin = IAssetSerializer<T>::serializeBin;
+                //asset->serJSON = IAssetSerializer<T>::serializeJson;
+                //asset->serYAML = IAssetSerializer<T>::serializeYaml;
+                //
+                //asset->deserBin = IAssetSerializer<T>::deserializeBin;
+                //asset->deserJSON = IAssetSerializer<T>::deserializeJson;
+                //asset->deserYAML = IAssetSerializer<T>::deserializeYaml;
                 getAssets().push_back(asset);
             }
         };
@@ -166,7 +167,7 @@ DEFINE_TYPE(TYPE); \
 template<> \
 inline JEngine::detail::Asset* JEngine::detail::Asset::getAsset<TYPE>() { \
   static JEngine::detail::Asset asset; \
-  JEngine::detail::Asset::addAsset<TYPE>(&asset, JEngine::TypeHelpers::getType<TYPE>()); \
+  /*JEngine::detail::Asset::addAsset<TYPE>(&asset, JEngine::TypeHelpers::getType<TYPE>());*/ \
   return &asset; \
 }\
 template<> \

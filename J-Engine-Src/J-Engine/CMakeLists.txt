@@ -2,6 +2,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project ("J-Engine")
+project ("J-Engine-Editor")
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -50,7 +51,7 @@ set(OPENGL_RENDERING_SRC
 source_group("JEngine/OpenGL" FILES ${OPENGL_RENDERING_SRC})
 list(APPEND JENGINE_SOURCES ${OPENGL_RENDERING_SRC})
 
-# OpenGL files
+# JEngine Debug files
 set(JENGINE_DEBUG_SRC
 	"include/JEngine/Debug/FPS.h"
 	"src/JEngine/Debug/FPS.cpp"
@@ -63,12 +64,43 @@ set(JENGINE_DEBUG_SRC
 source_group("JEngine/Debug" FILES ${JENGINE_DEBUG_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_DEBUG_SRC})
 
+# JEngine Audio files
+set(JENGINE_DEBUG_SRC
+	"include/JEngine/Audio/AudioEngine.h"
+	"src/JEngine/Audio/AudioEngine.cpp"
+	
+	"include/JEngine/Audio/AudioClip.h"
+	"src/JEngine/Audio/AudioClip.cpp"
+		
+	"include/JEngine/Audio/BeatMap.h"
+	"src/JEngine/Audio/BeatMap.cpp"
+	
+	"src/JEngine/Audio/IAudioSource.cpp"
+	"include/JEngine/Audio/IAudioSource.h"
+)
+source_group("JEngine/Audio" FILES ${JENGINE_DEBUG_SRC})
+list(APPEND JENGINE_SOURCES ${JENGINE_DEBUG_SRC})
+
+# JEngine Import Settings files
+set(JENGINE_DEBUG_SRC
+	"include/JEngine/Assets/Import/ImportSettings.h"
+	
+	"include/JEngine/Assets/Import/AudioImportSettings.h"
+	"src/JEngine/Assets/Import/AudioImportSettings.cpp"
+	
+	"include/JEngine/Assets/Import/BeatMapImportSettings.h"
+	"src/JEngine/Assets/Import/BeatMapImportSettings.cpp"
+)
+source_group("JEngine/Assets/Import" FILES ${JENGINE_DEBUG_SRC})
+list(APPEND JENGINE_SOURCES ${JENGINE_DEBUG_SRC})
+
 # JEngine Utility files
 set(JENGINE_UTILITY_SRC
 	 "include/JEngine/Utility/Version.h"
 
      "include/JEngine/Utility/Flags.h"
      "include/JEngine/Utility/EnumUtils.h"
+     "src/JEngine/Utility/EnumUtils.cpp"
 
      "include/JEngine/Utility/Action.h"
      "include/JEngine/Utility/Span.h"
@@ -158,6 +190,7 @@ set(JENGINE_COLLECTIONS_SRC
 	 "include/JEngine/Collections/PoolAllocator.h"
 	 "include/JEngine/Collections/SubCollection.h"
 	 "include/JEngine/Collections/ReferenceVector.h"
+	 "include/JEngine/Collections/IndexStack.h"
 )
 source_group("JEngine/Collections" FILES ${JENGINE_COLLECTIONS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_COLLECTIONS_SRC})
@@ -185,6 +218,9 @@ set(JENGINE_ASSETS_SRC
 	
 	 "include/JEngine/Assets/AssetPacking.h"
      "src/JEngine/Assets/AssetPacking.cpp"
+	
+	 "include/JEngine/Assets/SceneAsset.h"
+     "src/JEngine/Assets/SceneAsset.cpp"
 )
 source_group("JEngine/Assets" FILES ${JENGINE_ASSETS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_ASSETS_SRC})
@@ -196,6 +232,12 @@ set(JENGINE_ASSET_SERIALIZER_SRC
 	 
 	 "include/JEngine/Assets/Serializers/ShaderSerializer.h"
 	 "src/JEngine/Assets/Serializers/ShaderSerializer.cpp"
+	 
+	 "include/JEngine/Assets/Serializers/AudioClipSerializer.h"
+	 "src/JEngine/Assets/Serializers/AudioClipSerializer.cpp"
+	 
+	 "include/JEngine/Assets/Serializers/BeatMapSerializer.h"
+	 "src/JEngine/Assets/Serializers/BeatMapSerializer.cpp"
 )
 source_group("JEngine/Assets/Serializers" FILES ${JENGINE_ASSET_SERIALIZER_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_ASSET_SERIALIZER_SRC})
@@ -298,6 +340,12 @@ set(JENGINE_IO_SRC
 	 
 	 "include/JEngine/IO/ImageUtils.h"
      "src/JEngine/IO/ImageUtils.cpp"
+	 
+	 "include/JEngine/IO/Audio.h"
+     "src/JEngine/IO/Audio.cpp"
+	 
+	 "include/JEngine/IO/AudioUtils.h"
+     "src/JEngine/IO/AudioUtils.cpp"
 )
 source_group("JEngine/IO" FILES ${JENGINE_IO_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_IO_SRC})
@@ -305,7 +353,11 @@ list(APPEND JENGINE_SOURCES ${JENGINE_IO_SRC})
 
 # JEngine Serialization files
 set(JENGINE_SERIALZIATION_SRC
+	 "include/JEngine/IO/Serialization/SerializationConsts.h"
+	 "include/JEngine/IO/Serialization/SerializationUtils.h"
+	 "src/JEngine/IO/Serialization/SerializationUtils.cpp"
 	 "include/JEngine/IO/Serialization/Serializable.h"
+	 "include/JEngine/IO/Serialization/Serialize.h"
 )
 source_group("JEngine/IO/Serialization" FILES ${JENGINE_SERIALZIATION_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_SERIALZIATION_SRC})
@@ -328,15 +380,12 @@ set(JENGINE_IMGUI_SRC
 source_group("JEngine/Rendering/ImGui" FILES ${JENGINE_IMGUI_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_IMGUI_SRC})
 
-# JEngine Object files
+# JEngine Helper files
 set(JENGINE_HELPERS_SRC
-     "include/JEngine/Helpers/EnumMacros.h"
      "include/JEngine/Helpers/Helpers.h"
      "src/JEngine/Helpers/Helpers.cpp"
-     "include/JEngine/Helpers/StringConsts.h"
      "include/JEngine/Helpers/TypeHelpers.h"
      "src/JEngine/Helpers/TypeHelpers.cpp"
-     "include/JEngine/Helpers/NoCopy.h"
 )
 source_group("JEngine/Helpers" FILES ${JENGINE_HELPERS_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_HELPERS_SRC})
@@ -362,6 +411,7 @@ set(JENGINE_CORE_SRC
 	 "include/JEngine/Core/Assert.h"
 	 
 	 "include/JEngine/Core/IObject.h"
+	 "include/JEngine/Core/Reflection.h"
 	 
 	 "include/JEngine/Core/GameObject.h"
      "src/JEngine/Core/GameObject.cpp"
@@ -374,10 +424,13 @@ set(JENGINE_CORE_SRC
 	 
 	 "include/JEngine/Core/SceneManager.h"
      "src/JEngine/Core/SceneManager.cpp"
-	 
-	 "include/JEngine/Core/Engine.h"
-     "src/JEngine/Core/Engine.cpp"
-	 
+
+	 "include/JEngine/Core/Ref.h"
+	 "src/JEngine/Core/Ref.cpp"
+
+	 "include/JEngine/Core/UndoRedo.h"
+	 "src/JEngine/Core/UndoRedo.cpp"
+
 	 "src/JEngine/Core/Log.cpp"
 )
 source_group("JEngine/Core" FILES ${JENGINE_CORE_SRC})
@@ -451,15 +504,47 @@ set(JENGINE_INPUT_SRC
 source_group("JEngine/Input" FILES ${JENGINE_INPUT_SRC})
 list(APPEND JENGINE_SOURCES ${JENGINE_INPUT_SRC})
 
-add_library(J-Engine STATIC ${JENGINE_SOURCES})
+
+set(JEDITOR_SOURCES )
+list(APPEND JEDITOR_SOURCES "${JENGINE_SOURCES}")
+
+
+# JEngine Editor IO files
+set(JENGINE_IO_SRC
+	 "include/Editor/IO/DirectoryMonitor.h"
+	 "src/Editor/IO/DirectoryMonitor.cpp"
+	 
+	 "include/Editor/IO/SerializedNode.h"
+	 "src/Editor/IO/SerializedNode.cpp"
+)
+source_group("JEditor/IO" FILES ${JENGINE_IO_SRC})
+list(APPEND JEDITOR_SOURCES ${JENGINE_IO_SRC})
+
+
+# JEngine Editor Core files
+set(JENGINE_IO_SRC
+	 "include/Editor/Core/EditorEssentials.h"
+	 "src/Editor/Core/EditorEssentials.cpp"
+)
+source_group("JEditor/Core" FILES ${JENGINE_IO_SRC})
+list(APPEND JEDITOR_SOURCES ${JENGINE_IO_SRC})
+
+add_lib_for(J-Engine-Editor "${JEDITOR_SOURCES}" JENGINE_EDITOR)
+add_lib_for(J-Engine-Player "${JENGINE_SOURCES}" JENGINE_PLAYER)
 
 target_compile_options(
-    J-Engine PUBLIC
+    J-Engine-Editor PUBLIC
+    /external:W0
+)
+
+target_compile_options(
+    J-Engine-Player PUBLIC
     /external:W0
 )
 
 find_package(OpenGL REQUIRED)
-target_link_libraries(J-Engine spdlog XInput OpenGL::GL glfw ImGUI zlibstatic yaml-cpp nlohmann_json)
+target_link_libraries(J-Engine-Player spdlog XInput OpenGL::GL glfw ImGUI zlibstatic yaml-cpp nlohmann_json XAudio2)
+target_link_libraries(J-Engine-Editor spdlog XInput OpenGL::GL glfw ImGUI zlibstatic yaml-cpp nlohmann_json XAudio2)
 
 
 include_directories("include")

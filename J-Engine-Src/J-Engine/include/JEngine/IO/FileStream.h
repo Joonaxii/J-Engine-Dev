@@ -18,7 +18,6 @@ public:
 
     FileStream& operator=(FileStream&& other) noexcept;
 
-
     const char* getCFileMode() const {
         switch (_flags & 0x3) {
             default: return "b";

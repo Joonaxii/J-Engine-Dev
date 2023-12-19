@@ -32,6 +32,10 @@ namespace JEngine {
         void resize(size_t newSize);
         void setData(const void* data, size_t size, DataType type = DataType::T_Binary);
 
+    protected:
+        void destroyAsset() override {
+            IAssetSerializer<DataAsset>::getAllocator().deallocate(this);
+        }
     private:
         friend struct DataAssetSerializer;
         DataType _type;

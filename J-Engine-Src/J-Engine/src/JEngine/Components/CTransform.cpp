@@ -1,5 +1,7 @@
 #include <JEngine/Components/CTransform.h>
 #include <JEngine/Core/GameObject.h>
+#include <JEngine/Core/Scene.h>
+#include <JEngine/Utility/StringHelpers.h>
 
 namespace JEngine {
     CTransform::CTransform() : Component(),
@@ -10,7 +12,7 @@ namespace JEngine {
         destroyChildren();
     }
 
-    bool CTransform::setParent(CTransform* parent) {
+    bool CTransform::setParent(TCompRef<CTransform> parent) {
         if (parent == getObject()->getTransform()) { return false; }
         if (_parent == parent) { return true; }
 
@@ -25,7 +27,7 @@ namespace JEngine {
         return true;
     }
 
-    void CTransform::setTRS(const JVector2f& pos, float rot, const JVector2f& scale, Space space) {
+    void CTransform::setTRS(const JVector3f& pos, const JVector3f& rot, const JVector3f& scale, Space space) {
         switch (space) {
             case Space::Local:
                 _lPos = pos;
@@ -38,11 +40,11 @@ namespace JEngine {
         }
     }
 
-    void CTransform::transform(const JVector2f& tra, float rot, const JVector2f& sca, Space space) {
+    void CTransform::transform(const JVector3f& tra, const JVector3f& rot, const JVector3f& sca, Space space) {
         transform(&tra, &rot, &sca, space);
     }
 
-    void CTransform::translate(const JVector2f& translation, Space space) {
+    void CTransform::translate(const JVector3f& translation, Space space) {
         switch (space) {
             case Space::Local:
                 _lPos += translation;
@@ -53,7 +55,7 @@ namespace JEngine {
         }
     }
 
-    void CTransform::rotate(float rotation, Space space) {
+    void CTransform::rotate(const JVector3f& rotation, Space space) {
         switch (space) {
             case Space::Local:
                 _lRot += rotation;
@@ -64,7 +66,7 @@ namespace JEngine {
         }
     }
 
-    void CTransform::scale(const JVector2f& scale, Space space) {
+    void CTransform::scale(const JVector3f& scale, Space space) {
         switch (space) {
             case Space::Local:
                 _lSca *= scale;
@@ -75,7 +77,7 @@ namespace JEngine {
         }
     }
 
-    void CTransform::setPosition(const JVector2f& pos, Space space) {
+    void CTransform::setPosition(const JVector3f& pos, Space space) {
         switch (space) {
             case Space::Local:
                 _lPos = pos;
@@ -86,7 +88,7 @@ namespace JEngine {
         }
     }
 
-    void CTransform::setRotation(float rot, Space space) {
+    void CTransform::setRotation(const JVector3f& rot, Space space) {
         switch (space) {
             case Space::Local:
                 _lRot = rot;
@@ -98,7 +100,7 @@ namespace JEngine {
         }
     }
 
-    void CTransform::setScale(const JVector2f& scale, Space space) {
+    void CTransform::setScale(const JVector3f& scale, Space space) {
         switch (space) {
             case Space::Local:
                 _lSca = scale;
@@ -109,26 +111,21 @@ namespace JEngine {
         }
     }
 
-    CTransform* CTransform::getChildAt(const size_t index) {
+    TCompRef<CTransform> CTransform::getChildAt(const size_t index) const {
         JENGINE_CORE_ASSERT(index >= 0 && index < _children.size(), "Index out of range!");
         return _children[index];
     }
 
-    const CTransform* CTransform::getChildAt(const size_t index) const {
-        JENGINE_CORE_ASSERT(index >= 0 && index < _children.size(), "Index out of range!");
-        return _children[index];
-    }
-
-    CTransform* CTransform::find(const char* name) const {
-        for (const CTransform* child : _children) {
-            if (child->getObject() && strcmp(name, child->getObject()->getName().c_str())) { 
-                return const_cast<CTransform*>(child); 
+    TCompRef<CTransform> CTransform::find(std::string_view name) const {
+        for (TCompRef<CTransform> child : _children) {
+            if (child->getObject() && Helpers::strEquals(name, child->getObject()->getName())) {
+                return child;
             }
         }
         return nullptr;
     }
 
-    void CTransform::transform(const JVector2f* tra, const float* rot, const JVector2f* sca, Space space) {
+    void CTransform::transform(const JVector3f* tra, const JVector3f* rot, const JVector3f* sca, Space space) {
         if (_parent && space == Space::World) {
             auto inv = getWorldMatrix().getInverse();
             if (tra) {
@@ -149,7 +146,7 @@ namespace JEngine {
         _lSca = sca ? *sca * _lSca : _lSca;
     }
 
-    void CTransform::update(Space space, const JVector2f* pos, const float* rot, const JVector2f* scale) {
+    void CTransform::update(Space space, const JVector3f* pos, const JVector3f* rot, const JVector3f* scale) {
         if (_parent && space == Space::World) {
             auto inv = getWorldMatrix().getInverse();
             if (pos) {
@@ -170,7 +167,7 @@ namespace JEngine {
         _lSca = scale ? *scale : _lSca;
     }
 
-    CTransform* CTransform::addChild(CTransform* tr) {
+    TCompRef<CTransform> CTransform::addChild(TCompRef<CTransform> tr) {
         if (tr && tr != this && tr->_parent != this) {
             if (tr->_parent) {
                 tr->_parent->removeChild(tr);
@@ -181,7 +178,7 @@ namespace JEngine {
         return tr;
     }
 
-    bool CTransform::removeChild(CTransform* tr) {
+    bool CTransform::removeChild(TCompRef<CTransform> tr) {
         if (tr && tr != this) {
             auto find = std::find(_children.begin(), _children.end(), tr);
             if (find != _children.end()) {
@@ -195,7 +192,7 @@ namespace JEngine {
 
     void CTransform::destroyChildren() {
         for (size_t i = 0; i < _children.size(); i++) {
-            GameObject::destroyObject(_children[i]->getObject());
+            Scene::destroyObject(_children[i]->getObject());
         }
         _children.clear();
     }
@@ -208,7 +205,7 @@ namespace JEngine {
         destroyChildren();
 
         _lPos = { 0, 0 };
-        _lRot = 0.0f;
+        _lRot = { 0.0f, 0.0f, 0.0f };
         _lSca = { 1, 1 };
     }
 
@@ -217,79 +214,97 @@ namespace JEngine {
     }
 
     void CTransform::deserializeBinaryImpl(const Stream& stream) {
-        UUID8 parent{ UUID8::Empty };
-        UUID8* children{nullptr};
         uint32_t childCount{};
 
-        Serialization::deserialize(parent, stream);
+        Serialization::deserialize(_parent, stream);
         Serialization::deserialize(_lPos, stream);
         Serialization::deserialize(_lRot, stream);
         Serialization::deserialize(_lSca, stream);
 
         Serialization::deserialize(childCount, stream);
 
-        children = reinterpret_cast<UUID8*>(_malloca(childCount * sizeof(UUID8)));
-        JENGINE_CORE_ASSERT(children, "Failed to allocate child UUID buffer!");
-        stream.readValue(children, childCount, false);
-
-        //TODO: Add child/parent deserialization
-
-        _freea(children);
+        _children.clear();
+        TCompRef<CTransform> trCH{};
+        for (uint32_t i = 0; i < childCount; i++) {
+            Serialization::deserialize(trCH, stream);
+            if (trCH.isValid()) {
+                _children.emplace_back(trCH);
+            }
+        }
     }
-
     void CTransform::serializeBinaryImpl(const Stream& stream) const {
-        UUID8 parent = _parent ? _parent->getObject()->getUUID() : UUID8::Empty;
-        Serialization::serialize(parent, stream);
+        Serialization::serialize(_parent, stream);
         Serialization::serialize(_lPos, stream);
         Serialization::serialize(_lRot, stream);
         Serialization::serialize(_lSca, stream);
 
-        //TODO: Add child/parent serialization
+        Serialization::serialize(uint32_t(_children.size()), stream);
+        for (auto& child : _children) {
+            Serialization::serialize(child, stream);
+        }
     }
 
     void CTransform::deserializeYAMLImpl(yamlNode& node) {
-        UUID8 parent{ UUID8::Empty };
-        UUID8* children{ nullptr };
-        uint32_t childCount{};
-
-        Serialization::deserialize(parent, node["parent"]);
+        Serialization::deserialize(_parent.uuid, node["parent"]);
         Serialization::deserialize(_lPos, node["position"]);
         Serialization::deserialize(_lRot, node["rotation"]);
         Serialization::deserialize(_lSca, node["scale"]);
 
-        //TODO: Add child/parent deserialization
-    }
+        auto& children = node["children"];
 
+        _children.clear();
+        if (children.IsSequence()) {
+            TCompRef<CTransform> trCH{};
+            uint32_t childCount = uint32_t(children.size());
+            for (uint32_t i = 0; i < childCount; i++) {
+                Serialization::deserialize(trCH.uuid, children[i]);
+                if (trCH.isValid()) {
+                    _children.emplace_back(trCH);
+                }
+            }
+        }
+    }
     void CTransform::serializeYAMLImpl(yamlEmit& emit) const {
-        UUID8 parent = _parent ? _parent->getObject()->getUUID() : UUID8::Empty;
-        emit << YAML::Key << "parent" << YAML::Value << parent;
+        emit << YAML::Key << "parent" << YAML::Value << _parent;
         emit << YAML::Key << "position" << YAML::Value << _lPos;
         emit << YAML::Key << "rotation" << YAML::Value << _lRot;
         emit << YAML::Key << "scale" << YAML::Value << _lSca;
 
-        //TODO: Add child/parent serialization
+        emit << YAML::Key << "children" << YAML::Value << YAML::BeginSeq;
+        for (auto& child : _children) {
+            emit << child.uuid;
+        }
+        emit << YAML::EndSeq;
     }
 
     void CTransform::deserializeJSONImpl(json& jsonF) {
-        UUID8 parent{ UUID8::Empty };
-        UUID8* children{ nullptr };
-        uint32_t childCount{};
-
-        Serialization::deserialize(parent, jsonF["parent"]);
+        Serialization::deserialize(_parent.uuid, jsonF["parent"]);
         Serialization::deserialize(_lPos, jsonF["position"]);
         Serialization::deserialize(_lRot, jsonF["rotation"]);
         Serialization::deserialize(_lSca, jsonF["scale"]);
 
-        //TODO: Add child/parent deserialization
+        auto& children = jsonF["children"];
+        _children.clear();
+        if (children.is_array()) {
+            TCompRef<CTransform> trCH{};
+            uint32_t childCount = uint32_t(children.size());
+            for (uint32_t i = 0; i < childCount; i++) {
+                Serialization::deserialize(trCH.uuid, children[i]);
+                if (trCH.isValid()) {
+                    _children.emplace_back(trCH);
+                }
+            }
+        }
     }
-
     void CTransform::serializeJSONImpl(json& jsonF) const {
-        UUID8 parent = _parent ? _parent->getObject()->getUUID() : UUID8::Empty;
-        Serialization::serialize(parent, jsonF["parent"]);
+        Serialization::serialize(_parent.uuid, jsonF["parent"]);
         Serialization::serialize(_lPos, jsonF["position"]);
         Serialization::serialize(_lRot, jsonF["rotation"]);
         Serialization::serialize(_lSca, jsonF["scale"]);
 
-        //TODO: Add child/parent serialization
+        auto& chArr = jsonF["children"] = json::array_t{};
+        for (auto& child : _children) {
+            Serialization::serialize(child.uuid, chArr.emplace_back());
+        }
     }
 }

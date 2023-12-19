@@ -22,10 +22,8 @@ namespace JEngine {
         UUID8(const UUID8& other);
         UUID8(const uint32_t a, const uint32_t b);
         UUID8(const uint64_t hash);
-        UUID8(const std::string& str);
-        UUID8(const char* str);
-        UUID8(const char* str, const size_t length);
-
+        explicit UUID8(std::string_view str);
+   
         const bool operator ==(const UUID8& other) const;
         const bool operator !=(const UUID8& other) const;
 
@@ -39,20 +37,12 @@ namespace JEngine {
 
         UUID8& updateHash(HashState& state, const  void* data, size_t size, size_t blockSize = BLOCK_SIZE);
 
-        UUID8& parse(const std::string& str, const UUID8& defaultValue = {});
-        UUID8& parse(const char* str, const UUID8& defaultValue = {});
-        UUID8& parse(const char* str, const size_t count, const UUID8& defaultValue = {});
         UUID8& parse(ConstSpan<char> str, const UUID8& defaultValue = {});
 
         UUID8& computeHash(const Stream& stream, const size_t blockSize = BLOCK_SIZE);
         UUID8& computeHash(const Stream& stream, Span<char> buffer);
 
-        UUID8& computeHash(const char* data, const size_t size, const size_t blockSize = BLOCK_SIZE);
-
-        UUID8& computeHash(Span<char> data, const size_t blockSize = BLOCK_SIZE);
         UUID8& computeHash(ConstSpan<char> data, const size_t blockSize = BLOCK_SIZE);
-
-        UUID8& computeHash(Span<uint8_t> data, const size_t blockSize = BLOCK_SIZE);
         UUID8& computeHash(ConstSpan<uint8_t> data, const size_t blockSize = BLOCK_SIZE);
 
         friend yamlEmit& operator<<(yamlEmit& yamlOut, const UUID8& itemRef);
@@ -74,10 +64,8 @@ namespace JEngine {
         UUID16(const uint32_t a, const uint32_t b, const int64_t len);
         UUID16(const uint64_t hash, const int64_t len);
         UUID16(const UUID8& hash, const int64_t len);
-        UUID16(const std::string& str);
-        UUID16(const char* str);
-        UUID16(const char* str, const size_t length);
-
+        explicit UUID16(std::string_view str);
+   
         const bool operator ==(const UUID16& other) const;
         const bool operator !=(const UUID16& other) const;
 
@@ -91,20 +79,12 @@ namespace JEngine {
         UUID8 asUUID8() const { return _hash; }
         int64_t getLength() const { return _len; }
 
-        UUID16& parse(const std::string& str, const UUID16& defaultValue = {});
-        UUID16& parse(const char* str, const UUID16& defaultValue = {});
-        UUID16& parse(const char* str, const size_t count, const UUID16& defaultValue = {});
         UUID16& parse(ConstSpan<char> str, const UUID16& defaultValue = {});
 
         UUID16& computeHash(const Stream& stream, const size_t blockSize = UUID8::BLOCK_SIZE);
         UUID16& computeHash(const Stream& stream, Span<char> buffer);
 
-        UUID16& computeHash(const char* data, const size_t size, const size_t blockSize = UUID8::BLOCK_SIZE);
-
-        UUID16& computeHash(Span<char> data, const size_t blockSize = UUID8::BLOCK_SIZE);
         UUID16& computeHash(ConstSpan<char> data, const size_t blockSize = UUID8::BLOCK_SIZE);
-
-        UUID16& computeHash(Span<uint8_t> data, const size_t blockSize = UUID8::BLOCK_SIZE);
         UUID16& computeHash(ConstSpan<uint8_t> data, const size_t blockSize = UUID8::BLOCK_SIZE);
 
         friend yamlEmit& operator<<(yamlEmit& yamlOut, const UUID16& itemRef);

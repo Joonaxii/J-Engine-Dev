@@ -7,6 +7,7 @@
 #include <JEngine/Utility/Flags.h>
 #include <JEngine/Core/AssetDB.h>
 #include <JEngine/Core/SceneManager.h>
+#include <Windows.h>
 
 int main(int argc, char** argv);
 
@@ -30,17 +31,17 @@ namespace JEngine {
     class Application {
     public:
 
-        Application(const AppSpecs& specs, const ResourceRoot* roots, size_t rootCount);
+        Application(const AppSpecs& specs);
         virtual ~Application();
         
-        static Application* getInstance() { return _instance; }
+        static Application* get() { return _instance; }
 
-        bool init();
+        virtual bool init();
         virtual void run() = 0;
 
-        bool isQuitting() const { return bool(_flags & FLAG_QUITTING); }
-        void cancelQuit() { _flags &= ~FLAG_QUITTING; }
-        void quit() { _flags |= FLAG_QUITTING; }
+        bool isQuitting() const { return bool(_flags & APP_FLAG_QUITTING); }
+        void cancelQuit() { _flags &= ~APP_FLAG_QUITTING; }
+        void quit() { _flags |= APP_FLAG_QUITTING; }
 
         JTime& getTime() { return _time; }
         const JTime& getTime() const { return _time; }
@@ -48,21 +49,31 @@ namespace JEngine {
         const AppSpecs& getSpecs() const { return _specs; }
         Renderer& getRenderer() { return _renderer; }
 
-        SceneManager& getSceneManager() { return _sceneManager; }
-        const SceneManager& getSceneManager() const { return _sceneManager; }
+        Scene& getScene() { return _scene; }
+        const Scene& getScene() const { return _scene; }
 
         AssetDB& getAssetDB() { return _assetDB; }
         const AssetDB& getAssetDB() const { return _assetDB; }
 
+        void setForceFocus(bool focus) { _flags.setBit(APP_FORCE_FOCUS, focus); }
+        bool hasFocus() const;
+
+        static void toggleConsoleCloseButton(bool state);
+        static void hideConsole();
+        static void showConsole();
+        static bool isConsoleVisible();
+
     private:
         static Application* _instance;
-        static constexpr uint8_t FLAG_QUITTING = 0x1;
-
+        enum : uint8_t {
+            APP_FLAG_QUITTING = 0x1,
+            APP_FORCE_FOCUS = 0x2,
+        };
         UI8Flags _flags;
 
         AppSpecs _specs;
         AssetDB _assetDB;
-        SceneManager _sceneManager;
+        Scene _scene;
         Renderer _renderer;
         JTime _time;
     };

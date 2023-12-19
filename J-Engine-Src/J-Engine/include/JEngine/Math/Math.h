@@ -43,6 +43,34 @@ namespace JEngine::Math {
     }
 
     template<typename T>
+    inline float normalize_T(T value) {
+        return 0.0f;
+    }
+
+    template<>
+    inline float normalize_T(uint8_t value) {
+        static float LUT[UINT8_MAX + 1]{ 1.0f };
+        if (LUT[0] != 1.0f) {
+            for (size_t i = 0; i <= UINT8_MAX; i++) {
+                LUT[i] = float(i / float(UINT8_MAX));
+            }
+        }
+        return LUT[value];
+    }
+
+    template<>
+    inline float normalize_T(uint16_t value) {
+        static float LUT[UINT16_MAX + 1]{ 1.0f };
+        if (LUT[0] != 1.0f) {
+            for (size_t i = 0; i <= UINT16_MAX; i++) {
+                LUT[i] = float(i / float(UINT16_MAX));
+            }
+        }
+        return LUT[value];
+    }
+
+
+    template<typename T>
     inline constexpr bool isPowerOf2(T value) { return (value & (value - 1)) == 0; }
 
     template<> inline constexpr bool isPowerOf2<double>(const double value) { return isPowerOf2<int64_t>(int64_t(value)); }
@@ -57,14 +85,14 @@ namespace JEngine::Math {
     template<>
     inline constexpr double sqrt<double>(double x) {
         return (x >= 0 && x < std::numeric_limits<double>::infinity()
-            ? detail::sqrtNewtonRaphson(x, x, 0)
+            ? ::detail::sqrtNewtonRaphson(x, x, 0)
             : std::numeric_limits<double>::quiet_NaN());
     }
 
     template<>
     inline constexpr float sqrt<float>(float x) {
         return (x >= 0 && x < std::numeric_limits<float>::infinity()
-            ? detail::sqrtfNewtonRaphson(x, x, 0)
+            ? ::detail::sqrtfNewtonRaphson(x, x, 0)
             : std::numeric_limits<float>::quiet_NaN());
     }
 

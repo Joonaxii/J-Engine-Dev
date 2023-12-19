@@ -26,6 +26,7 @@ namespace JEngine {
         Unknown,
 
         R8,
+        RG8,
         RGB24,
         RGBA32,
         RGBA4444,
@@ -33,17 +34,31 @@ namespace JEngine {
         RGBA64,
         Indexed8,
         Indexed16,
+
+        //Support will be added later
+        DXT1,
+        DXT5,
     };
 
     inline constexpr int32_t getBitsPerPixel(const TextureFormat format) {
         switch (format) {
             default: return 0;
 
-            case TextureFormat::R8:        return 8;
+            case TextureFormat::R8:
             case TextureFormat::Indexed8:  return 8;
+
+            case TextureFormat::RG8:
+            case TextureFormat::RGBA4444:
             case TextureFormat::Indexed16: return 16;
+
             case TextureFormat::RGB24:     return 24;
             case TextureFormat::RGBA32:    return 32;
+
+            case TextureFormat::RGB48:     return 48;
+            case TextureFormat::RGBA64:    return 64;
+
+            case TextureFormat::DXT1:      return 4;
+            case TextureFormat::DXT5:      return 8;
         }
     }
     inline constexpr const char* getTextureFormatName(const TextureFormat format) {
@@ -51,12 +66,21 @@ namespace JEngine {
             default:						return "Unknown";
 
             case TextureFormat::R8:	        return "R8";
+            case TextureFormat::RG8:	    return "RG8";
 
             case TextureFormat::Indexed8:	return "Indexed8";
             case TextureFormat::Indexed16:	return "Indexed16";
 
             case TextureFormat::RGB24:		return "RGB24";
             case TextureFormat::RGBA32:		return "RGBA32";
+
+            case TextureFormat::RGBA4444:	return "RGBA4444";
+
+            case TextureFormat::RGB48:		return "RGB48";
+            case TextureFormat::RGBA64:		return "RGBA64";
+
+            case TextureFormat::DXT1:		return "DXT1";
+            case TextureFormat::DXT5:		return "DXT5";
         }
     }
 
@@ -83,7 +107,6 @@ namespace JEngine {
     constexpr uint8_t multUI8(uint32_t a, uint32_t b) {
         return uint8_t((a * b * 0x10101U + 0x800000U) >> 24);
     }
-
     inline uint8_t divUI8(int32_t a, int32_t b) {
         static bool init{ false };
         static uint8_t LUT[256 * 256]{ 0 };
@@ -98,19 +121,17 @@ namespace JEngine {
         return LUT[(a & 0xFF) | ((b & 0xFF) << 8)];
     }
 
-    uint8_t remapUI16ToUI8(uint16_t value);
-    uint8_t remapUI8ToUI4(uint8_t value) {
+    inline uint8_t remapUI8ToUI4(uint8_t value) {
         static bool init{ false };
         static uint8_t MAP[256]{};
         if (!init) {
             for (size_t i = 0; i < 256; i++)   {
-                MAP[i] = (i * 15) / 255;
+                MAP[i] = uint8_t((i * 15) / 255);
             }
             init = true;
         }
         return MAP[value];
     }
-
     inline uint8_t remapUI4ToUI8(uint8_t value) {
         static uint8_t LUT[16]{
             0,
@@ -133,8 +154,17 @@ namespace JEngine {
         return LUT[value & 0xF];
     }
 
+    inline uint8_t remapUI16ToUI8(uint16_t value) {
+        return value >> 8;
+    }
+
     enum : uint8_t {
         IMG_FLAG_HAS_ALPHA = 0x1,
+    };
+
+    struct ImageFrame {
+        size_t offset{ 0 };
+        int32_t duration{0};
     };
 
     struct ImageData {
@@ -143,15 +173,17 @@ namespace JEngine {
         int32_t height{ 0 };
         TextureFormat format{ TextureFormat::Unknown };
         int32_t paletteSize{ 0 };
+        std::vector<ImageFrame> frames{};
+        FilterMode filter{};
         uint8_t* data{ nullptr };
         uint8_t flags{ 0 };
 
-        ImageData() : width(), height(), format(), paletteSize(), data(), flags() {}
+        ImageData() : width(), height(), format(), paletteSize(), data(), flags(), filter{FilterMode::Nearest}, frames{ ImageFrame() }{}
         ImageData(int32_t width, int32_t height, TextureFormat format, int32_t paletteSize, uint8_t* data, uint8_t flags) :
-            width(width), height(height), format(format), paletteSize(paletteSize), data(data), flags(flags) {}
+            width(width), height(height), format(format), paletteSize(paletteSize), data(data), flags(flags), filter{ FilterMode::Nearest }, frames{ ImageFrame() } {}
 
         ImageData(int32_t width, int32_t height, TextureFormat format, int32_t paletteSize, uint8_t* data) :
-            width(width), height(height), format(format), paletteSize(paletteSize), data(data), flags(0) {}
+            width(width), height(height), format(format), paletteSize(paletteSize), data(data), flags(0), filter{ FilterMode::Nearest }, frames{ ImageFrame() } {}
 
         bool isIndexed() const { return format >= TextureFormat::Indexed8 && format <= TextureFormat::Indexed16; }
         bool hasAlpha() const {
@@ -167,12 +199,32 @@ namespace JEngine {
             }
         }
 
-        const uint8_t* getData() const {
-            return isIndexed() ? data + (paletteSize * 4) : data;
+        const uint8_t* getData(int32_t frame = 0) const {
+            return (isIndexed() ? data + (size_t(paletteSize) * 4) : data) + frames[frame].offset;
         }
 
-        uint8_t* getData() {
-            return isIndexed() ? data + (paletteSize * 4) : data;
+        uint8_t* getData(int32_t frame = 0) {
+            return (isIndexed() ? data + (size_t(paletteSize) * 4) : data) + frames[frame].offset;
+        }
+
+        template<typename T>
+        const T* getDataAs(int32_t frame = 0) const {
+            return reinterpret_cast<const T*>((isIndexed() ? data + (size_t(paletteSize) * 4) : data) + frames[frame].offset);
+        }
+
+        template<typename T>
+        uint8_t* getDataAs(int32_t frame = 0) {
+            return reinterpret_cast<T*>((isIndexed() ? data + (size_t(paletteSize) * 4) : data) + frames[frame].offset);
+        }
+
+        template<typename T>
+        const T* getRawDataAs(int32_t frame = 0) const {
+            return reinterpret_cast<const T*>(data + frames[frame].offset);
+        }
+
+        template<typename T>
+        uint8_t* getRawDataAs(int32_t frame = 0) {
+            return reinterpret_cast<T*>(data + frames[frame].offset);
         }
 
         size_t getSize() const {
@@ -205,7 +257,6 @@ namespace JEngine {
         }
 
         bool doAllocate(size_t size, bool clear = true) {
-
             size_t required = size;
             if (data) {
                 if (required <= _bufferSize)

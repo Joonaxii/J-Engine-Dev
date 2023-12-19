@@ -18,11 +18,11 @@ namespace JEngine {
 
         std::string toString() const {
             std::stringstream sstrm;
-            sstrm << _major;
+            sstrm << int64_t(_major);
             sstrm << '.';
-            sstrm << _minor;
+            sstrm << int64_t(_minor);
             sstrm << '.';
-            sstrm << _revision;
+            sstrm << int64_t(_revision);
             return sstrm.str();
         }
 

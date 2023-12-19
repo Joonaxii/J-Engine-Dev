@@ -97,7 +97,7 @@ namespace JEngine {
     }
 
     bool RenderTexture::deserializeBinary(const Stream& stream, const size_t size) {
-        if (formatMatch(stream, FMT_JRTX)) {
+        if (Format::formatMatch(stream, FMT_JRTX)) {
             return true;
         }
         return false;

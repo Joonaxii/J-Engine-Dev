@@ -1,13 +1,12 @@
 #pragma once
-#include <JEngine/IO/Serialization/Serializable.h>
 #include <cstdint>
-
-static constexpr uint16_t RED_MASK_555 = 0x1F;
-static constexpr uint16_t GREEN_MASK_555 = 0x3E0;
-static constexpr uint16_t BLUE_MASK_555 = 0x7C00;
-static constexpr uint16_t ALPHA_MASK_555 = 0x8000;
+#include <JEngine/IO/Serialization/Serializable.h>
 
 namespace JEngine {
+    static constexpr uint16_t RED_MASK_555 = 0x1F;
+    static constexpr uint16_t GREEN_MASK_555 = 0x3E0;
+    static constexpr uint16_t BLUE_MASK_555 = 0x7C00;
+    static constexpr uint16_t ALPHA_MASK_555 = 0x8000;
 
     struct JColor565;
     struct JColor24;

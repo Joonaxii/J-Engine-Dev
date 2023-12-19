@@ -9,7 +9,7 @@
 namespace JEngine {
     enum DataFormat : uint8_t {
         FMT_UNKNOWN = 0xFF,
-        FMT_BINARY,
+        FMT_BINARY = 0x00,
         FMT_TEXT,
 
         FMT_JSON, //Requires complex analysis
@@ -40,7 +40,7 @@ namespace JEngine {
 
         FMT_JPRF, //Engine Preferences/Settings
 
-        FMT_JMAT, //Material
+        FMT_JMAT, //Material Asset used by renderers
         FMT_JSHD, //Shader (Can be just a raw shader or an "include shader")
 
         FMT_JTEX, //Texture (Engine native texure format)
@@ -52,9 +52,11 @@ namespace JEngine {
         FMT_JSCN, //Scene
         FMT_JPFB, //Prefab
 
-        FMT_JAUD, //Audio (Audio isn't supported yet, possibly will support OGG and WAV)
+        FMT_JAUD, //Audio (Supports WAV and will possibly support OGG)
+        FMT_JSEC, //Audio Section Asset
+        FMT_JBPM, //Beat Map Asset
 
-        FMT_JFNT, //Font (Wrapper for TTF/OTF font data)
+        FMT_JFNT, //Font (Wrapper for TTF/OTF/Bitmap font data)
         FMT_JDAT, //Raw Data (Raw binary/text)
 
         _FMT_COUNT,
@@ -67,7 +69,7 @@ namespace JEngine {
 
         FormatInfo() : signature{0}, mask(0), size(0) {}
         FormatInfo(const void* sig, uint64_t mask, size_t size) :
-            signature{reinterpret_cast<const char*>(sig)}, mask(mask), size(size > 64 ? 64 : 0)
+            signature{reinterpret_cast<const char*>(sig)}, mask(mask), size(size > 64 ? 64 : size)
         {
         }
 
@@ -152,6 +154,7 @@ namespace JEngine {
             "JEngine Prefab",
 
             "JEngine Audio",
+            "JEngine Beat Map",
 
             "JEngine Font",
             "JEngine Data File",
@@ -174,6 +177,8 @@ namespace JEngine {
 #define S_TO_UINT48(val) uint64_t(val[0] | (val[1] << 8) | (val[2] << 16) | (val[3] << 24) | (val[4] << 32) | (val[5] << 40))
 #define S_TO_UINT56(val) uint64_t(val[0] | (val[1] << 8) | (val[2] << 16) | (val[3] << 24) | (val[4] << 32) | (val[5] << 40) | (val[6] << 48))
 #define S_TO_UINT64(val) uint64_t(val[0] | (val[1] << 8) | (val[2] << 16) | (val[3] << 24) | (val[4] << 32) | (val[5] << 40) | (val[6] << 48) | (val[7] << 56))
+
+#define CS_TO_UI8(val) reinterpret_cast<const uint8_t*>(val)
 
 #define CREATE_DATA_HEADER(FORMAT, value, length) \
 template<> \
@@ -198,6 +203,8 @@ CREATE_DATA_HEADER(JEngine::FMT_JSCN, S_TO_UINT32("JSCN"), 4);
 CREATE_DATA_HEADER(JEngine::FMT_JPFB, S_TO_UINT32("JPFB"), 4);
 
 CREATE_DATA_HEADER(JEngine::FMT_JAUD, S_TO_UINT32("JAUD"), 4);
+CREATE_DATA_HEADER(JEngine::FMT_JSEC, S_TO_UINT32("JSEC"), 4);
+CREATE_DATA_HEADER(JEngine::FMT_JBPM, S_TO_UINT32("JBPM"), 4);
 
 CREATE_DATA_HEADER(JEngine::FMT_JFNT, S_TO_UINT32("JFNT"), 4);
 CREATE_DATA_HEADER(JEngine::FMT_JDAT, S_TO_UINT32("JDAT"), 4);

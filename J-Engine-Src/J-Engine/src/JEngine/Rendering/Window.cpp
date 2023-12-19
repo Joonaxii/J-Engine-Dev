@@ -5,7 +5,7 @@
 
 namespace JEngine {
     std::map<GLFWwindow*, Window*> Window::_glWindowToWindow{};
-    Window* Window::_instance{nullptr};
+    Window* Window::_instance{ nullptr };
 
     Window* Window::setInstance(Window* window) {
         return _instance = window;
@@ -15,12 +15,12 @@ namespace JEngine {
         return _instance;
     }
 
-    Window::Window() : _screenBuffer(GL_RGBA32F), _minimized(true), _window(nullptr), _size(), _worldRect(), _worldProjection(), _onResize() { }
+    Window::Window() : _screenBuffer(GL_RGBA32F), _flags(JWIN_FL_MINIMIZED), _swapInterval(DEFAULT_SWAP_INTERVAL), _window(nullptr), _size(), _worldRect(), _worldProjection(), _onResize(), _onFocus(), _onMinimize() { }
     Window::~Window() {
         close();
     }
 
-    bool Window::init(const char* title, const int32_t width, const int32_t height) {
+    bool Window::init(const char* title, int32_t width, int32_t height, uint8_t swapInterval) {
         if (_window) { return true; }
 
         //Init GLFW window
@@ -44,11 +44,16 @@ namespace JEngine {
             return false;
         }
 
+        setSwapInterval(_swapInterval);
+
         //Init window resize event update set screen size related values
         _glWindowToWindow.insert(std::make_pair(_window, this));
         onWindowResize(width, height);
+        onWindowFocus(glfwGetWindowAttrib(_window, GLFW_FOCUSED));
 
         glfwSetWindowSizeCallback(_window, windowResizeCallback);
+        glfwSetWindowFocusCallback(_window, windowFocusCallback);
+        JENGINE_CORE_INFO("[J-Engine - Window] Init:\n  - Width: {0}\n  - Height: {1}\n  - Swap Interval: {2}", _size.x, _size.y, uint32_t(_swapInterval));
         return true;
     }
 
@@ -67,7 +72,7 @@ namespace JEngine {
 
     bool Window::isInitialized() const { return _window != nullptr; }
 
-    void Window::clear(const JColor32& clearColor, const uint32_t clearFlags) {
+    void Window::clear(const JColor32& clearColor, uint32_t clearFlags) {
         GLCall(glClearColor(
             Math::normalize<uint8_t, GLclampf>(clearColor.r),
             Math::normalize<uint8_t, GLclampf>(clearColor.g),
@@ -81,6 +86,12 @@ namespace JEngine {
     void Window::pollEvents() {
         if (!_window) { return; }
         GLCall(glfwPollEvents());
+    }
+
+    void Window::setSwapInterval(uint8_t swapInterval) {
+        if (!_window) { return; }
+        _swapInterval = swapInterval;
+        glfwSwapInterval(_swapInterval);
     }
 
     void Window::close() {
@@ -105,7 +116,7 @@ namespace JEngine {
         glScissor(0, 0, _size.x, _size.y);
     }
 
-    void Window::updateViewport(const JVector2i& viewRect, const JVector2i& viewSize, const uint8_t flags) {
+    void Window::updateViewport(const JVector2i& viewRect, const JVector2i& viewSize, uint8_t flags) {
         if (flags & 0x1) {
             glViewport(viewRect.x, viewRect.y, viewSize.x, viewSize.y);
         }
@@ -115,43 +126,90 @@ namespace JEngine {
     }
 
     uint64_t Window::addOnWindowResizeCB(const ResizeEvent::Func& cb) {
-        return _onResize.add(const_cast<ResizeEvent::Func&>(cb));
+        return _onResize.add(cb);
     }
 
-    bool Window::removeOnWindowResizeCB(const uint64_t id) {
+    bool Window::removeOnWindowResizeCB(uint64_t id) {
         return _onResize.remove(id);
     }
 
-    void Window::onWindowResize(const int32_t width, const int32_t height) {
-        _size.x = width;
-        _size.y = height;
-
-        _minimized = width <= 0 || height <= 0;
-
-        const float aspect = _size.x / float(_size.y);
-        static constexpr float orthoSize = 0.5f;
-
-        const float w = orthoSize * aspect;
-        _worldRect       = JRectf({ -0.5f * aspect, -0.5f }, { 0.5f * aspect, 0.5f });
-        _worldProjection = JMatrix4f::ortho(-w, w, -orthoSize, orthoSize);
-
-        _screenProjection = _worldProjection;
-        _screenProjection.translate(-w, -orthoSize);
-        _screenProjection.scale(aspect, 1.0f);
-
-        FrameBufferSpecs specs;
-        specs.width = width;
-        specs.height = height;
-
-        _screenBuffer.invalidate(specs);
-        _onResize(width, height, -1, false);
+    uint64_t Window::addOnWindowFocusCB(const FocusEvent::Func& cb) {
+        return _onFocus.add(cb);
     }
 
-    void Window::windowResizeCallback(GLFWwindow* window, const int32_t width, const int32_t height) {
+    bool Window::removeOnWindowFocusCB(uint64_t id) {
+        return _onFocus.remove(id);
+    }
+
+    bool Window::isOSWindowFocused(void* window) {
+        return glfwGetWindowAttrib((GLFWwindow*)(window), GLFW_FOCUSED) != 0;
+    }
+
+    uint64_t Window::addOnWindowMinimizeCB(const MinimizeEvent::Func& cb) {
+        return _onMinimize.add(cb);
+    }
+
+    bool Window::removeOnWindowMinimizeCB(uint64_t id) {
+        return _onMinimize.remove(id);
+    }
+
+    void Window::onWindowResize(int32_t width, int32_t height) {
+        bool wasMinimized = _flags.isBitSet(JWIN_FL_MINIMIZED);
+        _flags.setBit(JWIN_FL_MINIMIZED, width <= 0 || height <= 0);
+        if (_flags.isBitSet(JWIN_FL_MINIMIZED)) {
+            if (!wasMinimized) {
+                _onMinimize(true);
+            }
+            return;
+        }
+
+        if (width != _size.x || height != _size.y) {
+            _size.x = width;
+            _size.y = height;
+
+            const float aspect = _size.x / float(_size.y);
+            static constexpr float orthoSize = 0.5f;
+
+            const float w = orthoSize * aspect;
+            _worldRect = JRectf({ -0.5f * aspect, -0.5f }, { 0.5f * aspect, 0.5f });
+            _worldProjection = JMatrix4f::ortho(-w, w, -orthoSize, orthoSize);
+
+            _screenProjection = _worldProjection;
+            _screenProjection.translate(-w, -orthoSize);
+            _screenProjection.scale(aspect, 1.0f);
+
+            FrameBufferSpecs specs{};
+            specs.width = width;
+            specs.height = height;
+
+            _screenBuffer.invalidate(specs);
+            _onResize(width, height, -1, false);
+        }
+
+        if (wasMinimized) {
+            _onMinimize(false);
+        }
+    }
+
+    void Window::windowResizeCallback(GLFWwindow* window, int32_t width, int32_t height) {
         if (window) {
             auto win = _glWindowToWindow[window];
             if (win) {
                 win->onWindowResize(width, height);
+            }
+        }
+    }
+
+    void Window::onWindowFocus(int32_t focus) {
+        _flags.setBit(JWIN_FL_FOCUSED, focus != 0);
+        _onFocus(focus != 0);
+    }
+
+    void Window::windowFocusCallback(GLFWwindow* window, int32_t focused) {
+        if (window) {
+            auto win = _glWindowToWindow[window];
+            if (win) {
+                win->onWindowFocus(focused);
             }
         }
     }

@@ -6,11 +6,12 @@
 #include <JEngine/Math/Graphics/JColor.h>
 #include <JEngine/Math/Graphics/JColor24.h>
 #include <JEngine/Math/Graphics/JColor32.h>
+#include <JEngine/Cryptography/UUID.h>
+#include <JEngine/Core/Ref.h>
 #include <string>
+#include <string_view>
 #include <iostream>
 #include <unordered_map>
-#include <JEngine/Collections/ObjectRef.h>
-#include <JEngine/Cryptography/UUID.h>
 
 namespace JEngine {
     struct ShaderSources {
@@ -26,10 +27,10 @@ namespace JEngine {
     class Texture;
     class Shader : public IAsset {
     public:
-        typedef bool (*FindInclude)(const std::string& line, const std::ostream& stream);
+        typedef bool (*FindInclude)(std::string_view line, const std::ostream& stream);
 
         Shader();
-        Shader(const std::string& fileath);
+        Shader(std::string_view fileath);
         ~Shader();
 
         void bind() const;
@@ -37,43 +38,43 @@ namespace JEngine {
 
         uint32_t getNativeHandle() const;
 
-        void setUniform1i(const std::string& name, const int32_t value);
-        void setUniform1ui(const std::string& name, const uint32_t value);
-        void setUniform1f(const std::string& name, const float value);
+        void setUniform1i(std::string_view name, int32_t value);
+        void setUniform1ui(std::string_view name, uint32_t value);
+        void setUniform1f(std::string_view name, float value);
 
-        void setUniformV2f(const std::string& name, const JVector2f& vector);
-        void setUniformV2f(const std::string& name, const float v0, const float v1);
+        void setUniformV2f(std::string_view name, const JVector2f& vector);
+        void setUniformV2f(std::string_view name, float v0, float v1);
 
-        void setUniformV2i(const std::string& name, const JVector2i& vector);
-        void setUniformV2i(const std::string& name, const int32_t v0, const int32_t v1);
+        void setUniformV2i(std::string_view name, const JVector2i& vector);
+        void setUniformV2i(std::string_view name, int32_t v0, int32_t v1);
 
-        void setUniformV2ui(const std::string& name, const JVector2u& vector);
-        void setUniformV2ui(const std::string& name, const uint32_t v0, const uint32_t v1);
+        void setUniformV2ui(std::string_view name, const JVector2u& vector);
+        void setUniformV2ui(std::string_view name, uint32_t v0, uint32_t v1);
 
-        void setUniformV3f(const std::string& name, const JVector3f& vector);
-        void setUniformV3f(const std::string& name, const float v0, const float v1, const float v2);
+        void setUniformV3f(std::string_view name, const JVector3f& vector);
+        void setUniformV3f(std::string_view name, float v0, float v1, float v2);
 
-        void setUniformColor24(const std::string& name, const JColor24& color);
-        void setUniformV3i(const std::string& name, const JVector3i& vector);
-        void setUniformV3i(const std::string& name, const int32_t v0, const int32_t v1, const int32_t v2);
+        void setUniformColor24(std::string_view name, JColor24 color);
+        void setUniformV3i(std::string_view name, const JVector3i& vector);
+        void setUniformV3i(std::string_view name, int32_t v0, int32_t v1, int32_t v2);
 
-        void setUniformV3ui(const std::string& name, const JVector3u& vector);
-        void setUniformV3ui(const std::string& name, const uint32_t v0, const uint32_t v1, const uint32_t v2);
+        void setUniformV3ui(std::string_view name, const JVector3u& vector);
+        void setUniformV3ui(std::string_view name, uint32_t v0, uint32_t v1, uint32_t v2);
 
-        void setUniformColor(const std::string& name, const JColor& color);
-        void setUniformV4f(const std::string& name, const JVector4f& vector);
-        void setUniformV4f(const std::string& name, const float v0, const float v1, const float v2, const float v3);
+        void setUniformColor(std::string_view name, const JColor& color);
+        void setUniformV4f(std::string_view name, const JVector4f& vector);
+        void setUniformV4f(std::string_view name, float v0, float v1, float v2, float v3);
 
-        void setUniformV4i(const std::string& name, const JVector4i& vector);
-        void setUniformV4i(const std::string& name, const int32_t v0, const int32_t v1, const int32_t v2, const int32_t v3);
+        void setUniformV4i(std::string_view name, const JVector4i& vector);
+        void setUniformV4i(std::string_view name, int32_t v0, int32_t v1, int32_t v2, int32_t v3);
 
-        void setUniformColor32(const std::string& name, const JColor32& color);
-        void setUniformV4ui(const std::string& name, const JVector4u& vector);
-        void setUniformV4ui(const std::string& name, const uint32_t v0, const uint32_t v1, const uint32_t v2, const uint32_t v3);
+        void setUniformColor32(std::string_view name, JColor32 color);
+        void setUniformV4ui(std::string_view name, const JVector4u& vector);
+        void setUniformV4ui(std::string_view name, uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3);
 
-        void setUniformMat4f(const std::string& name, const JMatrix4f& mat);
+        void setUniformMat4f(std::string_view name, const JMatrix4f& mat);
 
-        uint32_t setTextures(const std::string& name, const Texture* texture, const uint32_t position = 0);
+        uint32_t setTextures(std::string_view name, TAssetRef<Texture> texture, const uint32_t position = 0);
 
         bool serializeJson(json& jsonF) const;
         bool deserializeJson(json& jsonF);
@@ -83,15 +84,15 @@ namespace JEngine {
 
         uint64_t getBlendUnion() const;
 
-        static bool tryFindShader(const char* name, ObjectRef<Shader>& shader);
-        static Shader* findShader(const char* name);
+        static bool tryFindShader(std::string_view name, TAssetRef<Shader>& shader);
+        static TAssetRef<Shader> findShader(std::string_view name);
 
-        static void addShaderToLUT(const ObjectRef<Shader>& shader);
-        static bool removeShaderFromLUT(const ObjectRef<Shader>& shader);
+        static void addShaderToLUT(TAssetRef<Shader> shader);
+        static bool removeShaderFromLUT(TAssetRef<Shader> shader);
     private:
         friend class ShaderSerializer;
 
-        typedef std::unordered_map<UUID16, ObjectRef<Shader>, std::hash<UUID16>> ShaderLUT;
+        typedef std::unordered_map<UUID16, TAssetRef<Shader>, std::hash<UUID16>> ShaderLUT;
 
         static uint64_t CURRENT_BLENDING_MODE;
         static ShaderLUT SHADER_LUT;
@@ -99,12 +100,12 @@ namespace JEngine {
         uint16_t _blendingModes[4];
         uint32_t _shaderID;
         std::vector<char> _shader{};
-        std::unordered_map<std::string, int32_t> _uniformCache;
+        std::unordered_map<UUID16, int32_t, std::hash<UUID16>> _uniformCache;
 
         ShaderSources parseShader();
         uint32_t compileShader(const uint32_t type, const char* shader);
         uint32_t createShader(const char* vertShader, const char* fragShader);
 
-        int32_t getUniformLocation(const std::string& name);
+        int32_t getUniformLocation(std::string_view name);
     };
 }

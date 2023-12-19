@@ -3,13 +3,23 @@
 namespace JEngine {
     const JColor32 ICamera::DEFAULT_CLEAR_COLOR = JColor32(26, 26, 26, 0);
 
-    ICamera::ICamera() : 
-        _screenRect(0, 0, 1, 1), _viewRect(0, 0, 1, 1), 
-        _layerMask(0xFF), _cameraFlags(AUTO_RENDER_CAMERA), _tintColor(JColor32::White),
-        _clearColor(DEFAULT_CLEAR_COLOR), _depth(0.0f), _clearFlags(ClearFlags(Clear_Depth | Clear_Color)) 
-    { registerCamera(this); }
+    ICamera::ICamera() : ICamera(AUTO_RENDER_CAMERA) {}
 
-    ICamera::~ICamera() { unregisterCamera(this); }
+    ICamera::ICamera(uint8_t flags) : 
+        _screenRect(0, 0, 1, 1), _viewRect(0, 0, 1, 1), 
+        _layerMask(0xFF), _cameraFlags(flags), _tintColor(JColor32::White),
+        _clearColor(DEFAULT_CLEAR_COLOR), _depth(0.0f), _clearFlags(ClearFlags(Clear_Depth | Clear_Color)) 
+    { 
+        if ((_cameraFlags & CAMERA_NO_REGISTRATION) == 0) {
+            registerCamera(this); 
+        }
+    }
+
+    ICamera::~ICamera() {
+        if ((_cameraFlags & CAMERA_NO_REGISTRATION) == 0) {
+            unregisterCamera(this);
+        }
+    }
 
     int32_t ICamera::compareTo(const ICamera& other) const {
         if (_depth < other._depth) { return 1; }
@@ -60,8 +70,8 @@ namespace JEngine {
         Serialization::serialize(_viewRect, jsonF["viewRect"]);
         Serialization::serialize(_screenRect, jsonF["screenRect"]);
 
-        UUID8 uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUID8::Empty;
-        Serialization::serialize(uuid, jsonF["blendMaterial"]);
+        //UUID8 uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUID8::Empty;
+        //Serialization::serialize(uuid, jsonF["blendMaterial"]);
         return true;
     }
 
@@ -78,7 +88,7 @@ namespace JEngine {
         Serialization::deserialize(_screenRect, jsonF["screenRect"]);
 
         UUID8 uuid{};
-        Serialization::deserialize(uuid, jsonF["blendMaterial"]);
+        //Serialization::deserialize(uuid, jsonF["blendMaterial"]);
         //TODO: Add fetching of material by UUID
         return true;
     }
@@ -95,8 +105,8 @@ namespace JEngine {
         Serialization::serialize(_viewRect, stream);
         Serialization::serialize(_screenRect, stream);
 
-        const UUID8 uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUID8::Empty;
-        Serialization::serialize(uuid, stream);
+        //const UUID8 uuid = _blendMaterial.getPtr() ? _blendMaterial.getPtr()->getUUID() : UUID8::Empty;
+        //Serialization::serialize(uuid, stream);
         return true;
     }
 
@@ -112,8 +122,8 @@ namespace JEngine {
         Serialization::deserialize(_viewRect, stream);
         Serialization::deserialize(_screenRect, stream);
 
-        UUID8 uuid{};
-        Serialization::deserialize(uuid, stream);
+        //UUID8 uuid{};
+        //Serialization::deserialize(uuid, stream);
         //TODO: Find material by UUID
 
         return true;
@@ -139,7 +149,7 @@ namespace JEngine {
         transformProjection(renderData.projection);
 
         RENDER_OBJECTS(this, _layerMask, renderData);
-        WRITE_TO_BUFFER(_blendMaterial, _tintColor, renderData);
+        WRITE_TO_BUFFER(nullptr, _tintColor, renderData);
         return true;
     }
 }

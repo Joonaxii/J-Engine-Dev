@@ -1,38 +1,33 @@
 #pragma once
-#include <JEngine/Assets/IAsset.h>
 #include <JEngine/Utility/Flags.h>
+#include <JEngine/Core/GameObject.h>
+#include <JEngine/Collections/IndexStack.h>
+#include <JEngine/Core/Ref.h>
 
 namespace JEngine {
-    class GameObject;
-    class Scene : public IAsset {
+    class SceneAsset;
+    class Scene {
     public:
+        Scene() {}
         ~Scene();
 
-        static Scene* createScene(const std::string& name, uint8_t flags);
-        static Scene* createScene(const char* name, uint8_t flags);
-
-        bool deserializeBinary(const Stream& stream);
-        bool serializeBinary(const Stream& stream) const;
-
-        bool deserializeJSON(json& jsonF);
-        bool serializeJSON(json& jsonF) const;
-
-        bool deserializeYAML(const yamlNode& node);
-        bool serializeYAML(yamlEmit& emit) const;
-
-        bool load();
+        bool load(TAssetRef<SceneAsset> scene);
         bool unload();
 
-    private:
-        enum : uint8_t {
-            SC_IS_LOADED = 0x1,
-        };
-        friend class SceneManager;
+        bool uuidIsInUse(uint32_t uuid) const;
+        GameObject* getByUUID(uint32_t uuid);
+        Component* Scene::findComponent(CompRef uuid);
 
-        UI8Flags _infoFlags;
-        std::vector<GameObject*> _objects;
-        
-        Scene(const char* name, uint8_t flags);
+        static GORef createObject(std::string_view name, const UUID16* components, size_t compCount, uint16_t flags = 0x00, uint32_t uuidRef = UINT32_MAX);
+        static GORef createObject(std::string_view name, uint16_t flags = 0x00, uint32_t uuidRef = UINT32_MAX);
+
+        static bool destroyObject(uint32_t uuid);
+        static GameObject* destroyObject(GameObject* go);
+        static GORef destroyObject(GORef go);
+
+    private:
+        TAssetRef<SceneAsset> _sceneAsset;
+        ChunkedLUT<GameObject> _gameObjects;
 
         Scene(const Scene& other) = delete;
         Scene(Scene&& other) = delete;
@@ -40,5 +35,7 @@ namespace JEngine {
 
         void* operator new(size_t size) noexcept { return malloc(size); };
         void operator delete(void* ptr) noexcept { free(ptr); };
+
+        void clear();
     };
 }

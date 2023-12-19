@@ -17,7 +17,7 @@ namespace JEngine {
         _ppu(100.0f),
         _pivot(0.5f, 0.5f)
     {
-        std::fill_n(_vertices, 16, JVertex2f({ 0, 0 }, { 255, 255, 255, 255 }, { 0, 0 }));
+        std::fill_n(_vertices, 16, JVertex({ 0, 0, 0 }, { 255, 255, 255, 255 }, { 0, 0 }));
     }
 
     Sprite::Sprite(const Sprite& copy) : 
@@ -28,7 +28,7 @@ namespace JEngine {
         _pivot(copy._pivot),
         _texture(copy._texture)
     {
-        std::fill_n(_vertices, 16, JVertex2f({ 0, 0 }, { 255, 255, 255, 255 }, { 0, 0 }));
+        std::fill_n(_vertices, 16, JVertex({ 0, 0, 0 }, { 255, 255, 255, 255 }, { 0, 0 }));
         setTexture(copy._texture, false);
         setTextureRect(copy._textureRect);
     }
@@ -42,7 +42,7 @@ namespace JEngine {
         _pivot(pivot)
        // _atlas(-1)
     {
-        std::fill_n(_vertices, 16, JVertex2f({0, 0}, {255, 255, 255, 255}, {0, 0}));
+        std::fill_n(_vertices, 16, JVertex({ 0, 0, 0 }, {255, 255, 255, 255}, {0, 0}));
         setTexture(texture);
         setTextureRect(rectangle);
     }
@@ -63,7 +63,7 @@ namespace JEngine {
     void Sprite::setTexture(const ObjectRef<Texture>& texture, bool resetRect) {
         const Texture* texRef = texture.getPtr();
 
-        if (resetRect || (!texRef && (_textureRect == JRecti()))) {
+        if (texRef != nullptr && (resetRect || (_textureRect == JRecti()))) {
             setTextureRect(JRecti(0, 0, texRef->getWidth(), texRef->getHeight()));
         }
 
@@ -101,11 +101,11 @@ namespace JEngine {
         return _ppu;
     }
 
-    int32_t Sprite::writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex2f* verts) {
+    int32_t Sprite::writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex* verts) {
         flip *= 4;
         for (size_t i = 0; i < 4; i++) {
             auto vert = _vertices[flip + i];
-            verts[i] = JVertex2f(matrix.transformPoint(vert.position), vert.color, vert.uv);
+            verts[i] = JVertex(matrix.transformPoint(vert.position), vert.color, vert.uv);
         }
         return 4;
     }
@@ -256,7 +256,7 @@ namespace JEngine {
         return 4;
     }
 
-    const JVertex2f* Sprite::getVertices(const uint8_t flip) const {
+    const JVertex* Sprite::getVertices(const uint8_t flip) const {
         return _vertices + (flip * 4);
     }
 

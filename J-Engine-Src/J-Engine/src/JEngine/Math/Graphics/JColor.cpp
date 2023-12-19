@@ -4,11 +4,6 @@
 #include <JEngine/Math/Math.h>
 
 namespace JEngine {
-
-    JColor::JColor() : r(0), g(0), b(0), a(0) { }
-    JColor::JColor(const float r, const float g, const float b) : r(r), g(g), b(b), a(1.0f) { }
-    JColor::JColor(const float r, const float g, const float b, const float a) : r(r), g(g), b(b), a(a) { }
-
     JColor::JColor(const JColor24& rgb) :
         r(Math::uintToScalar<uint8_t, float>(rgb.r)),
         g(Math::uintToScalar<uint8_t, float>(rgb.g)),
@@ -36,21 +31,6 @@ namespace JEngine {
 
     bool JColor::operator!=(const JColor& other) const {
         return !(*this == other);
-    }
-
-    JColor::operator JColor32() const {
-        return JColor32(
-            Math::scalarToUInt<uint8_t, float>(r),
-            Math::scalarToUInt<uint8_t, float>(g),
-            Math::scalarToUInt<uint8_t, float>(b),
-            Math::scalarToUInt<uint8_t, float>(a));
-    }
-
-    JColor::operator JColor24() const {
-        return JColor24(
-            Math::scalarToUInt<uint8_t, float>(r),
-            Math::scalarToUInt<uint8_t, float>(g),
-            Math::scalarToUInt<uint8_t, float>(b));
     }
 
     void JColor::set(const JColor32& rgba) {

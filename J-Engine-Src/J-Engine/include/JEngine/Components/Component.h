@@ -1,35 +1,20 @@
 #pragma once
 #include <cstdint>
+#include <JEngine/Components/ComponentFactory.h>
 #include <JEngine/IO/Serialization/Serializable.h>
-#include <JEngine/Utility/Flags.h>
-#include <JEngine/Cryptography/UUIDFactory.h>
-#include <JEngine/Core/IObject.h>
 #include <JEngine/Collections/PoolAllocator.h>
+#include <JEngine/Utility/Flags.h>
+#include <JEngine/Core/IObject.h>
+#include <JEngine/Core/Ref.h>
 
 namespace JEngine {
-    enum ComponentFlags: uint8_t {
-        COMP_IS_TRANSFORM = 0x1,
-    };
-
-    template<typename T>
-    struct ComponentInfo {
-        static inline constexpr size_t InitPool{ 0x00 };
-        static inline constexpr ComponentFlags Flags{ 0x00 };
-        static inline constexpr const char* Name { "Component" };
-    };
-
-    struct ComponentRef {
-        UUID8 goRef{};
-        UUID8 compRef{};
-    };
-
     class GameObject;
     class Component : public IObject {
     public:
         Component();
         virtual ~Component();
   
-        GameObject* getObject() const { return _object; }
+        GORef getObject() const { return GORef(getUUID()); }
 
         void deserializeBinary(const Stream& stream);
         void serializeBinary(const Stream& stream) const;
@@ -81,12 +66,10 @@ namespace JEngine {
     private:
         friend class GameObject;
 
-        GameObject* _object;
-        void init(GameObject* go, uint16_t flags);
+        void init(CompRef compRef, uint16_t flags);
 
         void start();
         void update(float time, float delta);
         void destroy();
     };
 }
-REGISTER_UUID_FACTORY(JEngine::Component);

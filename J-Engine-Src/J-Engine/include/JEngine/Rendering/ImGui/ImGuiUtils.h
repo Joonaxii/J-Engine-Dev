@@ -4,13 +4,16 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 #include <JEngine/Utility/Flags.h>
-#include <JEngine/Core/Application.h>
+#include <JEngine/Utility/EnumUtils.h>
+#include <JEngine/Rendering/Window.h>
 
 namespace JEngine {
+    class Application;
     class IDockPanel {
     public:
         enum : uint8_t {
             FLAG_IS_INITIALIZED = 0x1,
+            FLAG_IS_FOCUSED = 0x2,
         };
         enum : uint8_t {
             AL_None,
@@ -38,6 +41,8 @@ namespace JEngine {
             return true;
         }
         bool isInitialized() const { return _flags.isBitSet(FLAG_IS_INITIALIZED); }
+        void setFocused(bool focused) { _flags.setBit(FLAG_IS_FOCUSED, focused); }
+        bool isFocused() const { return _flags.isBitSet(FLAG_IS_FOCUSED); }
 
         virtual void init(Application* app) = 0;
         virtual void draw(Application* app) = 0;
@@ -104,14 +109,12 @@ namespace JEngine {
                 return;
             }
         }
-
         static void setFocused(ImGuiID dockId, const char* window) {
             if (ImGuiDockNode* node = ImGui::DockBuilderGetNode(dockId)) {
                 auto windowId = ImHashStr(window);
                 node->SelectedTabId = windowId;
             }
         }
-
         static ImGuiDockNode* getDockNode(const char* windowName) {
             ImGuiWindow* window = ImGui::FindWindowByName(windowName);
 
@@ -125,7 +128,6 @@ namespace JEngine {
             }
             return nullptr;
         }
-
         static void focusWindow(const char* windowName) {
             ImGuiWindow* window = ImGui::FindWindowByName(windowName);
 
@@ -143,7 +145,6 @@ namespace JEngine {
             }
             window->DockNode->TabBar->NextSelectedTabId = window->TabId;
         }
-
         static void focusWindow(ImGuiID windowId) {
             ImGuiWindow* window = ImGui::FindWindowByID(windowId);
             if (window->DockNode == NULL || window->DockNode->TabBar == NULL) {
@@ -151,5 +152,135 @@ namespace JEngine {
             }
             window->DockNode->TabBar->NextSelectedTabId = window->TabId;
         }
+        static bool isCurrentWindowFocused(bool* forceFocus = nullptr, const void* mainWindow = nullptr) {
+            auto win = ImGui::GetCurrentWindow();
+            if (!win || !win->Active || win->Hidden) { return false; }
+
+            //Check if this is a floating sub window
+            if (win->Viewport != ImGui::GetMainViewport()) {
+                if (forceFocus && win->Viewport && win->Viewport->PlatformHandle) {
+                    *forceFocus |= Window::isOSWindowFocused(win->Viewport->PlatformHandle);
+                }
+                return ImGui::IsWindowFocused(ImGuiHoveredFlags_RootWindow);
+            }
+            return ImGui::IsWindowFocused(ImGuiHoveredFlags_RootWindow);
+        }
+    
+
+        template<typename T>
+        bool drawBitMask(const char* label, T& value, int32_t start, int32_t length, const char* const* names, bool allowMultiple = true, bool displayAll = true) {
+            static constexpr size_t BITS = (sizeof(T) << 3);
+            length = std::min<int32_t>(length, BITS - start);
+            if (length <= 0) { return false; }
+            uint64_t bits = uint64_t(value);
+
+            bool changed = false;
+            char temp[257]{ 0 };
+            bool tempToggle[64]{ 0 };
+            uint64_t tempL = 0;
+            uint64_t bitsSet = 0;
+            bool wasSet = false;
+            for (uint64_t i = 0, j = 1ULL << start; i < length; i++, j <<= 1) {
+                if (tempL >= 256) { break; }
+                if (bits & j) {
+                    if (!wasSet) {
+                        bitsSet++;
+                        tempToggle[start + i] = true;
+                        wasSet = !allowMultiple;
+
+                        if (tempL > 0) {
+                            memcpy_s(temp + tempL, 256 - tempL, ", ", 2);
+                            tempL += 2;
+                        }
+                        const char* name = names[i];
+                        size_t len = strlen(name);
+
+                        memcpy_s(temp + tempL, 256 - tempL, name, len);
+                        tempL += len;
+                    }
+                    else {
+                        changed |= true;
+                    }
+                }
+            }
+
+            if (tempL == 0) {
+                sprintf_s(temp, "None");
+            }
+            else if (bitsSet == length && displayAll) {
+                sprintf_s(temp, "Everything");
+            }
+
+            uint64_t mask = ((1ULL << length) - 1) << start;
+            if (ImGui::BeginCombo(label, temp, ImGuiComboFlags_HeightLarge)) {
+                ImGui::Indent();
+                ImGui::PushID("Elements");
+
+                for (size_t i = 0, j = 1ULL << start; i < length; i++, j <<= 1) {
+                    bool& tempBool = *(tempToggle + start + i);
+                    ImGui::PushID(int32_t(i));
+                    if (ImGui::Checkbox(names[i], &tempBool)) {
+                        changed = true;
+                        if (tempBool) {
+                            if (!allowMultiple) {
+                                uint64_t negate = (mask & ~j);
+                                bits &= ~negate;
+                            }
+                            bits |= j;
+                        }
+                        else {
+                            bits &= ~j;
+                        }
+                    }
+                    ImGui::PopID();
+                }
+
+                ImGui::PopID();
+                ImGui::Unindent();
+                ImGui::EndCombo();
+            }
+
+            if (changed) {
+                value = T(bits);
+            }
+            return changed;
+        }
+
+        template<typename T>
+        bool drawBitMask(const char* label, T& value, bool allowMultiple = true, bool displayAll = true) {
+            return drawBitMask(label, value, 0, EnumNames<T>::Count, EnumNames<T>::getEnumNames(), allowMultiple, displayAll);
+        }
+
+        template<typename T>
+        bool drawDropdown(const char* label, T& value, const char* const* names, int32_t itemCount) {
+            int32_t valueInt = value;
+            if (ImGui::Combo(label, &valueInt, names, itemCount)) {
+                value = T(valueInt);
+                return true;
+            }
+            return false;
+        }
+
+        template<typename T, typename U>
+        bool drawDropdown(const char* label, T& value, const U* names, size_t itemCount) {
+            bool changed = false;
+            size_t selectI = size_t(value);
+
+            if (ImGui::BeginCombo(label, selectI >= itemCount ? "" : names[selectI].getName())) {
+                for (size_t i = 0; i < itemCount; i++) {
+                    ImGui::PushID(int32_t(i));
+                    if (ImGui::Selectable(names[i].getName(), i == selectI)) {
+                        selectI = i;
+                        value = T(selectI);
+                        changed = true;
+                    }
+                    ImGui::PopID();
+                }
+                ImGui::EndCombo();
+            }
+            return changed;
+        }
+
+
     }
 }

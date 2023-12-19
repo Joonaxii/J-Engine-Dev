@@ -1,13 +1,12 @@
 #pragma once
+#include <cstdint>
 #include <string>
 #include <vector>
-#include <unordered_map>
-#include <JEngine/Collections/PoolAllocator.h>
-#include <JEngine/Collections/ReferenceVector.h>
+#include <JEngine/Collections/IndexStack.h>
 #include <JEngine/IO/Helpers/IOUtils.h>
 #include <JEngine/IO/FileStream.h>
 #include <JEngine/Utility/Span.h>
-#include <JEngine/Cryptography/UUID.h>
+#include <JEngine/Utility/DataFormatUtils.h>
 
 namespace JEngine {
     struct EntryInfo {
@@ -18,7 +17,7 @@ namespace JEngine {
 
         constexpr EntryInfo() noexcept : position(0), size(NPOS) {}
         constexpr EntryInfo(size_t pos, size_t size) noexcept : position(pos), size(size) {}
-
+   
         constexpr bool isFolder() const { return (position & size) == NPOS; }
         constexpr bool isFile() const { return (position != NPOS && size == NPOS); }
 
@@ -29,119 +28,91 @@ namespace JEngine {
     static constexpr EntryInfo FILE_EINF(0, EntryInfo::NPOS);
     static constexpr EntryInfo RUNTIME_EINF(EntryInfo::NPOS, 0);
 
-    struct FileEntry {
-        static constexpr size_t PATH_HASH_BLOCK_SIZE = 8;
+    struct FileID {
+    public:
+        static constexpr uint32_t FOLDER_MASK = 0x80'00'00'00U;
+        static constexpr uint32_t ID_MASK    = ~FOLDER_MASK;
+        static constexpr uint32_t NULL_ID    = UINT32_MAX;
 
-        FileEntry* parent{nullptr};
-        UUID8 hash{};
-        int32_t source{-1};
-        int32_t index{-1};
+        constexpr FileID() : _id(ID_MASK) {}
+        constexpr FileID(uint32_t id) : _id(id) {}
+        constexpr FileID(uint32_t index, bool isFolder) : _id((index & ID_MASK) | (isFolder ? FOLDER_MASK : 0x00U)) {}
+
+        constexpr bool isFolder() const { return (_id & FOLDER_MASK) != 0; }
+        constexpr bool isValid() const { return (_id & ID_MASK) != ID_MASK; }
+        constexpr uint32_t getID() const { return (_id & ID_MASK); }
+
+        constexpr bool operator==(const FileID& other) const { return _id == other._id; }
+        constexpr bool operator!=(const FileID& other) const { return _id != other._id; }
+
+    private:
+        uint32_t _id;
+    };
+
+    struct FileRef {
+        FileID id{};
+        uint32_t index{};
+
+        constexpr FileRef() : id(), index(UINT32_MAX) {}
+        constexpr FileRef(FileID parent, uint32_t index) : id(parent), index(index) {}
+    };
+
+    class VFS;
+    struct FileEntry {
+        static constexpr uint32_t NULL_SOURCE = UINT32_MAX;
+
+        FileID parent{};
+        FileID id{};
+        uint32_t source{ NULL_SOURCE };
         EntryInfo dataInfo{};
         std::string name{};
-        std::vector<FileEntry*> children{};
 
-        bool isFolder() const { return dataInfo.isFolder(); }
-        bool isFile() const { return dataInfo.isFile(); }
+        std::vector<FileID> children{};
 
-        void setup(FileEntry* parent, ConstSpan<char> name, UUID8 hash, int32_t index, int32_t source, EntryInfo info) {
+        FileEntry() = default;
+
+        bool isFolder() const { return id.isFolder(); }
+        bool isFile() const { return !id.isFolder(); }
+
+        void setup(FileID id, FileID parent, ConstSpan<char> name, uint32_t source, EntryInfo info) {
             this->parent = parent;
+            this->id = id;
             this->source = source;
-            this->hash = hash;
-            this->index = index;
             this->dataInfo = info;
             this->name = std::string(name.get(), name.length());
             children.clear();
         }
 
-        FileEntry* findInChild(ConstSpan<char> span) const {
-            for (FileEntry* child : children) {
-                if (child->isSame(span)) { return child; }
-            }
-            return nullptr;
-        }
-
         bool isSame(ConstSpan<char> span) const {
-            return IO::pathsAreEqual(span, ConstSpan<char>(name.c_str(), name.size()));
+            return IO::pathsAreEqual(span, ConstSpan<char>(name));
         }
 
-        size_t getPathLength(bool includeRoot) const {
-            size_t len = 0;
-            const FileEntry* entry = this;
-            while (entry) {
-                if (!includeRoot && entry->parent == nullptr) { break; }
-                len += entry->name.length() + 1;
-                entry = entry->parent;
-            }
-            return len;
-        }
+        FileID findInChild(const VFS& vfs, ConstSpan<char> span) const;
+        size_t getPathLength(const VFS& vfs, bool includeRoot) const;
 
-        bool isSubFile() const {
-            const FileEntry* entry = parent;
-            while (entry) {
-                if (entry->isFile()) { return true; }
-                entry = entry->parent;
-            }
-            return false;
-        }
+        bool isSubFile(const VFS& vfs) const;
 
-        size_t getDepth(bool includeRoot) const {
-            size_t depth = 0;
-            const FileEntry* entry = this;
-            while (entry) {
-                if (!includeRoot && entry->parent == nullptr && depth > 0) { break; }
-                depth++;
-                entry = entry->parent;
-            }
-            return depth - 1;
-        }
+        /// <summary>
+        /// This mehod will also remove this item from it's parent
+        /// </summary>
+        void remove(VFS& vfs);
 
-        size_t buildPath(bool includeRoot, char* buffer) const {
-            size_t depth = getDepth(includeRoot);
-            const FileEntry** eBuf = reinterpret_cast<const FileEntry**>(_malloca((depth + 1) * sizeof(FileEntry*)));
-            if (!eBuf) { return 0; }
+        size_t getDepth(const VFS& vfs, bool includeRoot) const;
+        size_t buildPath(const VFS& vfs, bool includeRoot, char* buffer) const;
+        size_t findLongestPath(const VFS& vfs, bool includeRoot, size_t initSize = 0) const;
 
-            size_t pos = depth;
-            const FileEntry* entry = this;
-            while (entry) {
-                if (!includeRoot && entry->parent == nullptr) { break; }
-                eBuf[pos--] = entry;
-                entry = entry->parent;
-            }
+        bool deleteIO(VFS& vfs);
+        void getOrderedChildren(std::vector<FileID>& output) const;
 
-            pos = 0;
-            for (size_t i = 0; i <= depth; i++) {
-                *buffer++ = '/';
-                const std::string& eName = eBuf[i]->name;
-                memcpy(buffer, eName.c_str(), eName.length());
-                buffer += eName.length();
-                pos += eName.length() + 1;
-            }
-            *buffer = 0;
-            _freea(eBuf);
-            return pos;
-        }
-
-        size_t findLongestPath(bool includeRoot, size_t initSize = 0) const {
-            initSize = std::max(initSize, getPathLength(includeRoot));
-
-            for (auto ch : children) {
-                initSize = ch->findLongestPath(includeRoot, initSize);
-            }
-            return initSize;
-        }
-
-        void updateHash() {
-            HashState state{};
-            hash = parent ? parent->hash : UUID8::Empty;
-
-            for (auto ch : children) {
-                ch->updateHash();
-            }
-        }
     };
 
 	class VFS {
 	public:
+        enum : uint32_t {
+            VFS_FLAG_NONE = 0x00,
+            VFS_FLAG_IS_VIRTUAL = 0x01,
+        };
+
         enum : uint8_t {
             F_ACT_NONE   = 0x00,
             F_ACT_REMOVE = 0x01,
@@ -149,69 +120,56 @@ namespace JEngine {
         };
 
         VFS();
-        VFS(const std::string& root);
+        VFS(ConstSpan<char> root, uint32_t flags);
         ~VFS();
 
-        void changeRoot(const std::string& root);
-        const std::string& getRootPath() const { return _rootPath; }
-        const FileEntry* getRoot() const { return _root; }
+        void changeRoot(ConstSpan<char> root, uint32_t flags = VFS_FLAG_NONE);
+        ConstSpan<char> getRootPath() const { return _rootPath; }
+
+        FileEntry* getRoot() { return getEntryByRef(_root); }
+        const FileEntry* getRoot() const { return getEntryByRef(_root); }
+
         size_t getEntryCount() const { return _entries.size(); }
-        size_t getFileCount() const { return _files.size(); }
+        size_t getSourceCount() const { return _sources.size(); }
 
         bool buildFromRoot();
 
-        int32_t addEntry(int32_t source, bool isFile, const char* path, size_t length, EntryInfo dataInfo = EntryInfo(), bool* addedNew = nullptr);
-        int32_t addEntry(int32_t source, bool isFile, const char* path, EntryInfo dataInfo = EntryInfo(), bool* addedNew = nullptr);
-        int32_t addEntry(int32_t source, bool isFile, const std::string& path, EntryInfo dataInfo = EntryInfo(), bool* addedNew = nullptr);
+        FileID addEntry(uint32_t source, ConstSpan<char> path, EntryInfo dataInfo = EntryInfo(), bool* addedNew = nullptr);
 
-        bool removeEntry(const char* path, size_t length, uint8_t fileAction = F_ACT_REMOVE);
-        bool removeEntry(const char* path, uint8_t fileAction = F_ACT_REMOVE);
-        bool removeEntry(const std::string& path, uint8_t fileAction = F_ACT_REMOVE);
+        FileStream* getSourceFile(uint32_t index) { return index >= _sources.size() ? nullptr : &_sources[index]; }
+        const FileStream* getSourceFile(uint32_t index) const { return index >= _sources.size() ? nullptr : &_sources[index]; }
 
-        FileStream* getSourceFile(int32_t index) { return index < 0 || index >= _files.tail() ? nullptr : _files[index]; }
-        const FileStream* getSourceFile(int32_t index) const { return index < 0 || index >= _files.tail() ? nullptr : _files[index]; }
+        uint32_t addSourceFile(ConstSpan<char> path);
 
-        FileEntry* getFileEntry(int32_t index) { return index < 0 || index >= _entries.tail() ? nullptr : _entries[index]; }
-        const FileEntry* getFileEntry(int32_t index) const { return index < 0 || index >= _entries.tail() ? nullptr : _entries[index]; }
+        bool removeSourceFile(ConstSpan<char> path);
+        bool removeSourceFile(uint32_t index);
 
-        int32_t addSourceFile(const char* path, size_t length);
-        int32_t addSourceFile(const char* path);
-        int32_t addSourceFile(const std::string& path);
+        void openSourceFile(uint32_t index, const char* mode);
+        void closeSourceFile(uint32_t index);
 
-        bool removeSourceFile(const char* path, size_t length);
-        bool removeSourceFile(const char* path);
-        bool removeSourceFile(const std::string& path);
-        bool removeSourceFile(int32_t index);
-
-        void openSourceFile(int32_t index, const char* mode);
-        void closeSourceFile(int32_t index);
-
-        int32_t indexOfFileEntry(ConstSpan<char> path) const;
-        int32_t indexOfFileEntry(UUID8 pathUUID) const;
-        int32_t indexOfSourceFile(ConstSpan<char> path) const;
-
+        FileID indexOfFileEntry(ConstSpan<char> path) const;
+        uint32_t indexOfSourceFile(ConstSpan<char> path) const;
+ 
         bool pathExists(ConstSpan<char> path) const;
-        bool pathExists(const char* path, size_t length) const;
-        bool pathExists(const char* path) const;
-        bool pathExists(const std::string& path) const;
-
-        UUID8 pathToHash(ConstSpan<char> path, bool autoAppendRoot = true) const;
-        UUID8 pathToCleanAndHash(ConstSpan<char> path, bool autoAppendRoot = true) const;
-
         void removeMissing();
 
+        FileEntry* getEntryByRef(FileID ref);
+        const FileEntry* getEntryByRef(FileID ref) const;
+
+        FileEntry* getEntryByPath(ConstSpan<char> path) { return getEntryByRef(indexOfFileEntry(path)); }
+        const FileEntry* getEntryByPath(ConstSpan<char> path) const { return getEntryByRef(indexOfFileEntry(path)); }
+
+        bool removeEntry(ConstSpan<char> path, uint8_t sourceAction = F_ACT_NONE);
+        bool removeEntry(FileID entry, uint8_t sourceAction = F_ACT_NONE);
+
 	private:
+
+        uint32_t _flags;
         ConstSpan<char> _rootSpan;
         std::string _rootPath;
-        FileEntry* _root;
+        FileID _root;
 
-        PoolAllocator<FileEntry> _entryAllocator;
-        PoolAllocator<FileStream> _fileAllocator;
-
-        ReferenceVector<FileEntry*> _entries;
-        ReferenceVector<FileStream*> _files;
-        std::unordered_map<UUID8, int32_t, std::hash<UUID8>> _fileEntryLUT;
-
-        void removeEntry(FileEntry* entry, uint8_t fileAction);
+        IndexedLUT<FileEntry> _entries;
+        IndexedLUT<FileStream> _sources;
     };
 }

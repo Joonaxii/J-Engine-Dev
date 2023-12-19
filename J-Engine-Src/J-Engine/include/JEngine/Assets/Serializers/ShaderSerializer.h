@@ -3,7 +3,7 @@
 #include <JEngine/Assets/Graphics/Shader/Shader.h>
 
 namespace JEngine {
-    struct ShaderSerializer : public IAssetSerializer<Shader> {
+    class ShaderSerializer : public IAssetSerializer<Shader> {
     public:
         void deserializeImpl(FileEntry* entry, IAsset* asset, const Stream& stream, uint8_t flags) override;
         void deserializeImpl(FileEntry* entry, IAsset* asset, const json& jsonF, uint8_t flags) override {}

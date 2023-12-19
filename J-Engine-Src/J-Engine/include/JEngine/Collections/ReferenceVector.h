@@ -149,9 +149,12 @@ namespace JEngine {
 
             _items = reinterpret_cast<T*>(malloc(count * sizeof(T)));
             _auxBuffer = reinterpret_cast<uint32_t*>(malloc(count * sizeof(uint32_t)));
-            memset(_items, 0, count * sizeof(T));
-            memset(_auxBuffer, 0, count * sizeof(uint32_t));
-            _capacity = count;
+
+            if (_auxBuffer && _items) {
+                memset(_items, 0, count * sizeof(T));
+                memset(_auxBuffer, 0, count * sizeof(uint32_t));
+                _capacity = count;
+            }
         }
 
         void release() {
@@ -183,7 +186,7 @@ namespace JEngine {
 
         int32_t lastIndexOf(const T& value) const override {
             if (value == _default) { return -1; }
-            for (size_t i = _tail - 1; i >= 0; i--) {
+            for (int32_t i = int32_t(_tail) - 1; i >= 0; i--) {
                 if (_items[i] == value) {
                     return int32_t(i);
                 }
@@ -193,7 +196,7 @@ namespace JEngine {
  
         template<typename U>
         int32_t indexOfType(const U& value, DoCompare<U> isEqual) const {
-            for (size_t i = 0; i < _tail; i++) {
+            for (uint32_t i = 0; i < _tail; i++) {
                 if (_items[i] != _default && isEqual(_items[i], value)) {
                     return int32_t(i);
                 }

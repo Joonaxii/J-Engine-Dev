@@ -1,7 +1,7 @@
 #include <JEngine/Assets/Graphics/Shader/ShaderLib.h>
-#include <JEngine/Helpers/StringConsts.h>
 #include <sstream>
 #include <JEngine/Utility/Span.h>
+#include <JEngine/Utility/StringHelpers.h>
 
 namespace JEngine {
     void ShaderLib::parse(const Stream& stream) {
@@ -32,22 +32,18 @@ namespace JEngine {
                 case '/': //Most likely a comment
                     if (nxtC == '*') {
                         temp = libDataSpan.slice(i);
-                        int32_t endOfComment = indexOf(temp, "*/");
+                        size_t endOfComment = Helpers::indexOf(temp, "*/");
 
-                        assert(endOfComment > -1 && "Invalid comment found!");
-                        i += size_t(endOfComment) - 1;
+                        assert(endOfComment != SIZE_MAX && "Invalid comment found!");
+                        i += endOfComment - 1;
                         scope = i + 1;
                         continue;
                     }
                     break;
-
-                default:
-                    
-                    break;
             }
 
 
-            if (isWhiteSpace(c)) {
+            if (std::isspace(c)) {
 
 
 

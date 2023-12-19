@@ -12,7 +12,7 @@
 
 namespace JEngine {
     class SpriteBatch;
-    class Sprite : public IAsset, public IRenderable<JVector2f>
+    class Sprite : public IAsset, public IRenderable
     {
     public:
         Sprite();
@@ -25,7 +25,7 @@ namespace JEngine {
         void setTextureRect(const JRecti& rectangle);
         void setColor(const JColor32 color);
 
-        int32_t writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex2f* verts);
+        int32_t writeToBuffer(const JMatrix4f& matrix, uint8_t flip, JVertex* verts);
 
         float setPPU(const float ppu);
         float getPPU() const;
@@ -46,7 +46,7 @@ namespace JEngine {
         const JRectf& getGlobalBounds(const uint8_t flip) const;
 
         int32_t getVertexCount() const override;
-        const JVertex2f* getVertices(const uint8_t flip = 0) const override;
+        const JVertex* getVertices(const uint8_t flip = 0) const override;
 
         int32_t getIndexCount() const override;
         const uint32_t* getIndices() const override;
@@ -65,7 +65,7 @@ namespace JEngine {
         JRectf                  _boundsLocal;
         JRectf                  _boundsWorld[4];
 
-        JVertex2f               _vertices[16];
+        JVertex                 _vertices[16];
 
         JRecti                  _textureRect;
         float                   _ppu;

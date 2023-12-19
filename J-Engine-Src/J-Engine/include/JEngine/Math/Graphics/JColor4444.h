@@ -28,6 +28,8 @@ namespace JEngine {
         JColor4444(const JColor555& rgb);
         JColor4444(const JColor565& rgba);
 
+        operator uint16_t() const { return _value; }
+
         uint8_t getR() const { return (_value & 0xF); }
         uint8_t getG() const { return ((_value >> 4) & 0xF); }
         uint8_t getB() const { return ((_value >> 8) & 0xF); }

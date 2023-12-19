@@ -19,8 +19,6 @@ namespace JEngine {
     class IGuiPanel;
     class Renderer {
     public:
-        typedef DynamicBatch<JVertex2f> DynamicBatch2D;
-
         struct RenderInfo {
             uint32_t drawCalls;
             uint32_t activeRenderers;
@@ -55,12 +53,13 @@ namespace JEngine {
 
         bool doRender(IGuiPanel* panel);
 
-        void setCameraBlendMaterial(const ObjectRef<Material>& blendMaterial);
+        //void setCameraBlendMaterial(const ObjectRef<Material>& blendMaterial);
 
-        static void draw(const VertexArray& va, const IndexBuffer& ib, Material& shader);
+        static void draw(const VertexArray& va, const IndexBuffer& ib);
 
         const Window& getWindow() const;
         Window& getWindow();
+
 
     private:
         static Renderer* _instance;
@@ -91,8 +90,8 @@ namespace JEngine {
 
         Window _window;
 
-        std::set<IRenderer<JVertex2f>*> _renderers;
-        std::vector<IRenderer<JVertex2f>*> _activeRenderers[33];
+        std::set<IRenderer*> _renderers;
+        std::vector<IRenderer*> _activeRenderers[33];
 
         std::set<IImGuiDrawable*> _imGuiDrawables;
         std::vector<IImGuiDrawable*> _activeImGuiDrawables;
@@ -100,22 +99,22 @@ namespace JEngine {
         ICamera* _firstCam;
         std::map<ICamera*, RenderInfoGroup> _camerasToDraw;
 
-        ObjectRef<Material> _blendMaterial;
-        DynamicBatch2D _batch;
-        DynamicBatch2D _batchGizmos;
+        //ObjectRef<Material> _blendMaterial;
+        DynamicBatch _batch;
+        DynamicBatch _batchGizmos;
   
         void renderNull(RenderInfo& renderInfo, RenderInfo& uiRenderInfo);
 
         void prepareCameraRender(const JColor32& clearColor, const uint32_t clearFlags, ICamera::CameraRenderData& renderInfo);
         void renderObjectsToCamera(ICamera* camera, const uint32_t mask, ICamera::CameraRenderData& renderInfo);
-        void writeCameraToBuffer(Material* blendMaterial, const JColor32& uniformColor, ICamera::CameraRenderData& renderInfo);
+        void writeCameraToBuffer(void* blendMaterial, const JColor32& uniformColor, ICamera::CameraRenderData& renderInfo);
 
         static void prepareCameraRenderStatic(const JColor32& clearColor, const uint32_t clearFlags, ICamera::CameraRenderData& renderInfo);
         static void renderObjectsToCameraStatic(ICamera* camera, const uint32_t mask, ICamera::CameraRenderData& renderInfo);
-        static void writeCameraToBufferStatic(Material* blendMaterial, const JColor32& uniformColor, ICamera::CameraRenderData& renderInfo);
+        static void writeCameraToBufferStatic(void* blendMaterial, const JColor32& uniformColor, ICamera::CameraRenderData& renderInfo);
     
-        static void registerRenderer(IRenderer<JVertex2f>* renderer);
-        static void unregisterRenderer(IRenderer<JVertex2f>* renderer);
+        static void registerRenderer(IRenderer* renderer);
+        static void unregisterRenderer(IRenderer* renderer);
 
         static void registerGuiDrawable(IImGuiDrawable* renderer);
         static void unregisterGuiDrawable(IImGuiDrawable* renderer);

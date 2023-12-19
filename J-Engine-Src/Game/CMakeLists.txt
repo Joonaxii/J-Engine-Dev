@@ -1,8 +1,10 @@
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project (Game)
+project (Game-Editor)
+project (Game-Player)
 set(GAME_SOURCES )
+set(GAME_SOURCES_EDITOR )
 
 set(GAME_SRC
 	"include/SimpleRenderer.h"
@@ -12,8 +14,15 @@ set(GAME_SRC
 source_group("Game" FILES ${GAME_SRC})
 list(APPEND GAME_SOURCES ${GAME_SRC})
 
-add_library(Game STATIC ${GAME_SOURCES})
-target_link_libraries(Game J-Engine ImGUI)
+# Custom GUI related stuff goes here
+set(GAME_SRC )
+list(APPEND GAME_SOURCES_EDITOR ${GAME_SOURCES})
+
+add_lib_for(Game-Editor "${GAME_SOURCES_EDITOR}" JENGINE_EDITOR)
+add_lib_for(Game-Player "${GAME_SOURCES}" JENGINE_PLAYER)
+
+target_link_libraries(Game-Player J-Engine-Player ImGUI)
+target_link_libraries(Game-Editor J-Engine-Editor ImGUI)
 
 include_directories("include")
 include_directories("${CMAKE_SOURCE_DIR}/J-Engine/include")

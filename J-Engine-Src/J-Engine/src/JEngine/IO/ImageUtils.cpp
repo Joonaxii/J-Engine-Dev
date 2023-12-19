@@ -317,18 +317,6 @@ namespace JEngine {
         }
     }
 
-    uint8_t remapUI16ToUI8(uint16_t value) {
-        static uint8_t REMAPPED[UINT16_MAX + 1]{ 0 };
-        static bool init{ false };
-        if (!init) {
-            for (size_t i = 0; i <= UINT16_MAX; i++) {
-                REMAPPED[i] = uint8_t(i / 256);
-            }
-            init = true;
-        }
-        return REMAPPED[value];
-    }
-
     bool tryBuildPalette(const uint8_t* pixelData, int32_t start, int32_t length, int32_t& colors, int32_t bpp, uint8_t* newTexture, int32_t alphaClip) {
         JColor32 buffer{ 0,0,0,0xFF };
 

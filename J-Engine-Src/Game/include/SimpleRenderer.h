@@ -6,7 +6,7 @@
 #include <JEngine/Utility/Flags.h>
 #include <vector>
 
-class SimpleRenderer : public JEngine::IRenderer<JVertex2f> {
+class SimpleRenderer : public JEngine::IRenderer {
 public:
     SimpleRenderer();
     SimpleRenderer(JEngine::Sprite* sprite);
@@ -29,7 +29,7 @@ public:
     int32_t getVertexCount() const override;
     int32_t getIndexCount() const override;
 
-    const JVertex2f* getVertices() const override;
+    const JEngine::JVertex* getVertices() const override;
     const uint32_t* getIndices() const override;
 
     const JEngine::JMatrix4f& getWorldMatrix() const override;

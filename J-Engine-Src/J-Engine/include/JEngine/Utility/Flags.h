@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Math/Math.h>
 #include <JEngine/Helpers/Helpers.h>
+#include <JEngine/IO/Serialization/Serializable.h>
 
 namespace JEngine {
     template<typename T>
@@ -89,14 +89,12 @@ namespace YAML {
     template<typename T>
     struct convert<JEngine::Flags<T>> {
         static Node encode(const JEngine::Flags<T>& rhs) {
-            Node node;
-            node.push_back(YAML::Hex);
-            node.push_back(uint64_t(rhs._value));
+            Node node(rhs._value);
             return node;
         }
 
         static bool decode(const Node& node, JEngine::Flags<T>& rhs) {
-            rhs._value = T(node.as<uint64_t>());
+            rhs._value = node.as<T>();
             return true;
         }
     };  
@@ -106,7 +104,7 @@ namespace YAML {
 namespace JEngine {
     template<typename T>
     struct Serializable<Flags<T>> {
-        static bool deserializeJson(Flags<T>& itemRef, json& jsonF, const Flags<T>& defaultValue);
+        static bool deserializeJson(Flags<T>& itemRef, const json& jsonF, const Flags<T>& defaultValue);
         static bool serializeJson(const Flags<T>& itemRef, json& jsonF);
 
         static bool deserializeBinary(Flags<T>& itemRef, const Stream& stream);
@@ -114,13 +112,13 @@ namespace JEngine {
     };
 
     template<typename T>
-    inline bool Serializable<Flags<T>>::deserializeJson(Flags<T>& itemRef, json& jsonF, const Flags<T>& defaultValue) {
-        return Serialization::deserialize(itemRef._value, jsonF, defaultValue._value);
+    inline bool Serializable<Flags<T>>::deserializeJson(Flags<T>& itemRef, const json& jsonF, const Flags<T>& defaultValue) {
+        return Serialization::deserialize<T>(itemRef._value, jsonF, defaultValue._value);
     }
 
     template<typename T>
     inline bool Serializable<Flags<T>>::serializeJson(const Flags<T>& itemRef, json& jsonF) {
-        return Serialization::serialize(itemRef._value, jsonF);
+        return Serialization::serialize<T>(itemRef._value, jsonF);
     }
 
     template<typename T>

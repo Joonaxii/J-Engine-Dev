@@ -88,7 +88,7 @@ void FileStream::setFilepath(const wchar_t* filePath, size_t size) const {
         if (!temp) { return; }
         temp[len] = 0;
 
-        WideCharToMultiByte(CP_UTF8, 0, filePath, size, temp, int32_t(len), NULL, NULL);
+        WideCharToMultiByte(CP_UTF8, 0, filePath, int32_t(size), temp, int32_t(len), NULL, NULL);
         setFilepath(temp);
         _freea(temp);
     }

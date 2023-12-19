@@ -23,19 +23,6 @@ namespace JEngine {
             static constexpr uint8_t TTF_SIG[] = { 0x00, 0x01, 0x00, 0x00, 0x00, };
             static constexpr uint8_t OTF_SIG[] = { 0x4F, 0x54, 0x54, 0x4F, };
 
-            static constexpr uint8_t JPAK_SIG[] = { 'J', 'P', 'A', 'K', };
-            static constexpr uint8_t JPRF_SIG[] = { 'J', 'P', 'R', 'F', };
-            static constexpr uint8_t JMAT_SIG[] = { 'J', 'M', 'A', 'T', };
-            static constexpr uint8_t JSHD_SIG[] = { 'J', 'S', 'H', 'D', };
-            static constexpr uint8_t JGLI_SIG[] = { 'J', 'G', 'L', 'I', };
-            static constexpr uint8_t JTEX_SIG[] = { 'J', 'T', 'E', 'X', };
-            static constexpr uint8_t JRTX_SIG[] = { 'J', 'R', 'T', 'X', };
-            static constexpr uint8_t JATL_SIG[] = { 'J', 'A', 'T', 'L', };
-            static constexpr uint8_t JINP_SIG[] = { 'J', 'I', 'N', 'P', };
-            static constexpr uint8_t JSCN_SIG[] = { 'J', 'S', 'C', 'N', };
-            static constexpr uint8_t JPFB_SIG[] = { 'J', 'P', 'F', 'B', };
-            static constexpr uint8_t JTXT_SIG[] = { 'J', 'T', 'X', 'T', };
-            static constexpr uint8_t JBIN_SIG[] = { 'J', 'B', 'I', 'N', };
             static FormatInfo formats[_FMT_COUNT]{
                 {}, {}, {}, {}, //Raw binary & text formats
 
@@ -56,19 +43,21 @@ namespace JEngine {
                 FormatInfo(TTF_SIG  , 0x01F, 5),
                 FormatInfo(OTF_SIG  , 0x00F, 4),
 
-                FormatInfo(JPAK_SIG  , 0x00F, 4),
-                FormatInfo(JPRF_SIG  , 0x00F, 4),
-                FormatInfo(JMAT_SIG  , 0x00F, 4),
-                FormatInfo(JSHD_SIG  , 0x00F, 4),
-                FormatInfo(JGLI_SIG  , 0x00F, 4),
-                FormatInfo(JTEX_SIG  , 0x00F, 4),
-                FormatInfo(JRTX_SIG  , 0x00F, 4),
-                FormatInfo(JATL_SIG  , 0x00F, 4),
-                FormatInfo(JINP_SIG  , 0x00F, 4),
-                FormatInfo(JSCN_SIG  , 0x00F, 4),
-                FormatInfo(JPFB_SIG  , 0x00F, 4),
-                FormatInfo(JTXT_SIG  , 0x00F, 4),
-                FormatInfo(JBIN_SIG  , 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JPAK"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JPRF"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JMAT"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JSHD"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JGLI"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JTEX"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JRTX"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JATL"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JINP"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JSCN"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JPFB"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JAUD"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JSEC"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JBPM"), 0x00F, 4),
+                FormatInfo(CS_TO_UI8("JDAT"), 0x00F, 4),
             };
             return formats;
         }

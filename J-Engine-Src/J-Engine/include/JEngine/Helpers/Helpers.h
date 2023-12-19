@@ -9,5 +9,4 @@ namespace JEngine::Helpers {
 
     std::string getDirectoryName(const std::string& path);
     std::string getFileName(const std::string& path, const bool includeExtension);
-
 }

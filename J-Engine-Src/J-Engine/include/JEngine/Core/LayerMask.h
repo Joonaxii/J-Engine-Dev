@@ -1,21 +1,30 @@
 #pragma once
 #include <JEngine/IO/Serialization/Serializable.h>
+#include <string_view>
 
 namespace JEngine {
     struct LayerMask {
     public:
-        LayerMask();
-        LayerMask(const uint32_t value);
+        static constexpr size_t MAX_NAME_LEN = 32;
+#pragma pack(push, 1)
+        struct LayerName {
+            char buffer[MAX_NAME_LEN + 1]{ 0 };
 
-#pragma region Operators Self
-        operator bool() const;
+            constexpr LayerName() : buffer{ 0 } {}
 
-        LayerMask operator~() const;
-#pragma endregion
+            LayerName(const char* input) : buffer{ 0 } {
+                memcpy(buffer, input, std::min(MAX_NAME_LEN, strlen(input)));
+            }
+        };
+#pragma pack(pop)
+
+        constexpr LayerMask() : _value(0) {}
+        constexpr LayerMask(uint32_t value) : _value(value) {}
+
+        constexpr operator uint32_t() const { return _value; }
+        constexpr LayerMask LayerMask::operator~() const { return LayerMask(~_value); }
 
 #pragma region Operators UInt32/Size/Templated
-        operator uint32_t() const;
-        operator size_t() const;
 
         template<typename T>
         bool operator<(const T& other) const {
@@ -144,8 +153,18 @@ namespace JEngine {
             return *this;
         }
 
+        static LayerMask nameToLayer(std::string_view name);
+        static std::string_view layerToName(LayerMask layer);
+
+        static void setLayerName(int32_t index, std::string_view newName);
+        static std::string_view getLayerName(int32_t index);
+
+        static const LayerName* getLayerNames() { return LayerNames; }
+
 #pragma endregion
     private:
+        static LayerName LayerNames[32];
+
         friend struct Serializable<LayerMask>;
         friend struct YAML::convert<LayerMask>;
         uint32_t _value;

@@ -1,4 +1,6 @@
 #include <JEditor/GUI/Panels/HierarchyPanel.h>
+#include <JEditor/JEditor.h>
+
 namespace JEngine::Editor {
     HierarchyPanel::HierarchyPanel(const char* title, Alignment align) : IDockPanel(title, align) { }
 
@@ -11,7 +13,7 @@ namespace JEngine::Editor {
             auto avail = ImGui::GetContentRegionAvail();
             ImGui::BeginChild("##Hierarchy", avail,false, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoDecoration);
 
-            bool isShift = Input::isHeld(Input::INP_LCtrl);
+            bool isShift = Input::isHeld<JEditor::INPUT_SYS_EDITOR>(Input::INP_LCtrl);
             for (uint32_t i = 0; i < 4; i++) {
                 ImGui::PushID(i);
                 sprintf_s(temp, "GameObject #%i", i);

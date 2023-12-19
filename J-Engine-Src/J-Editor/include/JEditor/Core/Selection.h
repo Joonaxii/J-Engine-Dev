@@ -2,6 +2,7 @@
 #include <vector>
 #include <unordered_set>
 #include <JEngine/Core/IObject.h>
+#include <JEditor/JEditor.h>
 
 namespace JEngine::Editor {
     class Selection {

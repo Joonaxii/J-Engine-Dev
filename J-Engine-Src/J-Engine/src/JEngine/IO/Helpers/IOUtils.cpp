@@ -14,7 +14,7 @@
 
 namespace JEngine::IO {
     bool hasAnyExtension(const fs::path& path, const char** extensions, size_t count) {
-        if (!extensions || count < 1)  { return true; }
+        if (!extensions || count < 1) { return true; }
 
         if (!path.has_extension()) {
             for (size_t i = 0; i < count; i++) {
@@ -44,7 +44,7 @@ namespace JEngine::IO {
         ofn.lStructSize = sizeof(OPENFILENAME);
         ofn.hwndOwner = glfwGetWin32Window(Window::getInstance()->getWindowPtr());
         ofn.lpstrFile = szFile;
-        ofn.nMaxFile  = DWORD(maxPathLen);
+        ofn.nMaxFile = DWORD(maxPathLen);
         ofn.lpstrFilter = filter;
         ofn.nFilterIndex = DWORD(filterTypes);
         ofn.Flags = OFN_PATHMUSTEXIST | (allowCreate ? 0 : OFN_FILEMUSTEXIST) | OFN_NOCHANGEDIR;
@@ -59,7 +59,7 @@ namespace JEngine::IO {
     }
 
     std::string openFolder(const char* title, const size_t maxPathLen) {
-        CHAR szPath[MAX_PATH]{0};
+        CHAR szPath[MAX_PATH]{ 0 };
 
         BROWSEINFOA pth;
         ZeroMemory(&pth, sizeof(BROWSEINFOA));
@@ -79,13 +79,15 @@ namespace JEngine::IO {
         return std::string();
     }
 
-    std::string combine(const char* lhs, size_t lenLhs, const char* rhs, size_t lenRhs) {
+    std::string combine(ConstSpan<char> lhs, ConstSpan<char>  rhs) {
         std::string newStr{};
-        newStr.reserve(lenLhs + lenRhs + 1);
-        newStr.append(lhs, lenLhs);
+        size_t lenLhs = lhs.length();
+        size_t lenRhs = rhs.length();
+        newStr.reserve(lhs.length() + rhs.length() + 1);
+        newStr.append(lhs.get(), lhs.length());
 
         uint8_t state = 0;
-        char lastC = lenLhs == 0 ? 0 : *(lhs + lenLhs - 1);
+        char lastC = lenLhs == 0 ? 0 : *(lhs.get() + (lenLhs - 1));
         state |= (lastC == '/' || lastC == '\\') ? 1 : 0;
         lastC = lenRhs == 0 ? 0 : rhs[0];
         state |= (lastC == '/' || lastC == '\\') ? 2 : 0;
@@ -96,25 +98,30 @@ namespace JEngine::IO {
                 newStr.append(1, '/');
                 break;
             case 3:
-                offset = Helpers::findNotIndexOf(rhs, lenRhs, "/\\", 0, lenRhs);
+                offset = Helpers::indexNotOf(rhs, "/\\");
                 offset = offset < 0 ? 0 : offset;
                 break;
         }
-        newStr.append(rhs + offset, lenRhs - offset);
+        auto tmp = rhs.slice(offset);
+        newStr.append(tmp.get(), tmp.length());
 
         fixPath(newStr);
         return newStr;
     }
 
-    std::string combine(const std::string& lhs, const std::string& rhs) {
-        return combine(lhs.c_str(), lhs.length(), rhs.c_str(), rhs.length());
+    ConstSpan<char>  getDirectory(ConstSpan<char>  path) {
+        ConstSpan<char> spn(path);
+        int32_t pth = spn.indexOfAnyLast("/\\", 2);
+
+        if (pth < 0) { return std::string_view(); }
+        return path.slice(0, pth);
     }
 
     std::string getExeDir() {
         char buffer[MAX_PATH]{ 0 };
         GetModuleFileName(NULL, buffer, MAX_PATH);
         ConstSpan<char> temp(buffer, strlen(buffer));
-        int32_t last = temp.indexOfLast('/');
+        int32_t last = temp.indexOfAnyLast("/\\", 2);
         if (last > -1) {
             temp = temp.slice(0, last);
         }
@@ -128,7 +135,7 @@ namespace JEngine::IO {
 
     bool getAll(const fs::path& path, uint8_t flags, std::vector<FilePath>& paths, bool recursive) {
         if ((flags & 0x3) == 0) {
-            JENGINE_CORE_WARN("[J-Engine - IOUtils] Warning: Search flags are set to 0!");
+            JENGINE_CORE_WARN("[IOUtils] Warning: File search flags are set to 0!");
             return false;
         }
         size_t startC = paths.size();
@@ -205,18 +212,18 @@ namespace JEngine::IO {
         return false;
     }
 
-    void enumerateFiles(const std::string& path, const std::string& extension, std::function<const void(const std::string&)> callback, const bool fixPath, const bool reverse) {
-        if (!exists(path)) {
-            JENGINE_CORE_WARN("[IOUtils - Enumerate Files] Warning: Path '{0}' was not found!", path.c_str());
+    void enumerateFiles(ConstSpan<char> path, ConstSpan<char> extension, std::function<const void(ConstSpan<char>)> callback, bool fixPath, bool reverse) {
+        if (!IO::exists(path)) {
+            JENGINE_CORE_WARN("[IOUtils] Warning: Path '{0}' was not found, cannot enumerate!", path);
             return;
         }
-
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+        fs::path pth(std::string_view(path.get(), path.length()));
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(pth)) {
             std::string name = entry.path().string();
             std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return std::tolower(c); });
 
             bool len = name.length() >= extension.length();
-            if (!isFile(name)) { continue; }
+            if (!IO::isFile(name)) { continue; }
 
             bool isSame = true;
             if (len) {
@@ -244,13 +251,14 @@ namespace JEngine::IO {
         }
     }
 
-    void enumerateFiles(const std::string& path, const std::string& extension, std::vector<std::string>& paths, const bool fixPath, const bool reverse) {
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+    void enumerateFiles(ConstSpan<char>  path, ConstSpan<char>  extension, std::vector<std::string>& paths, bool fixPath, bool reverse) {
+        fs::path pth(std::string_view(path.get(), path.length()));
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(pth)) {
             std::string name = entry.path().string();
             std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return std::tolower(c); });
 
             bool len = name.length() >= extension.length();
-            if (!isFile(name)) { continue; }
+            if (!IO::isFile_FS(name)) { continue; }
 
             bool isSame = true;
             if (len) {
@@ -278,41 +286,37 @@ namespace JEngine::IO {
         }
     }
 
-    bool exists(const char* path, size_t length) {
-        if (path == nullptr || length == 0) { return false; }
-        auto pth = std::filesystem::u8path(path, path + length);
-        return std::filesystem::exists(pth);
+    bool exists_FS(const fs::path& path) {
+        return std::filesystem::exists(path);
     }
 
-    bool exists(const char* path) {
-        return exists(path, strlen(path));
+    bool isFile_FS(const fs::path& path) {
+        return fs::is_regular_file(path);
     }
 
-    bool exists(const std::string& path) {
-        return exists(path.c_str());
+    bool isDir_FS(const fs::path& path) {
+        return fs::is_directory(path);
     }
 
-    bool isFile(const std::string& path) {
-        struct stat info;
-        if (stat(path.c_str(), &info) != 0) { return 0; }
-        else if (info.st_mode & S_IFREG) { return 1; }
-        return 0;
+    bool createDir_FS(const fs::path& path) {
+        if (IO::exists_FS(path)) {
+            return IO::isDir_FS(path);
+        }
+
+        return fs::create_directories(path);
     }
 
-    bool isDir(const std::string& path) {
-        struct stat info;
-
-        if (stat(path.c_str(), &info) != 0) { return 0; }
-        else if (info.st_mode & S_IFDIR) { return 1; }
-        return 0;
+    bool delFile_FS(const fs::path& path) {
+        if (!IO::exists_FS(path)) { return false; }
+        return std::filesystem::remove(path);
     }
 
-    void delDirRecursively(const std::string& path) {
-        if (!exists(path)) { return; }
-        std::filesystem::remove_all(path);
+    bool delDirRecursively_FS(const fs::path& path) {
+        if (!IO::exists_FS(path)) { return false; }
+        return std::filesystem::remove_all(path) > 0;
     }
 
-    void copyRecursively(const std::filesystem::path& src, const std::filesystem::path& target) noexcept {
+    void copyRecursively_FS(const std::filesystem::path& src, const std::filesystem::path& target) noexcept {
         try {
             std::filesystem::copy(src, target, std::filesystem::copy_options::overwrite_existing | std::filesystem::copy_options::recursive);
         }
@@ -321,7 +325,7 @@ namespace JEngine::IO {
         }
     }
 
-    void fixPath(std::string& path) {
+    void fixPath(Span<char> path) {
         for (size_t i = 0; i < path.length(); i++) {
             auto c = path[i];
             if (c == '\\') {
@@ -330,29 +334,7 @@ namespace JEngine::IO {
         }
     }
 
-    void fixPath(char* path) {
-        while (true) {
-            char c = *path;
-            if (c == '\0') { break; }
-
-            if (c == '\\') {
-                *path = '/';
-            }
-            path++;
-        }
-    }
-
-    void fixPath(char* path, size_t length) {
-        while (length-- > 0) {
-            char c = *path;
-            if (c == '\\') {
-                *path = '/';
-            }
-            path++;
-        }
-    }
-
-    bool pathsAreEqual(ConstSpan<char> lhs, ConstSpan<char> rhs)  {
+    bool pathsAreEqual(ConstSpan<char> lhs, ConstSpan<char> rhs) {
         if (lhs.length() == rhs.length()) {
             for (size_t i = 0; i < lhs.length(); i++) {
                 char a = lhs[i];

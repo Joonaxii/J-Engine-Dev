@@ -1,4 +1,5 @@
 #include <JEditor/GUI/MainWindow.h>
+#include <JEditor/JEditor.h>
 #include <JEditor/GUI/Panels/GameViewPanel.h>
 #include <JEditor/GUI/Panels/SceneViewPanel.h>
 #include <JEditor/GUI/Panels/HierarchyPanel.h>
@@ -8,6 +9,8 @@
 #include <algorithm>
 
 namespace JEngine::Editor {
+    static constexpr const char EDITOR_SETTINGS_TITLE[] = "Editor Settings";
+
 
     static constexpr ImGuiDockNodeFlags DOCKSPACE_FLAGS = ImGuiDockNodeFlags_PassthruCentralNode;
     /*  static constexpr const char* getMainPanelName(MainPanelType panel) {
@@ -21,7 +24,7 @@ namespace JEngine::Editor {
       }*/
 
 
-    MainWindow::MainWindow(Application* application) : IGuiPanel(), _app(application), _panels{}, _dockID(), _panelPostInfo{}{}
+    MainWindow::MainWindow(Application* application) : IGuiPanel(), _app(application), _panels{}, _dockID(), _panelPostInfo{}, _layoutsPath(std::string(JEDITOR_USER_DATA_PATH) + "/Layouts") {}
 
     MainWindow::~MainWindow() {
         for (auto panel : _panels) {
@@ -42,6 +45,13 @@ namespace JEngine::Editor {
     void MainWindow::drawGui() {
         if (!_app) { return; }
 
+        enum : uint8_t {
+            FOCUS_EDITOR_SETTINGS = 0x1,
+        };
+
+        static bool editorSettings{false};
+        uint8_t focusFlags{ 0 };
+
         auto& rend = _app->getRenderer();
 
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -50,9 +60,6 @@ namespace JEngine::Editor {
 
         window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-        //if (DOCKSPACE_FLAGS & ImGuiDockNodeFlags_PassthruCentralNode) {
-        //    window_flags |= ImGuiWindowFlags_NoBackground;
-        //}
 
         ImVec2 pos;
         ImVec2 size;
@@ -81,6 +88,17 @@ namespace JEngine::Editor {
                     }
                     ImGui::EndMenu();
                 }
+
+                if (ImGui::BeginMenu("Edit")) {
+                    static bool opened = false;
+                    if (ImGui::MenuItem("Editor Settings##Editor", "", false, true)) {
+                        if (editorSettings) {
+                            focusFlags |= FOCUS_EDITOR_SETTINGS;
+                        }
+                        editorSettings = true;
+                    }
+                    ImGui::EndMenu();
+                }
             }
             ImGui::EndMenuBar();
 
@@ -93,15 +111,16 @@ namespace JEngine::Editor {
                 }
                 ImGui::DockSpace(_dockID, ImVec2(0.0f, 0.0f), DOCKSPACE_FLAGS);
             }
+            ImGui::End();
         }
-        ImGui::End();
 
         _flags.setBit(FLAG_DRAWING, true);
-        static ImGuiWindowFlags_ viewFlags = ImGuiWindowFlags_(ImGuiWindowFlags_NoDecoration & ~(ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize) | ImGuiWindowFlags_NoCollapse);
+        static constexpr ImGuiWindowFlags_ VIEW_FLAGS = ImGuiWindowFlags_(ImGuiWindowFlags_NoCollapse);
+        bool forceFocus = false;
         for (auto panel : _panels) {
             ImGui::PushID(panel);
-
-            if (ImGui::Begin(panel->getTitle(), 0, viewFlags)) {
+            if (ImGui::Begin(panel->getTitle(), 0, VIEW_FLAGS)) {
+                panel->setFocused(Gui::isCurrentWindowFocused(&forceFocus));
                 auto dockNode = ImGui::GetWindowDockNode();
                 if (!dockNode || !dockNode->ParentNode) {
                     auto size = ImGui::GetWindowSize();
@@ -123,10 +142,15 @@ namespace JEngine::Editor {
                 }
                 panel->draw(_app);
             }
+            else if(panel->isFocused()) {
+                panel->setFocused(false);
+            }
             ImGui::End();
             ImGui::PopID();
         }
         _flags.setBit(FLAG_DRAWING, false);
+
+        _app->setForceFocus(forceFocus);
 
         if (_panelPostInfo.size()) {
             while (_panelPostInfo.size()) {
@@ -134,8 +158,13 @@ namespace JEngine::Editor {
                 Gui::focusWindow(post.focused);
                 _panelPostInfo.pop_back();
             }
-            ImGui::LoadIniSettingsFromDisk("imgui.ini");
+            //GImGui->SettingsLoaded = false;
         }
+
+        if ((focusFlags & FOCUS_EDITOR_SETTINGS) && editorSettings) {
+            ImGui::SetNextWindowFocus();
+        }
+        drawEditorSettings(editorSettings);
 
         while (!_panelRemoveQueue.empty()) {
             removePanel(_panelRemoveQueue.back());
@@ -212,7 +241,7 @@ namespace JEngine::Editor {
         ImGui::DockBuilderFinish(_dockID);
 
         _freea(idBuffer);
-        ImGui::LoadIniSettingsFromDisk("imgui.ini");
+        //GImGui->SettingsLoaded = false;
     }
 
     void MainWindow::addPanel(IDockPanel* panel) {
@@ -249,5 +278,64 @@ namespace JEngine::Editor {
             return nullptr;
         }
         return panel;
+    }
+
+    bool MainWindow::isEditorFocused() const {
+        GameViewPanel* gameView = findPanelOfType<GameViewPanel>();
+        if (gameView) {
+            return !gameView->isFocused();
+        }
+        return true;
+    }
+
+    void MainWindow::drawEditorSettings(bool& open) {
+        if (!open) { return; }
+
+        enum : uint32_t {
+            MENU_General,
+            MENU_EditorVisuals,
+            MENU_COUNT,
+        };
+
+        static constexpr const char* OPTIONS[MENU_COUNT]{
+            "General",
+            "Editor Visuals",
+        };
+        static uint32_t selOpt = 0;
+
+        bool wasOpen = open;
+        ImGui::PushID(EDITOR_SETTINGS_TITLE);
+
+
+        ImGui::SetNextWindowSize({ 750.0f, 600.0f }, ImGuiCond_Appearing);
+        ImGui::SetNextWindowPos({ 100.0f, 100.0f }, ImGuiCond_Appearing);
+        if (ImGui::Begin(EDITOR_SETTINGS_TITLE, &open, ImGuiWindowFlags_MenuBar)) {
+            if (ImGui::BeginMenuBar()) {
+                bool selected = false;
+                for (uint32_t i = 0; i < MENU_COUNT; i++) {
+                    ImGui::PushID(i);
+                    selected = i == selOpt;
+                    if (ImGui::MenuItem(OPTIONS[i], "", selected)) {
+                        selOpt = i;
+                    }
+                    ImGui::PopID();
+                }
+                ImGui::EndMenuBar();
+            }
+
+            if (ImGui::BeginChild("##SettingsArea", {0, 0}, ImGuiChildFlags_Border)) {
+                //TODO: Handle settings...
+            }
+            ImGui::EndChild();
+        }
+
+        if (wasOpen && !open) {
+            auto window = ImGui::GetCurrentWindow();
+            ImGui::DockContextProcessUndockWindow(ImGui::GetCurrentContext(), window);
+        }
+
+        ImGui::End();
+        ImGui::PopID();
+
     }
 }

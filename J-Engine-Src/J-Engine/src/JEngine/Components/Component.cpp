@@ -2,20 +2,14 @@
 #include <JEngine/Core/GameObject.h>
 
 namespace JEngine {
-    Component::Component() : IObject(), _object(nullptr) { }
+    Component::Component() : IObject() { }
 
     Component::~Component() {
-        if ((getFlags() & FLAG_IS_DESTROYED) == 0) {
-            _object = nullptr;
-            getFlags() |= FLAG_IS_DESTROYED;
-            UUIDFactory::removeUUID<Component>(getUUID());
-            setUUID(UUID8::Empty);
-        }
+        getFlags() |= FLAG_IS_DESTROYED;
     }
 
-    void Component::init(GameObject* go, uint16_t flags) {
-        _object = go;
-        initObj(UUID8::Empty, flags & FLAGS_INSTANCE);
+    void Component::init(CompRef compRef, uint16_t flags) {
+        initObj(compRef.uuid, flags & FLAGS_INSTANCE);
         onInit();
     }
 
@@ -34,49 +28,42 @@ namespace JEngine {
     }
 
     void Component::deserializeBinary(const Stream& stream) {
-        UI8Flags flags{};
+        uint8_t flags{};
         Serialization::deserialize(flags, stream);
-        getFlags() = UI16Flags(flags.getValue());
+        getFlags() = UI16Flags(flags);
 
         deserializeBinaryImpl(stream);
     }
 
     void Component::serializeBinary(const Stream& stream) const {
-        UI8Flags flags(getFlags());
-
-        Serialization::serialize(flags, stream);
+        Serialization::serialize(uint8_t(getFlags()), stream);
         serializeBinaryImpl(stream);
     }
 
     void Component::deserializeYAML(yamlNode& node) {
-        UI8Flags flags{};
+        uint8_t flags{};
         Serialization::deserialize(flags, node["flags"]);
-        getFlags() = UI16Flags(flags.getValue());
-
+        getFlags() = UI16Flags(flags);
         deserializeYAMLImpl(node);
     }
 
     void Component::serializeYAML(yamlEmit& emit) const {
-        UI8Flags flags(getFlags());
-
         emit << YAML::BeginMap; 
-        Serialization::serialize(flags, emit << YAML::Key << "flags" << YAML::Value);
+        Serialization::serialize(uint8_t(getFlags()), emit << YAML::Key << "flags" << YAML::Value);
 
         serializeYAMLImpl(emit);
         emit << YAML::EndMap;
     }
 
     void Component::deserializeJSON(json& jsonF) {
-        UI8Flags flags{};
+        uint8_t flags{};
         Serialization::deserialize(flags, jsonF["flags"]);
-        getFlags() = UI16Flags(flags.getValue());
+        getFlags() = UI16Flags(flags);
         deserializeJSONImpl(jsonF);
     }
 
     void Component::serializeJSON(json& jsonF) const {
-        UI8Flags flags(getFlags());
-
-        Serialization::serialize(flags, jsonF["flags"]);
+        Serialization::serialize(uint8_t(getFlags()), jsonF["flags"]);
         serializeJSONImpl(jsonF);
     }
 

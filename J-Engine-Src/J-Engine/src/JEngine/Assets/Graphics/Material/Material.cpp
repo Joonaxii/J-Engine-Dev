@@ -1,9 +1,9 @@
 #include <JEngine/Assets/Graphics/Material/Material.h>
 
 namespace JEngine {
-    Material::Material() : IAsset(), _mainTex(), _shader() { }
-    Material::Material(const ObjectRef<Shader>& shader) : IAsset(), _shader(shader), _mainTex() { }
-    Material::Material(const ObjectRef<Texture>& texture, const ObjectRef<Shader>& shader) : IAsset(), _mainTex(texture), _shader(shader) { }
+    Material::Material() : IAsset(){ }
+   //Material::Material(const ObjectRef<Shader>& shader) : IAsset(), _shader(shader), _mainTex() { }
+   //Material::Material(const ObjectRef<Texture>& texture, const ObjectRef<Shader>& shader) : IAsset(), _mainTex(texture), _shader(shader) { }
 
     void Material::addProperty(const MaterialProperty& prop) {
         const int32_t index = indexOfProperty(prop.getName());
@@ -21,81 +21,83 @@ namespace JEngine {
     }
 
     bool Material::operator<(const Material& other) const {
-        auto shdrA = _shader.getPtr();
-        auto shdrB = other._shader.getPtr();
-
-        if (shdrA && shdrB) {
-            const auto uniA = shdrA->getBlendUnion();
-            const auto uniB = shdrB->getBlendUnion();
-            if (uniA == uniB) {
-                goto end;
-            }
-
-            return uniA < uniB;
-        }
-        else if(shdrA && !shdrB) {
-            return false;
-        }
-        else {
-            if (!shdrA && shdrB) { return true; }
-        }
-
-        end:
-        return getUUID() < other.getUUID();
+        //auto shdrA = _shader.getPtr();
+        //auto shdrB = other._shader.getPtr();
+        //
+        //if (shdrA && shdrB) {
+        //    const auto uniA = shdrA->getBlendUnion();
+        //    const auto uniB = shdrB->getBlendUnion();
+        //    if (uniA == uniB) {
+        //        goto end;
+        //    }
+        //
+        //    return uniA < uniB;
+        //}
+        //else if(shdrA && !shdrB) {
+        //    return false;
+        //}
+        //else {
+        //    if (!shdrA && shdrB) { return true; }
+        //}
+        //
+        //end:
+        //return getUUID() < other.getUUID();
+        return false;
     }
 
     bool Material::operator>(const Material& other) const {
-        auto shdrA = _shader.getPtr();
-        auto shdrB = other._shader.getPtr();
-
-        if (shdrA && shdrB) {
-            const auto uniA = shdrA->getBlendUnion();
-            const auto uniB = shdrB->getBlendUnion();
-            if (uniA == uniB) {
-                goto end;
-            }
-
-            return uniA > uniB;
-        }
-        else if (shdrA && !shdrB) {
-            return true;
-        }
-        else {
-            if (!shdrA && shdrB) { return false; }
-        }
+        //auto shdrA = _shader.getPtr();
+        //auto shdrB = other._shader.getPtr();
+        //
+        //if (shdrA && shdrB) {
+        //    const auto uniA = shdrA->getBlendUnion();
+        //    const auto uniB = shdrB->getBlendUnion();
+        //    if (uniA == uniB) {
+        //        goto end;
+        //    }
+        //
+        //    return uniA > uniB;
+        //}
+        //else if (shdrA && !shdrB) {
+        //    return true;
+        //}
+        //else {
+        //    if (!shdrA && shdrB) { return false; }
+        //}
 
     end:
         return getUUID() > other.getUUID();
     }
 
     bool Material::operator==(const Material& other) const {
-        if (_mainTex.getID() != other._mainTex.getID()) { return false; }
-        if (_shader.getID() != other._shader.getID()) { return false; }
-
-        auto shdrA = _shader.getPtr();
-        auto shdrB = other._shader.getPtr();
-
-        if (shdrA && shdrB) {
-            if (shdrA->getBlendUnion() != shdrB->getBlendUnion()) { return false; }
-        }
-
-        size_t size = _properties.size();
-        if (size != other._properties.size()) { return false; }
-
-        size_t count = size;
-        for (size_t i = 0; count > 0 && i < size; i++) {
-            auto& propA = _properties[i];
-            auto& propB = other._properties[i];
-            if (propA != propB) {
-                for (size_t j = 0; j < size; j++)  {
-                    auto& propC = other._properties[i];
-                    if (propC == propA) { count--; break; }
-                }
-                continue;
-            }
-            count--;
-        }
-        return count == 0;
+        //if (_mainTex.getID() != other._mainTex.getID()) { return false; }
+        //if (_shader.getID() != other._shader.getID()) { return false; }
+        //
+        //auto shdrA = _shader.getPtr();
+        //auto shdrB = other._shader.getPtr();
+        //
+        //if (shdrA && shdrB) {
+        //    if (shdrA->getBlendUnion() != shdrB->getBlendUnion()) { return false; }
+        //}
+        //
+        //size_t size = _properties.size();
+        //if (size != other._properties.size()) { return false; }
+        //
+        //size_t count = size;
+        //for (size_t i = 0; count > 0 && i < size; i++) {
+        //    auto& propA = _properties[i];
+        //    auto& propB = other._properties[i];
+        //    if (propA != propB) {
+        //        for (size_t j = 0; j < size; j++)  {
+        //            auto& propC = other._properties[i];
+        //            if (propC == propA) { count--; break; }
+        //        }
+        //        continue;
+        //    }
+        //    count--;
+        //}
+        //return count == 0;
+        return false;
     }
 
     bool Material::operator!=(const Material& other) const  {
@@ -123,15 +125,15 @@ namespace JEngine {
     }
 
     void Material::setFrameBuffer(const ObjectRef<FrameBuffer>& fBuffer) {
-        _frameBuffer = fBuffer;
+        //_frameBuffer = fBuffer;
     }
 
     bool Material::serializeJson(json& jsonF) const {
-        const UUID8 shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUID8::Empty;
-        const UUID8 mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUID8::Empty;
-
-        Serialization::serialize(shaderUUID, jsonF["shader"]);
-        Serialization::serialize(mainTexUUID, jsonF["mainTexture"]);
+        //const UUID8 shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUID8::Empty;
+        //const UUID8 mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUID8::Empty;
+        //
+        //Serialization::serialize(shaderUUID, jsonF["shader"]);
+        //Serialization::serialize(mainTexUUID, jsonF["mainTexture"]);
 
         json::array_t props{};
         for (const MaterialProperty& prop : _properties) {
@@ -174,136 +176,116 @@ namespace JEngine {
     }
 
     bool Material::serializeYaml(yamlEmit& yamlOut) const {
-        const UUID8 shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUID8::Empty;
-        const UUID8 mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUID8::Empty;
-        yamlOut << YAML::BeginMap;
-        Serialization::serialize("shader", shaderUUID, yamlOut);
-        Serialization::serialize("mainTexture", mainTexUUID, yamlOut);
-        Serialization::serialize("properties", _properties.data(), _properties.size(), yamlOut);
-        yamlOut << YAML::EndMap;
+        //const UUID8 shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUID8::Empty;
+        //const UUID8 mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUID8::Empty;
+        //yamlOut << YAML::BeginMap;
+        //Serialization::serialize("shader", shaderUUID, yamlOut);
+        //Serialization::serialize("mainTexture", mainTexUUID, yamlOut);
+        //Serialization::serialize("properties", _properties.data(), _properties.size(), yamlOut);
+        //yamlOut << YAML::EndMap;
         return true;
     }
 
     bool Material::serializeBinary(const Stream& stream) const {
-        const UUID8 shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUID8::Empty;
-        const UUID8 mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUID8::Empty;
-
-        Serialization::serialize(shaderUUID, stream);
-        Serialization::serialize(mainTexUUID, stream);
-
-        const int32_t props = int32_t(_properties.size());
-        Serialization::serialize(props, stream);
-
-        for (const auto& prop : _properties) {
-            Serialization::serialize(prop, stream);
-        }
+        //const UUID8 shaderUUID = _shader.getPtr() ? _shader.getPtr()->getUUID() : UUID8::Empty;
+        //const UUID8 mainTexUUID = _mainTex.getPtr() ? _mainTex.getPtr()->getUUID() : UUID8::Empty;
+        //
+        //Serialization::serialize(shaderUUID, stream);
+        //Serialization::serialize(mainTexUUID, stream);
+        //
+        //const int32_t props = int32_t(_properties.size());
+        //Serialization::serialize(props, stream);
+        //
+        //for (const auto& prop : _properties) {
+        //    Serialization::serialize(prop, stream);
+        //}
         return true;
     }
 
     bool Material::deserializeBinary(const Stream& stream, const size_t size) {
-        UUID8 shaderUUID = UUID8::Empty;
-        UUID8 mainTexUUID = UUID8::Empty;
-
-        Serialization::deserialize(shaderUUID, stream);
-        Serialization::deserialize(mainTexUUID, stream);
-
-        _properties.clear();
-        int32_t props;
-        Serialization::deserialize(props, stream);
-        _properties.resize(props);
-
-        for (size_t i = 0; i < props; i++) {
-            Serialization::deserialize(_properties[i], stream);
-        }
+       // UUID8 shaderUUID = UUID8::Empty;
+       // UUID8 mainTexUUID = UUID8::Empty;
+       //
+       // Serialization::deserialize(shaderUUID, stream);
+       // Serialization::deserialize(mainTexUUID, stream);
+       //
+       // _properties.clear();
+       // int32_t props;
+       // Serialization::deserialize(props, stream);
+       // _properties.resize(props);
+       //
+       // for (size_t i = 0; i < props; i++) {
+       //     Serialization::deserialize(_properties[i], stream);
+       // }
         return true;
     }
 
     const Shader* Material::getShaderPtr() const {
-        return _shader.getPtr();
+        return nullptr;
     }
 
     Shader* Material::getShaderPtr() {
-        return _shader.getPtr();
-    }
-
-    ObjectRef<Shader>& Material::getShader() {
-        return _shader;
-    }
-
-    const ObjectRef<Shader>& Material::getShader() const {
-        return _shader;
-    }
-
-    void Material::setMainTexture(const ObjectRef<Texture>& tex) {
-        _mainTex = tex;
+        return nullptr;
     }
 
     const Texture* Material::getMainTexturePtr() const {
-        return _mainTex.getPtr();
+        return nullptr;
     }
 
     Texture* Material::getMainTexturePtr() {
-        return _mainTex.getPtr();
-    }
-
-    ObjectRef<Texture>& Material::getMainTexture() {
-        return _mainTex;
-    }
-
-    const ObjectRef<Texture>& Material::getMainTexture() const {
-        return _mainTex;
+        return nullptr;
     }
 
     bool Material::bind() {
-        Shader* shader = _shader.getPtr();
-        if (!shader) { return false; }
-
-        shader->bind();
-        uint32_t texSlot = 0;
-        auto fBuffer = _frameBuffer.getPtr();
-        auto tex = _mainTex.getPtr();
-        if (!fBuffer && tex) {
-            texSlot = tex->bind(texSlot);
-        }else if (fBuffer) {
-            texSlot = fBuffer->bindColorAttachment(texSlot);
-        }
-
-        for (auto& prop : _properties) {
-            if (prop.getType() == MaterialProperty::T_Texture) {
-                auto texP = prop.asTexture().getPtr();
-                if (texP) {
-                    texSlot = texP->bind(texSlot);
-                }
-                else {
-                    texSlot = Texture::bindNull(texSlot);
-                }
-            }
-        }
-
-        applyProperties(*shader);
+        //Shader* shader = _shader.getPtr();
+        //if (!shader) { return false; }
+        //
+        //shader->bind();
+        //uint32_t texSlot = 0;
+        //auto fBuffer = _frameBuffer.getPtr();
+        //auto tex = _mainTex.getPtr();
+        //if (!fBuffer && tex) {
+        //    texSlot = tex->bind(texSlot);
+        //}else if (fBuffer) {
+        //    texSlot = fBuffer->bindColorAttachment(texSlot);
+        //}
+        //
+        //for (auto& prop : _properties) {
+        //    if (prop.getType() == MaterialProperty::T_Texture) {
+        //        auto texP = prop.asTexture().getPtr();
+        //        if (texP) {
+        //            texSlot = texP->bind(texSlot);
+        //        }
+        //        else {
+        //            texSlot = Texture::bindNull(texSlot);
+        //        }
+        //    }
+        //}
+        //
+        //applyProperties(*shader);
         return true;
     }
 
     void Material::unbind() const {
-        auto shader = _shader.getPtr();
-        if (shader) {
-            shader->unbind();
-        }
-
-        uint32_t slot = 0;
-        auto tex = _mainTex.getPtr();
-        if (tex) {
-            slot = tex->unBind(slot);
-        }
-
-        for (auto& prop : _properties) {
-            if (prop.getType() == MaterialProperty::T_Texture) {
-                auto texP = prop.asTexture().getPtr();
-                if (texP) {
-                    slot = texP->unBind(slot);
-                }
-            }
-        }
+        //auto shader = _shader.getPtr();
+        //if (shader) {
+        //    shader->unbind();
+        //}
+        //
+        //uint32_t slot = 0;
+        //auto tex = _mainTex.getPtr();
+        //if (tex) {
+        //    slot = tex->unBind(slot);
+        //}
+        //
+        //for (auto& prop : _properties) {
+        //    if (prop.getType() == MaterialProperty::T_Texture) {
+        //        auto texP = prop.asTexture().getPtr();
+        //        if (texP) {
+        //            slot = texP->unBind(slot);
+        //        }
+        //    }
+        //}
     }
 
     int32_t Material::indexOfProperty(const std::string& name) const {
@@ -315,53 +297,53 @@ namespace JEngine {
     }
 
     void Material::applyProperties(Shader& shader) const {
-        uint32_t pos = shader.setTextures("_MainTex", _mainTex.getPtr());
-        for (const auto& prop : _properties) {
-            switch (prop.getType())
-            {
-                case MaterialProperty::T_UInt:
-                    shader.setUniform1i(prop.getName(), prop.asUInt());
-                    break;    
-                
-                case MaterialProperty::T_Float:
-                    shader.setUniform1f(prop.getName(), prop.asFloat());
-                    break;
-
-                case MaterialProperty::T_Vector2f: 
-                    shader.setUniformV2f(prop.getName(), prop.asVector2f()); break;
-                    
-                case MaterialProperty::T_Vector2i:
-                    shader.setUniformV2i(prop.getName(), prop.asVector2i()); break;
-                    
-                case MaterialProperty::T_Vector3f:
-                    shader.setUniformV3f(prop.getName(), prop.asVector3f()); break;
-
-                case MaterialProperty::T_Vector3i:
-                    shader.setUniformV3i(prop.getName(), prop.asVector3i()); break;
-
-                case MaterialProperty::T_Vector4f:
-                    shader.setUniformV4f(prop.getName(), prop.asVector4f()); break;
-
-                case MaterialProperty::T_Vector4i:
-                    shader.setUniformV4i(prop.getName(), prop.asVector4i()); break;
-                    
-                case MaterialProperty::T_Matrix4f:
-                    shader.setUniformMat4f(prop.getName(), prop.asMatrix4f()); break;
-
-                case MaterialProperty::T_Color32:
-                    shader.setUniformColor32(prop.getName(), prop.asColor32()); break;
-
-                case MaterialProperty::T_Color24:
-                    shader.setUniformColor24(prop.getName(), prop.asColor24()); break;
-
-                case MaterialProperty::T_Color:
-                    shader.setUniformColor(prop.getName(), prop.asColor()); break;
-
-                case MaterialProperty::T_Texture:
-                    pos += shader.setTextures(prop.getName(), prop.asTexture().getPtr(), pos);
-                    break;
-                default: break;
-            }
-        }
+        //uint32_t pos = shader.setTextures("_MainTex", _mainTex.getPtr());
+        //for (const auto& prop : _properties) {
+        //    switch (prop.getType())
+        //    {
+        //        case MaterialProperty::T_UInt:
+        //            shader.setUniform1i(prop.getName(), prop.asUInt());
+        //            break;    
+        //        
+        //        case MaterialProperty::T_Float:
+        //            shader.setUniform1f(prop.getName(), prop.asFloat());
+        //            break;
+        //
+        //        case MaterialProperty::T_Vector2f: 
+        //            shader.setUniformV2f(prop.getName(), prop.asVector2f()); break;
+        //            
+        //        case MaterialProperty::T_Vector2i:
+        //            shader.setUniformV2i(prop.getName(), prop.asVector2i()); break;
+        //            
+        //        case MaterialProperty::T_Vector3f:
+        //            shader.setUniformV3f(prop.getName(), prop.asVector3f()); break;
+        //
+        //        case MaterialProperty::T_Vector3i:
+        //            shader.setUniformV3i(prop.getName(), prop.asVector3i()); break;
+        //
+        //        case MaterialProperty::T_Vector4f:
+        //            shader.setUniformV4f(prop.getName(), prop.asVector4f()); break;
+        //
+        //        case MaterialProperty::T_Vector4i:
+        //            shader.setUniformV4i(prop.getName(), prop.asVector4i()); break;
+        //            
+        //        case MaterialProperty::T_Matrix4f:
+        //            shader.setUniformMat4f(prop.getName(), prop.asMatrix4f()); break;
+        //
+        //        case MaterialProperty::T_Color32:
+        //            shader.setUniformColor32(prop.getName(), prop.asColor32()); break;
+        //
+        //        case MaterialProperty::T_Color24:
+        //            shader.setUniformColor24(prop.getName(), prop.asColor24()); break;
+        //
+        //        case MaterialProperty::T_Color:
+        //            shader.setUniformColor(prop.getName(), prop.asColor()); break;
+        //
+        //        case MaterialProperty::T_Texture:
+        //            pos += shader.setTextures(prop.getName(), prop.asTexture().getPtr(), pos);
+        //            break;
+        //        default: break;
+        //    }
+        //}
     }
 }

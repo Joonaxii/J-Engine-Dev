@@ -1,4 +1,5 @@
 #pragma once
+#include <JEngine/Collections/PoolAllocator.h>
 #include <JEngine/Cryptography/UUIDFactory.h>
 #include <JEngine/Core/IObject.h>
 #include <cstdint>
@@ -18,7 +19,7 @@ namespace JEngine {
     protected:
         friend class AssetDB;
 
-        virtual void init(const char* name, UUID8 uuid, uint16_t flags);
+        virtual void init(const char* name, uint32_t uuid, uint16_t flags);
 
         /// <summary>
         /// This method is meant for deallocating/freeing this asset's pointer so it can be reused.
@@ -29,4 +30,3 @@ namespace JEngine {
     };
 
 }
-REGISTER_UUID_FACTORY(JEngine::IAsset)

@@ -5,21 +5,19 @@
 #include <algorithm>
 
 namespace JEngine {
-    typedef IRenderer<JVertex2f> IRenderer2D;
     Renderer* Renderer::_instance = nullptr;
 
     namespace priv {
-
         static const uint32_t QUAD_INDICES[6]{
             0, 1, 2,
             2, 3, 0
         };
 
-        static const JVertex2f QUAD[4]{
-            { {0, 0}, {255, 255, 255, 255}, {0, 0}},
-            { {1, 0}, {255, 255, 255, 255}, {1, 0}},
-            { {1, 1}, {255, 255, 255, 255}, {1, 1}},
-            { {0, 1}, {255, 255, 255, 255}, {0, 1}},
+        static const JVertex QUAD[4]{
+            { {0, 0, 0}, {255, 255, 255, 255}, {0, 0}},
+            { {1, 0, 0}, {255, 255, 255, 255}, {1, 0}},
+            { {1, 1, 0}, {255, 255, 255, 255}, {1, 1}},
+            { {0, 1, 0}, {255, 255, 255, 255}, {0, 1}},
         };
 
         static void calculateFramebufferRects(
@@ -51,7 +49,7 @@ namespace JEngine {
         }
 
         struct MaterialGroup {
-            Material* material;
+            void* material;
             uint32_t length[33];
 
             const bool hasItems() const {
@@ -66,7 +64,7 @@ namespace JEngine {
             }
         };
 
-        const void generateMaterialGroups(const std::vector<uint64_t>& workingSet, const std::vector<IRenderer2D*> activeRenderers[33], std::vector<MaterialGroup>& groups) {
+        const void generateMaterialGroups(const std::vector<uint64_t>& workingSet, const std::vector<IRenderer*> activeRenderers[33], std::vector<MaterialGroup>& groups) {
             MaterialGroup curGrp{ nullptr, 0, };
             uint32_t vertCount = 0;
             uint32_t indCount = 0;
@@ -78,17 +76,17 @@ namespace JEngine {
                 const auto rInd = int32_t(ind & 0xFFFFFFFF);
 
                 auto& rends = activeRenderers[bInd];
-                IRenderer2D* rend = rends[rInd];
+                IRenderer* rend = rends[rInd];
 
-                Material* matR = rend->getMaterial();
+               // Material* matR = rend->getMaterial();
 
                 const uint32_t vertC = rend->getVertexCount();
                 const uint32_t indC = rend->getIndexCount();
                 vertCount += vertC;
                 indCount += indC;
 
-                if (((vertCount <= Renderer::DynamicBatch2D::MAX_VERTS) && (indCount <= Renderer::DynamicBatch2D::MAX_INDICES)) &&
-                    (!matR && !curGrp.material) || (curGrp.material && *curGrp.material == *matR)) {
+                if (((vertCount <= DynamicBatch::MAX_VERTS) && (indCount <= DynamicBatch::MAX_INDICES))/* &&
+                    (!matR && !curGrp.material) || (curGrp.material && *curGrp.material == *matR)*/) {
                     curGrp.length[bInd]++;
                 }
                 else {
@@ -98,7 +96,7 @@ namespace JEngine {
                     curGrp.clearItems();
 
                     curGrp.length[bInd] = 1;
-                    curGrp.material = matR;
+                    //curGrp.material = matR;
 
                     vertCount = vertC;
                     indCount = indC;
@@ -109,29 +107,29 @@ namespace JEngine {
             }
         }
 
-        const int32_t sortRenderers(IRenderer2D* lhs, IRenderer2D* rhs) {
+        const int32_t sortRenderers(IRenderer* lhs, IRenderer* rhs) {
             const int32_t sortComp = lhs->getSortingLayer().compareTo(rhs->getSortingLayer());
 
             if (sortComp) {
                 return sortComp;
             }
 
-            Material* matA = lhs->getMaterial();
-            Material* matB = rhs->getMaterial();
-
-            if (matA && matB) {
-                auto& matRA = *matA;
-                auto& matRB = *matB;
-                if (matRA == matRB) { return 0; }
-
-                if (matRA < matRB) { return -1; }
-                return 1;
-            }
-
-            if (!matA && !matB) {
-                return 0;
-            }
-            return !matA ? -1 : 1;
+           //Material* matA = lhs->getMaterial();
+           //Material* matB = rhs->getMaterial();
+           //
+           //if (matA && matB) {
+           //    auto& matRA = *matA;
+           //    auto& matRB = *matB;
+           //    if (matRA == matRB) { return 0; }
+           //
+           //    if (matRA < matRB) { return -1; }
+           //    return 1;
+           //}
+           //
+           //if (!matA && !matB) {
+           //    return 0;
+           //}
+            return /*!matA ? */-1 /*: 1*/;
         }
 
         const int32_t sortGuiDrawables(IImGuiDrawable* lhs, IImGuiDrawable* rhs) {
@@ -146,16 +144,17 @@ namespace JEngine {
 
     }
 
-    Renderer::Renderer() : _batch(), _batchGizmos(), _firstCam(nullptr)
-        , _window(), _tick(), _initialized(false), _blendMaterial(nullptr), _defaultBufferLayout(), _gizmoBufferLayout() {
+    Renderer::Renderer() : _batch(), _batchGizmos(), _firstCam(nullptr), 
+        _window(), _tick(), _initialized(false),
+        _defaultBufferLayout(), _gizmoBufferLayout() {
         if (!_instance) {
             _instance = this;
-            IRenderer2D::setRegistrationMethods(registerRenderer, unregisterRenderer);
+            IRenderer::setRegistrationMethods(registerRenderer, unregisterRenderer);
             IImGuiDrawable::setRegistrationMethods(registerGuiDrawable, unregisterGuiDrawable);
             ICamera::setRegistrationMethods(registerCamera, unregisterCamera);
             ICamera::setCameraRenderMethods(prepareCameraRenderStatic, renderObjectsToCameraStatic, writeCameraToBufferStatic);
 
-            _defaultBufferLayout.push<float>(2);
+            _defaultBufferLayout.push<float>(3);
             _defaultBufferLayout.push<uint8_t>(4);
             _defaultBufferLayout.push<float>(2);
 
@@ -171,42 +170,43 @@ namespace JEngine {
 
     bool Renderer::init(const char* title, const int32_t width, const int32_t height) {
         if (_initialized) {
-            JENGINE_CORE_WARN("[JEngine - Renderer] Warning: Already initialized!");
+            JENGINE_CORE_WARN("[Renderer] Warning: Already initialized!");
             return true;
         }
         const int32_t glfwErr = glfwInit();
         if (glfwErr == GLFW_FALSE) {
-            JENGINE_CORE_ERROR("[JEngine - Renderer] Error: Failed to initialize GLFW!");
+            JENGINE_CORE_ERROR("[Renderer] Error: Failed to initialize GLFW!");
             terminate();
             return false;
         }
 
         if (!_window.init(title, width, height)) {
-            JENGINE_CORE_ERROR("[JEngine - Renderer] Error: Failed to initialize GLFW window!");
+            JENGINE_CORE_ERROR("[Renderer] Error: Failed to initialize GLFW window!");
             terminate();
             return false;
         }
         Window::setInstance(&_window);
 
         _batch.init(_defaultBufferLayout);
-        _batchGizmos.init(_gizmoBufferLayout, DynamicBatch2D::MAX_VERTS >> 1, DynamicBatch2D::MAX_INDICES >> 1);
+        _batchGizmos.init(_gizmoBufferLayout, DynamicBatch::MAX_VERTS >> 1, DynamicBatch::MAX_INDICES >> 1);
 
         GLCall(glEnable(GL_BLEND));
         glEnable(GL_SCISSOR_TEST);
 
-        JENGINE_CORE_TRACE("[JEngine - Renderer - OpenGL] Init:");
-        JENGINE_CORE_INFO(" - Vendor         : {0}", reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
-        JENGINE_CORE_INFO(" - Renderer       : {0}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
-        JENGINE_CORE_INFO(" - Shader Version : {0}", reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
-        JENGINE_CORE_INFO(" - Version        : {0}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+        JENGINE_CORE_INFO("[Renderer] Init:\n  - Vendor         : {0}\n  - Renderer       : {1}\n  - Shader Version : {2}\n  - Version        : {3}", 
+            reinterpret_cast<const char*>(glGetString(GL_VENDOR)),
+            reinterpret_cast<const char*>(glGetString(GL_RENDERER)),
+            reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)),
+            reinterpret_cast<const char*>(glGetString(GL_VERSION)));
         ImGui::CreateContext();
         auto& io = ImGui::GetIO();
 
         ImGui::StyleColorsDark();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+        io.IniFilename = NULL;
         io.ConfigWindowsMoveFromTitleBarOnly = true;
         io.ConfigDockingTransparentPayload = true;
-
+  
         ImGui_ImplGlfw_InitForOpenGL(_window.getWindowPtr(), true);
         ImGui_ImplOpenGL3_Init("#version 330");
 
@@ -218,7 +218,7 @@ namespace JEngine {
         if (!_initialized) { return; }
         if (_instance == this) {
             _instance = nullptr;
-            IRenderer2D::setRegistrationMethods(nullptr, nullptr);
+            IRenderer::setRegistrationMethods(nullptr, nullptr);
         }
 
         Window::setInstance(nullptr);
@@ -243,7 +243,7 @@ namespace JEngine {
         if (!_initialized) { return false; }
         if (_window.isMinimized()) {
             _window.pollEvents();
-            return true;
+            goto guiDraw;
         }
         if (!_window.tick()) { return false; }
 
@@ -317,6 +317,9 @@ namespace JEngine {
         //GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
         //_window.resetViewport();
         //_window.clear(JColor32::Black);
+        _window.finalizeFrame();
+
+        guiDraw:
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -331,11 +334,9 @@ namespace JEngine {
             draw->onImGui();
             ImGui::PopID();
         }
-        _window.finalizeFrame();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
 
         GLFWwindow* win = glfwGetCurrentContext();
         ImGui::UpdatePlatformWindows();
@@ -347,9 +348,9 @@ namespace JEngine {
         return true;
     }
 
-    void Renderer::setCameraBlendMaterial(const ObjectRef<Material>& blendMaterial) {
-        _blendMaterial = blendMaterial;
-    }
+   // void Renderer::setCameraBlendMaterial(const ObjectRef<Material>& blendMaterial) {
+   //     _blendMaterial = blendMaterial;
+   // }
 
     void Renderer::renderNull(RenderInfo& renderInfo, RenderInfo& uiRenderInfo) {
         JMatrix4f projection = _window.getWorldProjectionMatrix();
@@ -402,14 +403,14 @@ namespace JEngine {
         for (priv::MaterialGroup& mGrp : groups) {
             _batch.setup(mGrp.material);
 
-            Shader* shader = mGrp.material ? mGrp.material->getShaderPtr() : nullptr;
+            Shader* shader = mGrp.material ? /*mGrp.material->getShaderPtr()*/ nullptr : nullptr;
             if (shader && shaderSet.find(shader) == shaderSet.end()) {
                 shaderSet.insert(shader);
                 shader->bind();
                 shader->setUniformMat4f("_MVP", projection);
             }
 
-            IRenderer2D** rends = _activeRenderers[0].data() + pos;
+            IRenderer** rends = _activeRenderers[0].data() + pos;
             for (size_t j = 0; j < mGrp.length[0]; j++) {
                 auto rend = rends[j];
                 _batch.addVerts(rend->getWorldMatrix(), rend->getColor(), rend->getVertices(), rend->getVertexCount(), rend->getIndices(), rend->getIndexCount());
@@ -423,32 +424,32 @@ namespace JEngine {
             }
         }
 
-        auto matBlend = _blendMaterial.getPtr();
-        if (matBlend && matBlend->getShaderPtr()) {
-            GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-
-            _window.updateViewport(srcMin + dstMin, srcSiz, 0x2);
-            _batch.setup(matBlend);
-
-            matBlend->setFrameBuffer(&fBuffer);
-
-            matBlend->getShaderPtr()->bind();
-            matBlend->getShaderPtr()->setUniformMat4f("_MVP", _window.getScreenProjectionMatrix());
-
-            JMatrix4f mat = JMatrix4f(screenRect.getMin(), 0, screenRect.getMax());
-
-            _batch.addVerts(mat, JColor32::White, priv::QUAD, 4, priv::QUAD_INDICES, 6);
-
-            _batch.drawBatch();
-            matBlend->setFrameBuffer(nullptr);
-        }
+        void* matBlend = /*_blendMaterial.getPtr()*/nullptr;
+       // if (matBlend && matBlend->getShaderPtr()) {
+       //     GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+       //
+       //     _window.updateViewport(srcMin + dstMin, srcSiz, 0x2);
+       //     _batch.setup(matBlend);
+       //
+       //     matBlend->setFrameBuffer(&fBuffer);
+       //
+       //     matBlend->getShaderPtr()->bind();
+       //     matBlend->getShaderPtr()->setUniformMat4f("_MVP", _window.getScreenProjectionMatrix());
+       //
+       //     JMatrix4f mat = JMatrix4f(screenRect.getMin(), 0, screenRect.getMax());
+       //
+       //     _batch.addVerts(mat, JColor32::White, priv::QUAD, 4, priv::QUAD_INDICES, 6);
+       //
+       //     _batch.drawBatch();
+       //     matBlend->setFrameBuffer(nullptr);
+       // }
         GLCall(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
         GLCall(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
         fBuffer.unbind();
     }
 
-    void Renderer::draw(const VertexArray& va, const IndexBuffer& ib, Material& material) {
-        material.bind();
+    void Renderer::draw(const VertexArray& va, const IndexBuffer& ib) {
+        //material.bind();
         va.bind();
         ib.bind();
         GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, nullptr));
@@ -514,7 +515,7 @@ namespace JEngine {
         for (priv::MaterialGroup& mGrp : groups) {
             _batch.setup(mGrp.material);
 
-            Shader* shader = mGrp.material ? mGrp.material->getShaderPtr() : nullptr;
+            Shader* shader = mGrp.material ?/* mGrp.material->getShaderPtr()*/ nullptr : nullptr;
             if (shader && shaderSet.find(shader) == shaderSet.end()) {
                 shaderSet.insert(shader);
                 shader->bind();
@@ -522,7 +523,7 @@ namespace JEngine {
             }
 
             for (size_t i = 1; i < 33; i++) {
-                IRenderer2D** rends = _activeRenderers[i].data() + pos[i];
+                IRenderer** rends = _activeRenderers[i].data() + pos[i];
                 for (size_t j = 0; j < mGrp.length[i]; j++)
                 {
                     auto rend = rends[j];
@@ -540,12 +541,12 @@ namespace JEngine {
     }
 
 
-    void Renderer::writeCameraToBufferStatic(Material* blendMaterial, const JColor32& uniformColor, ICamera::CameraRenderData& renderInfo) {
+    void Renderer::writeCameraToBufferStatic(void* blendMaterial, const JColor32& uniformColor, ICamera::CameraRenderData& renderInfo) {
         if (!_instance) { return; }
         _instance->writeCameraToBuffer(blendMaterial, uniformColor, renderInfo);
     }
 
-    void Renderer::writeCameraToBuffer(Material* blendMaterial, const JColor32& uniformColor, ICamera::CameraRenderData& renderInfo) {
+    void Renderer::writeCameraToBuffer(void* blendMaterial, const JColor32& uniformColor, ICamera::CameraRenderData& renderInfo) {
         JVector2i srcMin;
         JVector2i srcSiz;
 
@@ -559,50 +560,50 @@ namespace JEngine {
             _window.getWidth(), _window.getHeight(),
             _window.getWidth(), _window.getHeight());
 
-        Material* matBlend = blendMaterial;
-        bool isValid = matBlend && matBlend->getShaderPtr();
+        //Material* matBlend = blendMaterial;
+        bool isValid = /*matBlend && matBlend->getShaderPtr()*/false;
 
-        if (!isValid) {
-            matBlend = _blendMaterial.getPtr();
-            isValid = matBlend && matBlend->getShaderPtr();
-        }
+        //if (!isValid) {
+        //    matBlend = _blendMaterial.getPtr();
+        //    isValid = matBlend && matBlend->getShaderPtr();
+        //}
 
-        if (isValid) {
-            static bool isBlendEnabled = true;
-
-            GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-
-            _window.updateViewport(srcMin + dstMin, srcSiz, 0x2);
-
-            matBlend->setFrameBuffer(renderInfo.frameBuffer);
-
-            matBlend->getShaderPtr()->bind();
-            matBlend->getShaderPtr()->setUniformMat4f("_MVP", _window.getScreenProjectionMatrix());
-
-            JMatrix4f mat = JMatrix4f(renderInfo.screenRect.getMin(), 0, renderInfo.screenRect.getMax());
-            if (isBlendEnabled != renderInfo.doBlend) {
-                isBlendEnabled = renderInfo.doBlend;
-
-                if (isBlendEnabled) {
-                    glEnable(GL_BLEND);
-                }
-                else {
-                    glDisable(GL_BLEND);
-                }
-            }
-
-            _batch.setup(matBlend);
-            _batch.addVerts(mat, uniformColor, priv::QUAD, 4, priv::QUAD_INDICES, 6);
-
-            //If Batch fails to draw, do a simple blit.
-            _batch.drawBatch();
-            matBlend->setFrameBuffer(nullptr);
-
-            if (!isBlendEnabled) {
-                isBlendEnabled = true;
-                glEnable(GL_BLEND);
-            }
-        }
+        //if (isValid) {
+        //    static bool isBlendEnabled = true;
+        //
+        //    GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        //
+        //    _window.updateViewport(srcMin + dstMin, srcSiz, 0x2);
+        //
+        //    matBlend->setFrameBuffer(renderInfo.frameBuffer);
+        //
+        //    matBlend->getShaderPtr()->bind();
+        //    matBlend->getShaderPtr()->setUniformMat4f("_MVP", _window.getScreenProjectionMatrix());
+        //
+        //    JMatrix4f mat = JMatrix4f(renderInfo.screenRect.getMin(), 0, renderInfo.screenRect.getMax());
+        //    if (isBlendEnabled != renderInfo.doBlend) {
+        //        isBlendEnabled = renderInfo.doBlend;
+        //
+        //        if (isBlendEnabled) {
+        //            glEnable(GL_BLEND);
+        //        }
+        //        else {
+        //            glDisable(GL_BLEND);
+        //        }
+        //    }
+        //
+        //    _batch.setup(matBlend);
+        //    _batch.addVerts(mat, uniformColor, priv::QUAD, 4, priv::QUAD_INDICES, 6);
+        //
+        //    //If Batch fails to draw, do a simple blit.
+        //    _batch.drawBatch();
+        //    matBlend->setFrameBuffer(nullptr);
+        //
+        //    if (!isBlendEnabled) {
+        //        isBlendEnabled = true;
+        //        glEnable(GL_BLEND);
+        //    }
+        //}
 
         GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
         renderInfo.frameBuffer->unbind();
@@ -612,12 +613,12 @@ namespace JEngine {
 #pragma region Registration Methods
 
     //IRenderer Registration Methods
-    void Renderer::registerRenderer(IRenderer2D* renderer) {
+    void Renderer::registerRenderer(IRenderer* renderer) {
         if (!_instance) { return; }
         _instance->_renderers.insert(renderer);
     }
 
-    void Renderer::unregisterRenderer(IRenderer2D* renderer) {
+    void Renderer::unregisterRenderer(IRenderer* renderer) {
         if (!_instance) { return; }
 
         const auto find = _instance->_renderers.find(renderer);

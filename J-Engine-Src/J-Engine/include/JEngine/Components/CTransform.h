@@ -1,6 +1,5 @@
 #pragma once
 #include <JEngine/Components/Component.h>
-#include <JEngine/Components/ComponentFactory.h>
 #include <JEngine/Math/Units/JMatrix.h>
 #include <JEngine/Math/Units/JVector.h>
 #include <JEngine/Utility/EnumUtils.h>
@@ -36,43 +35,40 @@ namespace JEngine {
         CTransform();
         ~CTransform();
 
-        bool setParent(CTransform* parent);
-        CTransform* getParent() { return _parent; }
-        const CTransform* getParent() const { return _parent; }
+        bool setParent(TCompRef<CTransform> parent);
+        TCompRef<CTransform> getParent() const { return _parent; }
 
-        void transform(const JVector2f& translation, float rotation, const JVector2f& scale, Space space = Space::World);
-        void translate(const JVector2f& translation, Space space = Space::World);
-        void rotate(float rotation, Space space = Space::World);
-        void scale(const JVector2f& scale, Space space = Space::World);
+        void transform(const JVector3f& translation, const JVector3f& rotation, const JVector3f& scale, Space space = Space::World);
+        void translate(const JVector3f& translation, Space space = Space::World);
+        void rotate(const JVector3f& rotation, Space space = Space::World);
+        void scale(const JVector3f& scale, Space space = Space::World);
 
-        void setTRS(const JVector2f& pos, float rot, const JVector2f& scale, Space space = Space::World);
+        void setTRS(const JVector3f& pos, const JVector3f& rot, const JVector3f& scale, Space space = Space::World);
 
-        void setPosition(const JVector2f& pos, Space space = Space::World);
-        void setRotation(float rot, Space space = Space::World);
-        void setScale(const JVector2f& scale, Space space = Space::World);
+        void setPosition(const JVector3f& pos, Space space = Space::World);
+        void setRotation(const JVector3f& rot, Space space = Space::World);
+        void setScale(const JVector3f& scale, Space space = Space::World);
 
-        const JVector2f& getPosition(Space space = Space::World) const { 
+        JVector3f getPosition(Space space = Space::World) const {
             return space == Space::World && _parent ? _parent->getWorldMatrix().transformPoint(_lPos) : _lPos;
         }
-        float getRotation(Space space = Space::World) const {
-            return space == Space::World && _parent ? _parent->getRotation() + _lRot : _lRot; 
+        JVector3f getRotation(Space space = Space::World) const {
+            return space == Space::World && _parent ? _parent->getRotation() + _lRot : _lRot;
         }
-        const JVector2f& getScale(Space space = Space::World) const { 
-            return space == Space::World && _parent ? _parent->getWorldMatrix().transformVector(_lSca) : _lSca; 
+        JVector3f getScale(Space space = Space::World) const {
+            return space == Space::World && _parent ? _parent->getWorldMatrix().transformVector(_lSca) : _lSca;
         }
 
         JMatrix4f getLocalMatrix() const { return JMatrix4f(_lPos, _lRot, _lSca); }
         JMatrix4f getWorldMatrix() const { return _parent ? _parent->getWorldMatrix() * getLocalMatrix() : getLocalMatrix(); }
 
-        CTransform* addChild(CTransform* tr);
-        bool removeChild(CTransform* tr);
+        TCompRef<CTransform> addChild(TCompRef<CTransform> tr);
+        bool removeChild(TCompRef<CTransform> tr);
 
         size_t getChildCount() const { return _children.size(); }
 
-        CTransform* getChildAt(size_t index);
-        const CTransform* getChildAt(size_t index) const;
-
-        CTransform* find(const char* name) const;
+        TCompRef<CTransform> getChildAt(size_t index) const;
+        TCompRef<CTransform> find(std::string_view name) const;
 
     protected:
         friend class GameObject;
@@ -90,15 +86,15 @@ namespace JEngine {
         void serializeJSONImpl(json& jsonF) const override;
 
     private:
-        JVector2f _lPos;
-        float _lRot;
-        JVector2f _lSca;
+        JVector3f _lPos;
+        JVector3f _lRot;
+        JVector3f _lSca;
 
-        CTransform* _parent;
-        std::vector<CTransform*> _children{};
+        TCompRef<CTransform> _parent{};
+        std::vector<TCompRef<CTransform>> _children{};
 
-        void transform(const JVector2f* tra, const float* rot, const JVector2f* sca, Space space);
-        void update(Space space, const JVector2f* pos, const float* rot, const JVector2f* scale);
+        void transform(const JVector3f* tra, const JVector3f* rot, const JVector3f* sca, Space space);
+        void update(Space space, const JVector3f* pos, const JVector3f* rot, const JVector3f* scale);
 
         friend class GameObject;
         void destroyChildren();

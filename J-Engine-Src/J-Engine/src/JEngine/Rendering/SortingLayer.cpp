@@ -1,13 +1,11 @@
 #include <JEngine/Rendering/SortingLayer.h>
 #include <JEngine/Helpers/Helpers.h>
+#include <JEngine/Utility/StringHelpers.h>
 
 namespace JEngine {
-    std::vector<std::string> SortingLayer::LAYERS = { "Default" };
+    std::vector<SortingLayer::LayerName> SortingLayer::Layers = { "Default" };
 
-    SortingLayer::SortingLayer() : _order(0), _layer(0) { }
-
-    SortingLayer::SortingLayer(const int32_t order, const std::string& layerName) : SortingLayer(order, nameToLayer(layerName, false)) { }
-    SortingLayer::SortingLayer(const int32_t order, const uint16_t layer) : _order(layer + INT16_MIN), _layer(layer) { }
+    SortingLayer::SortingLayer(int32_t order, std::string_view layerName) : SortingLayer(order, nameToLayer(layerName)) { }
 
     bool SortingLayer::operator==(const SortingLayer& other) const { return getUnion() == other.getUnion(); }
     bool SortingLayer::operator!=(const SortingLayer& other) const { return getUnion() != other.getUnion(); }
@@ -16,25 +14,19 @@ namespace JEngine {
     bool SortingLayer::operator>(const SortingLayer& other) const { return getUnion() > other.getUnion(); }
 
     int32_t SortingLayer::compareTo(const SortingLayer& other) const {
-        const auto uniA = getUnion();
-        const auto uniB = other.getUnion();
+        uint32_t uniA = getUnion();
+        uint32_t uniB = other.getUnion();
         return (uniA == uniB) ? 0 : (uniA < uniB ? -1 : 1);
     }
 
-    const std::string& SortingLayer::layerToName(const uint16_t layer) {
-        return layer >= getLayerCount() ? LAYERS[0] : LAYERS[layer];
+    std::string_view SortingLayer::layerToName(uint16_t layer) {
+        return layer >= getLayerCount() ? std::string_view(Layers[0].buffer) : std::string_view(Layers[layer].buffer);
     }
 
-    uint16_t SortingLayer::nameToLayer(const std::string& name, const bool ignoreCase) {
-        const auto layers = getLayerCount();
-        if (ignoreCase) {
-            for (size_t i = 0; i < layers; i++) {
-                if (Helpers::strEqualsIgnoreCase(LAYERS[i], name)) { return uint16_t(i); }
-            }
-            return 0;
-        }
+    uint16_t SortingLayer::nameToLayer(std::string_view name) {
+        size_t layers = getLayerCount();
         for (size_t i = 0; i < layers; i++) {
-            if (std::strcmp(LAYERS[i].c_str(), name.c_str())) { return uint16_t(i); }
+            if (Helpers::strEquals(name, std::string_view(Layers[i].buffer))) { return uint16_t(i); }
         }
         return 0;
     }
@@ -51,32 +43,20 @@ namespace JEngine {
 
     uint16_t SortingLayer::getLayerIndex() const { return _layer; }
 
-    void SortingLayer::setLayerByName(const std::string& layer) {
-        const auto layerInd = nameToLayer(layer, false);
-        if (layerInd >= getLayerCount()) { return; }
-        _layer = layerInd;
+    void SortingLayer::setLayerByName(std::string_view layer) {
+        _layer = nameToLayer(layer);;
     }
 
-    const std::vector<std::string>& SortingLayer::getLayers() { return LAYERS; }
-    uint16_t SortingLayer::getLayerCount() { return uint16_t(LAYERS.size()); }
+    const std::vector<SortingLayer::LayerName>& SortingLayer::getLayers() { return Layers; }
+    size_t SortingLayer::getLayerCount() { return uint16_t(Layers.size()); }
 
-    void SortingLayer::setLayers(const std::vector<std::string>& layers)  {
-        LAYERS.clear();
-        if (layers.size() < 1) {
-            LAYERS.push_back("Default");
-            return;
+
+    void SortingLayer::addLayer(std::string_view layer) {
+        for (auto& lr : Layers) {
+            if (Helpers::strEquals(layer, std::string_view(lr.buffer))) {
+                return;
+            }
         }
-        LAYERS.insert(LAYERS.begin(), layers.begin(), layers.end());
-    }
-
-    void SortingLayer::addLayer(const std::string& layer) {
-        if (std::find(LAYERS.begin(), LAYERS.end(), layer) != LAYERS.end()) { return; }
-        LAYERS.push_back(layer);
-    }
-
-    void SortingLayer::addLayers(const std::vector<std::string>& layers) {
-        for (const auto& layer : layers) {
-            addLayer(layer);
-        }
+        Layers.emplace_back(layer);
     }
 }

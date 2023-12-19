@@ -20,7 +20,9 @@ mono_crash.*
 [Rr]elease/
 [Rr]eleases/
 [Bb]uilds/
+[Aa]sset[Dd][Bb]/
 [Bb]uild/
+[Uu]serdata/
 x64/
 x86/
 [Aa][Rr][Mm]/

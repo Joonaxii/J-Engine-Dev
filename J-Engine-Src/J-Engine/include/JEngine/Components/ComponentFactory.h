@@ -1,30 +1,57 @@
 #pragma once
 #include <map>
 #include <functional>
-#include <string>
-#include <typeindex>
-#include <JEngine/Helpers/TypeHelpers.h>
-#include <JEngine/Core/GameObject.h>
-#include <JEngine/Components/Component.h>
+#include <JEngine/Core/Ref.h>
 #include <JEngine/Collections/PoolAllocator.h>
-#define ADD_TO_GO_CALL(name) Component*(*name)(GameObject*)
+#include <JEngine/Helpers/TypeHelpers.h>
+#define ADD_TO_GO_CALL(name) JEngine::CompRef(*name)(JEngine::GORef)
 
 namespace JEngine {
+    using AddComponent = CompRef(*)(GORef);
+    using TrimAllocPool = void (*)();
+    using ClearAllocPool = void (*)(bool full);
+
+    enum ComponentFlags : uint8_t {
+        COMP_IS_TRANSFORM = 0x1,
+    };
+
+    template<typename T>
+    struct ComponentInfo {
+        static inline constexpr size_t InitPool{ 0x00 };
+        static inline constexpr ComponentFlags Flags{ 0x00 };
+        static inline constexpr const char* Name{ "Component" };
+    };
 
     struct Comp {
-        Type* type = nullptr;
-        Component* (*addComponent)(GameObject*) = nullptr;
-        void (*trimAllocPool)() = nullptr;
-        void (*clearAllocPool)(bool full) = nullptr;
+        Type const* type = nullptr;
+        AddComponent addComponent = nullptr;
+        TrimAllocPool trimAllocPool = nullptr;
+        ClearAllocPool clearAllocPool = nullptr;
+
+        constexpr Comp() : type{ nullptr }, addComponent{ nullptr }, trimAllocPool{ nullptr }, clearAllocPool{ nullptr }{};
+        constexpr Comp(
+            Type const& type,
+            AddComponent addComponent,
+            TrimAllocPool trimAllocPool,
+            ClearAllocPool clearAllocPool
+        ) : type{ &type }, addComponent{ addComponent }, trimAllocPool{ trimAllocPool }, clearAllocPool{ clearAllocPool }{};
     };
+
+    namespace detail {
+        template<typename T>
+        inline TCompRef<T> defaultAddComponent(GORef go) {
+            return go->addComponent<T>();
+        }
+    }
 
     class ComponentFactory {
     public:
-        template<typename T> static Comp* getComp();
+        static std::vector<Comp const*>& getComps();
 
-        static std::vector<Comp*>& getComps();
+        template<typename T>
+        static Comp const& getComp();
 
-        static Comp* getComponentByHash(const UUID16& hash) {
+        static Comp const* getComponentByHash(uint32_t hash) {
             auto& components = getComps();
             for (size_t i = 0; i < components.size(); i++) {
                 if (components[i]->type->hash == hash) {
@@ -35,49 +62,28 @@ namespace JEngine {
         }
 
         template<typename T>
-        static inline Component* defaultAddComponent(GameObject* go) {
-            auto comp = go->addComponent<T>();
-            return static_cast<Component*>(comp);
+        static bool hasComponent() {
+            auto& str = TypeHelpers::getTypeName<T>();
+            return TypeHelpers::getType<T>().hash;
         }
+        static bool hasComponent(uint32_t hash);
+        static bool hasComponent(const std::string_view& name);
+        static bool hasComponent(const std::string_view& name, uint32_t& hashOut);
 
         template<typename T>
-        static const bool hasComponent() {
-            const std::type_index& tt = typeid(T);
-            auto& str = TypeHelpers::getTypeName(tt);
-            return hasComponent(str);
-        }
-        static const bool hasComponent(const UUID16& hash);
-        static const bool hasComponent(const Component* component);
-        static const bool hasComponent(const std::string& name);
-        static const bool hasComponent(const std::string& name, UUID16& hashOut);
-
-        template<typename T>
-        static const bool hasComponent(std::pair<UUID16, std::string>& hash) {
+        static bool hasComponent(std::pair<uint32_t, std::string>& hash) {
             Type* type = JEngine::TypeHelpers::getType<T>();
 
             hash.first = type->hash;
             hash.second = type->name;
             return hasComponent(type->name);
         }
-        static const bool hasComponent(const Component* component, std::pair<UUID16, std::string>& hash);
 
-        static Component* addComponent(GameObject* go, const char* name);
-        static Component* addComponent(GameObject* go, const char* name, size_t count);
-        static Component* addComponent(GameObject* go, const std::string& name);
-        static Component* addComponent(GameObject* go, const UUID16& hash);
+        static CompRef addComponent(GORef go, std::string_view name);
+        static CompRef addComponent(GORef go, uint32_t hash);
 
         static void clearAllComponentPools(bool full);
         static void trimAllComponentPools();
-
-        template<typename T>
-        static void addComp(JEngine::Comp* comp, Type* type, ADD_TO_GO_CALL(addComponent)) {
-            if (comp->type != nullptr) { return; }
-            comp->type = type;
-            comp->addComponent = addComponent;
-            comp->trimAllocPool = trimPoolAllocator<T, ComponentInfo<T>::InitPool>;
-            comp->clearAllocPool = clearPoolAllocator<T, ComponentInfo<T>::InitPool>;
-            getComps().push_back(comp);
-        }
     };
 }
 template<typename T>
@@ -90,14 +96,20 @@ inline const JEngine::Comp* ValidatedComp<T>::Value = nullptr;
 
 #define DEFINE_COMPONENT(TYPE) \
 template<> \
-inline JEngine::Comp* JEngine::ComponentFactory::getComp<TYPE>() { \
-  static JEngine::Comp comp; \
-  JEngine::ComponentFactory::addComp<TYPE>(&comp, JEngine::TypeHelpers::getType<TYPE>(), JEngine::ComponentFactory::defaultAddComponent<TYPE>); \
-  return &comp; \
-}\
+inline JEngine::Comp const& JEngine::ComponentFactory::getComp<TYPE>() { \
+    static JEngine::Comp comp{}; \
+    if (comp.type == nullptr) { \
+        comp.type = &JEngine::TypeHelpers::getType<TYPE>(); \
+        comp.addComponent = JEngine::AddComponent(JEngine::detail::defaultAddComponent<TYPE>); \
+        comp.trimAllocPool = JEngine::TrimAllocPool(JEngine::trimPoolAllocator<TYPE, JEngine::ComponentInfo<TYPE>::InitPool>); \
+        comp.clearAllocPool = JEngine::ClearAllocPool(JEngine::trimPoolAllocator<TYPE, JEngine::ComponentInfo<TYPE>::InitPool>); \
+        JEngine::ComponentFactory::getComps().push_back(&comp); \
+    } \
+    return comp; \
+} \
 
 #define VALIDATE_COMPONENT(x) template<> \
-inline const JEngine::Comp* ValidatedComp<x>::Value = JEngine::ComponentFactory::getComp<x>(); \
+inline const JEngine::Comp* ValidatedComp<x>::Value = &JEngine::ComponentFactory::getComp<x>(); \
 
 #define REGISTER_COMPONENT(x) \
 DEFINE_TYPE(x); \

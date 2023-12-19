@@ -5,11 +5,11 @@
 namespace JEngine {
     class SceneManager {
     public:
-        typedef Action<const Scene*> OnScene;
+        typedef Action<uint32_t> OnScene;
         SceneManager();
 
-        Scene* getActiveScene() { return _activeScene; }
-        const Scene* getActiveScene() const { return _activeScene; }
+        Scene& getCurrent() { return _activeScene; }
+        const Scene& getCurrent() const { return _activeScene; }
         const std::vector<Scene*>& getScenes() const { return _scenes; }
 
         OnScene& getOnSceneUnload() { return _onSceneUnload; }
@@ -25,7 +25,7 @@ namespace JEngine {
         OnScene _onSceneUnload;
         OnScene _onSceneLoad;
 
-        Scene* _activeScene;
+        Scene _activeScene;
         std::vector<Scene*> _scenes;
     };
 }

@@ -31,6 +31,9 @@ namespace JEngine {
             T_Color,
 
             T_Matrix4f,
+
+
+            _T_COUNT,
         };
 
         MaterialProperty();
@@ -118,7 +121,7 @@ namespace JEngine {
         bool serializeBinary(std::ostream& stream) const;
 
     private:
-        static inline const uint8_t PROP_SIZES[static_cast<int32_t>(T_Matrix4f) + 1]
+        static inline const uint8_t PROP_SIZES[_T_COUNT]
         {
             sizeof(uint32_t),
             sizeof(float),
@@ -216,7 +219,7 @@ namespace YAML {
                 yamlOut << itemRef.asColor24();
                 break;
             case JEngine::MaterialProperty::T_Color:
-                yamlOut << itemRef.asColor();
+                //yamlOut << itemRef.asColor();
                 break;
             case JEngine::MaterialProperty::T_Matrix4f:
                 yamlOut << itemRef.asMatrix4f();
@@ -274,7 +277,7 @@ namespace YAML {
                     node["value"] = rhs.asColor24();
                     break;
                 case JEngine::MaterialProperty::T_Color:
-                    node["value"] = rhs.asColor();
+                    //node["value"] = rhs.asColor();
                     break;
                 case JEngine::MaterialProperty::T_Matrix4f:
                     node["value"] = rhs.asMatrix4f();
@@ -335,7 +338,7 @@ namespace YAML {
                         rhs.asColor24() = value.as<JEngine::JColor24>();
                         break;
                     case JEngine::MaterialProperty::T_Color:
-                        rhs.asColor() = value.as<JEngine::JColor>();
+                        //rhs.asColor() = value.as<JEngine::JColor>();
                         break;
                     case JEngine::MaterialProperty::T_Matrix4f:
                         rhs.asMatrix4f() = value.as<JEngine::JMatrix4f>();
@@ -408,7 +411,7 @@ namespace JEngine {
                 Serialization::deserialize(itemRef.asColor24(), jsonF["value"], defaultValue.asColor24());
                 break;
             case JEngine::MaterialProperty::T_Color:
-                Serialization::deserialize(itemRef.asColor(), jsonF["value"], defaultValue.asColor());
+                //Serialization::deserialize(itemRef.asColor(), jsonF["value"], defaultValue.asColor());
                 break;
             case JEngine::MaterialProperty::T_Matrix4f:
                 Serialization::deserialize(itemRef.asMatrix4f(), jsonF["value"], defaultValue.asMatrix4f());
@@ -463,7 +466,7 @@ namespace JEngine {
                 Serialization::serialize(itemRef.asColor24(), jsonF["value"]);
                 break;
             case JEngine::MaterialProperty::T_Color:
-                Serialization::serialize(itemRef.asColor(), jsonF["value"]);
+                //Serialization::serialize(itemRef.asColor(), jsonF["value"]);
                 break;
             case JEngine::MaterialProperty::T_Matrix4f:
                 Serialization::serialize(itemRef.asMatrix4f(), jsonF["value"]);

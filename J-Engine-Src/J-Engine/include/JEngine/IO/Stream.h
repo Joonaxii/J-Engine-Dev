@@ -95,13 +95,23 @@ public:
         return ret;
     }
 
-    int32_t readCString(char* str, int32_t maxLen) const {
+    size_t writeCString(std::string_view str) const {
+        if (!canWrite()) { return 0; }
+        size_t written = 0;
+        if (str.length() > 0) {
+            written += write(str.data(), str.length(), false);
+        }
+        written += writeValue<char>(0);
+        return written;
+    }
+
+    size_t readCString(char* str, size_t maxLen) const {
         if (!canRead()) { return 0; }
 
         if (maxLen < 1) { return 0; }
         maxLen--;
         size_t pos = _position;
-        int32_t len = 0;
+        size_t len = 0;
 
         char buffer[256]{ 0 };
         while (!isEOF()) {
@@ -120,8 +130,34 @@ public:
         return len;
     }
 
-    std::string readString(int32_t len) const {
+    size_t writeString(std::string_view str, bool writeLength = true) const {
+        if (!canWrite()) { return 0; }
+        size_t written = 0;
+
+        uint32_t len = uint32_t(str.length());
+        if (writeLength) {
+            written += this->writeValue(len);
+        }
+
+        if (str.length() > 0) {
+            written += write(str.data(), len, false);
+        }
+        return written;
+    }
+
+    std::string readString(size_t len) const {
         if (!canRead()) { return std::string(); }
+        std::string temp(len, 0);
+        this->read(temp.data(), len, false);
+        return temp;
+    }
+
+    std::string readString() const {
+        if (!canRead()) { return std::string(); }
+
+        uint32_t len{ 0 };
+        this->readValue(len, false);
+
         std::string temp(len, 0);
         this->read(temp.data(), len, false);
         return temp;

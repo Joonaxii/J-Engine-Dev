@@ -16,7 +16,7 @@ namespace JEngine {
             return _id++;
         }
 
-        bool remove(const uint64_t id) {
+        bool remove(uint64_t id) {
             bool found = false;
             _events.erase(std::remove_if(_events.begin(), _events.end(), [id, &found](const FuncBind& b)
                 {
@@ -35,6 +35,13 @@ namespace JEngine {
             }
             return *this;
         }
+
+        const Action& operator()(TIn&... input) const {
+            for (size_t i = 0; i < _events.size(); i++) {
+                _events[i](input...);
+            }
+            return *this;
+        }
     private:
         struct FuncBind {
             uint64_t id;
@@ -43,6 +50,11 @@ namespace JEngine {
             FuncBind(const uint64_t id, const Func& func) : id(id), func(func) {  }
 
             FuncBind& operator()(TIn&... input) {
+                func(input...);
+                return *this;
+            }
+
+            const FuncBind& operator()(TIn&... input) const {
                 func(input...);
                 return *this;
             }

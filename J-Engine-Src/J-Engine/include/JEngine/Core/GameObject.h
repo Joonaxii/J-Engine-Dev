@@ -1,179 +1,215 @@
 #pragma once
-#include <vector>
-#include <JEngine/Core/IObject.h>
+#include <JEngine/Collections/IndexStack.h>
 #include <JEngine/Components/Component.h>
-#include <string>
 #include <JEngine/Utility/Flags.h>
-#include <JEngine/Utility/Span.h>
 #include <JEngine/Utility/JTime.h>
-#include <JEngine/Collections/PoolAllocator.h>
+#include <JEngine/Utility/Span.h>
+#include <JEngine/Core/IObject.h>
+#include <JEngine/Core/Ref.h>
+#include <vector>
+#include <string>
 
 namespace JEngine {
     class CTransform;
     class Scene;
     class GameObject : public INamedObject {
     public:
-        static constexpr uint8_t MAX_COMPONENTS = 32;
+        static constexpr uint8_t MAX_COMPONENTS = 8;
 
         ~GameObject();
 
-        Span<Component*> getAllComponents() { return Span<Component*>(_components, _compInfo.count); }
-        ConstSpan<Component*> getAllComponents() const { return ConstSpan<Component*>(_components, _compInfo.count); }
+        template<uint32_t bufSize>
+        uint32_t getAllComponents(CompRef(&buffer)[bufSize]) {
+            uint32_t c = 0;
+            for (uint32_t i = 0; c < bufSize && i < MAX_COMPONENTS; i++) {
+                JEngine::Component** comp = _components.getAt(i);
+                if (comp) {
+                    buffer[c++] = ComponentRef(getUUID(), i);
+                }
+            }
+        }
+
+        void getAllComponents(std::vector<CompRef>& components) const;
 
         JTimeIndex getTimeSpace() const { return _timeSpace; }
         void setTimeSpace(JTimeIndex space) { _timeSpace = space; }
 
-        CTransform* getTransform();
-        const CTransform* getTransform() const;
-
-        static PoolAllocator<GameObject, 1>& getGameObjectAllocator() {
-            return PoolAllocator<GameObject, 1>::getGlobal();
-        }
+        TCompRef<CTransform> getTransform() const;
 
         template<typename T>
-        T* getComponent() const {
-            for (const auto& cur : _components) {
-                T* comp = dynamic_cast<T*>(cur);
+        TCompRef<T> getComponent() const {
+            for (uint32_t i = 0, c = 0; i < MAX_COMPONENTS; i++) {
+                Component** comp = _components.getAt(i);
                 if (comp) {
-                    return comp;
+                    T* compT = dynamic_cast<T*>(*comp);
+                    if (compT) {
+                        return TCompRef<T>(compT);
+                    }
                 }
+            }
+            return TCompRef<T>(nullptr);
+        }
+
+        Component* getComponentByUUID(CompRef uuid) const {
+            if (uuid.isForObject(getUUID())) {
+                Component* const* comp = _components.getAt(uuid.getIndex());
+                return comp ? *comp : nullptr;
             }
             return nullptr;
         }
 
-        template<typename T>
-        T* getComponent(const UUID8& uuid) const {
-            for (const auto& cur : _components) {
-                T* comp = dynamic_cast<T*>(cur);
-                if (comp && comp->getUUID() == uuid) {
-                    return comp;
-                }
-            }
-            return nullptr;
+        Component* getComponentByIndex(uint32_t index) const {
+            Component* const* comp = _components.getAt(index);
+            return comp ? *comp : nullptr;
         }
 
         template<typename T>
-        size_t getComponents(T* buffer, size_t maxCount) const {
-            size_t count = 0;
-            for (const auto& cur : _components) {
-                T* comp = dynamic_cast<T*>(cur);
+        uint32_t getComponents(TCompRef<T>* buffer, uint32_t maxCount) const {
+            uint32_t count = 0;
+            for (uint32_t i = 0, c = 0; i < MAX_COMPONENTS; i++) {
+                Component** comp = _components.getAt(i);
                 if (comp) {
-                    buffer[count++] = comp;
+                    T* compT = dynamic_cast<T*>(*comp);
+                    if (compT) {
+                        buffer[count++] = TCompRef<T>(compT);
+                        if (count >= maxCount) { break; }
+                    }
+                }
+            }
+            return count;
+        }
+
+        template<typename T, uint32_t size>
+        uint32_t getComponents(TCompRef<T>(&buffer)[size]) const {
+            return getComponents<T>(buffer, size);
+        }
+
+        uint32_t getComponents(CompRef* buffer, uint32_t maxCount) const {
+            uint32_t count = 0;
+            for (uint32_t i = 0, c = 0; i < MAX_COMPONENTS; i++) {
+                Component* const* comp = _components.getAt(i);
+                if (comp && *comp) {
+                    buffer[count++] = CompRef((*comp)->getUUID());
                     if (count >= maxCount) { break; }
                 }
             }
             return count;
         }
 
-        template<typename T, size_t size>
-        size_t getComponents(T(&buffer)[size]) const {
-            size_t count = 0;
-            for (const auto& cur : _components) {
-                T* comp = dynamic_cast<T*>(cur);
-                if (comp) {
-                    buffer[count++] = comp;
-                    if (count >= size) { break; }
-                }
-            }
-            return count;
+        template<uint32_t size>
+        uint32_t getComponents(CompRef(&buffer)[size]) const {
+            return getComponents(buffer, size);
         }
 
-        bool addComponent(Component* comp, bool autoStart = true);
-        bool removeComponent(const UUID8& uuid, bool destroy);
+
+        CompRef addComponent(Component* comp, uint16_t flags = 0, bool autoStart = true);
+        bool removeComponent(uint32_t uuid, bool destroy);
         bool removeComponent(Component* comp, bool destroy);
 
         template<typename T>
-        T* addComponent(uint16_t flags = 0, bool autoStart = true) {
-            if (_compInfo.count >= MAX_COMPONENTS) { 
-                JENGINE_CORE_WARN("[J-Engine - GameObject] Warning: Max number of components ({0}) for GameObject '{1}' [0x{2:x}] has been reached!!", MAX_COMPONENTS, getName().c_str(), getUUID().asUInt());
-                return nullptr; 
+        TCompRef<T> addComponent(uint16_t flags = 0, bool autoStart = true) {
+            if (_compInfo.getCount() >= MAX_COMPONENTS) {
+                JENGINE_CORE_WARN("[GameObject] Warning: Max number of components ({0}) for GameObject '{1}' [0x{2:X}] has been reached!!", MAX_COMPONENTS, getName(), getUUID());
+                return TCompRef<T>(nullptr);
             }
 
-            if ((ComponentInfo<T>::Flags & COMP_IS_TRANSFORM) && _compInfo.trIndex != NULL_TRANSFORM) {
-                JENGINE_CORE_ERROR("[J-Engine - GameObject] Error: Cannot add multiple transforms to one gameobject!");
-                return nullptr;
+            if ((ComponentInfo<T>::Flags & COMP_IS_TRANSFORM) && _compInfo.getTrIndex() != NULL_TRANSFORM) {
+                JENGINE_CORE_ERROR("[GameObject] Error: Cannot add multiple transforms to one GameObject!");
+                return TCompRef<T>(nullptr);
             }
 
             T* newComp = Component::getComponentAllocator<T>().allocate();
             if (!newComp) {
-                JENGINE_CORE_ERROR("[J-Engine - GameObject] Error: Failed to allocate component!");
-                return nullptr;
+                JENGINE_CORE_ERROR("[GameObject] Error: Failed to allocate Component!");
+                return TCompRef<T>(nullptr);
             }
 
             Component* comp = dynamic_cast<Component*>(newComp);
             if (!comp) {
-                JENGINE_CORE_ERROR("[J-Engine - GameObject] Error: Given type isn't a Component!");
+                JENGINE_CORE_ERROR("[GameObject] Error: Given type isn't a Component!");
                 Component::getComponentAllocator<T>().deallocate(newComp);
-                return nullptr;
+                return TCompRef<T>(nullptr);
             }
 
-            comp->init(this, flags);
-            if (addComponent(comp, autoStart)) {
-                UUID8 uuid = UUIDFactory::getRandomUUID();
-
-                int32_t ind = indexOfComponent(uuid);
-                while (uuid == UUID8::Empty || ind < MAX_COMPONENTS) {
-                    uuid = UUIDFactory::getRandomUUID();
-                    ind = indexOfComponent(uuid);
-                }
-
-                comp->setUUID(uuid);
-                return newComp;
+            if (addComponent(comp, flags, autoStart)) {
+                return TCompRef<T>(newComp);
             }
 
-            JENGINE_CORE_ERROR("[J-Engine - GameObject] Error: Failed to add Component!");
+            JENGINE_CORE_ERROR("[GameObject] Error: Failed to add Component!");
             Component::getComponentAllocator<T>().deallocate(newComp);
-            return nullptr;
+            return TCompRef<T>(nullptr);
         }
-
-        uint8_t indexOfComponent(const Component* comp) const;
-        uint8_t indexOfComponent(const UUID8& uuid) const;
-
-        static GameObject* createObject(const char* name, const UUID16* components, size_t compCount, uint16_t flags = 0x00, UUID8 uuid = UUID8::Empty);
-        static GameObject* createObject(const std::string& name, const UUID16* components, size_t compCount, uint16_t flags = 0x00, UUID8 uuid = UUID8::Empty);
-
-        static GameObject* createObject(const char* name, uint16_t flags = 0x00, UUID8 uuid = UUID8::Empty);
-        static GameObject* createObject(const std::string& name, uint16_t flags = 0x00, UUID8 uuid = UUID8::Empty);
-
-        static GameObject* destroyObject(GameObject* go);
-
-        static void deserializeCompRefBinary(const Stream& stream, UUID8& go, UUID8& comp);
-        static void serializeCompRefBinary(const Stream& stream, const GameObject* go, const Component* comp);
-
-        static void deserializeCompRefYAML(yamlNode& node, UUID8& go, UUID8& comp);
-        static void serializeCompRefYAML(yamlEmit& emit, const GameObject* go, const Component* comp);
-
-        static void deserializeCompRefJSON(json& jsonF, UUID8& go, UUID8& comp);
-        static void serializeCompRefJSON(json& jsonF, const GameObject* go, const Component* comp);
 
     private:
         friend class Scene;
-        friend class PoolAllocator<GameObject>;
-        friend struct PoolChunk<GameObject>;
-        static constexpr uint8_t NULL_TRANSFORM = 0xFF;
+        friend class ChunkedLUT<GameObject>;
+        static constexpr uint8_t NULL_TRANSFORM = 0xF;
 
         struct CompInfo {
-            uint8_t count{ 0 };
-            uint8_t trIndex{ NULL_TRANSFORM };
+        public:
+            constexpr CompInfo() : _count(0xF0) {}
+            constexpr CompInfo(uint8_t count, uint8_t trIndex) : 
+                _count((count & 0xF) | ((trIndex & 0xF) << 4)) {}
+
+            void setCount(uint8_t count) { _count = (_count & 0xF0) | (count & 0xF); }
+            CompInfo operator++(int) {
+                auto prev = *this;
+                if ((_count & 0xF) == 0xF) { 
+                    return prev; 
+                }
+                _count = ((_count & 0xF) + 1) |(_count & 0xF0);
+                return prev;
+            }
+            CompInfo operator--(int) {
+                auto prev = *this;
+                if ((_count & 0xF) == 0x0) {
+                    return prev; 
+                }
+                _count = ((_count & 0xF) - 1) | (_count & 0xF0);
+                return prev;
+            }
+
+            CompInfo& operator++() {
+                if ((_count & 0xF) == 0xF) {
+                    return *this;
+                }
+                _count = ((_count & 0xF) + 1) | (_count & 0xF0);
+                return *this;
+            }
+            CompInfo& operator--() {
+                if ((_count & 0xF) == 0x0) {
+                    return *this;
+                }
+                _count = ((_count & 0xF) - 1) | (_count & 0xF0);
+                return *this;
+            }
+            void setTrIndex(uint8_t index) { _count = (_count & 0xF) | ((index & 0xF) << 4); }
+
+            uint8_t getCount() const { return _count & 0xF; }
+            uint8_t getTrIndex() const { return (_count >> 4) & 0xF; }
+
+        private:
+            uint8_t _count{ 0 };
         };
         JTimeIndex _timeSpace;
 
-        Scene* _scene;
-
         CompInfo _compInfo{};
-        Component* _components[MAX_COMPONENTS]{ nullptr };
+        FixedLUT<Component*, MAX_COMPONENTS> _components{};
+
         GameObject();
 
-        GameObject(const GameObject& other) = delete;
-        GameObject(GameObject&& other) = delete;
-        GameObject& operator=(const GameObject&) = delete;
-
-        void* operator new(size_t size) noexcept = delete;
-        void operator delete(void* ptr) noexcept = delete;
-        void init(const char* name, uint16_t flags);
+        //GameObject(const GameObject& other) = delete;
+        //GameObject(GameObject&& other) = delete;
+        //GameObject& operator=(const GameObject&) = delete;
+        //
+        //void* operator new(size_t size) noexcept {
+        //    return ::operator new(size);
+        //}
+        //void operator delete(void* ptr) noexcept = delete;
+        void init(std::string_view name, uint16_t flags);
 
         void start();
         void update(const JTime& time);
     };
+    static constexpr size_t siz = sizeof(GameObject);
 }
-REGISTER_UUID_FACTORY(JEngine::GameObject);

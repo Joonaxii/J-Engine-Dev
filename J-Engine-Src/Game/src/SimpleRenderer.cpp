@@ -1,14 +1,14 @@
 #include <SimpleRenderer.h>
 using namespace JEngine;
 
-Material* getNewMaterial(const Material* other) {
-    if (other) {
-        return new Material(*other);
-    }
-    return new Material();
-}
+//Material* getNewMaterial(const Material* other) {
+//    if (other) {
+//        return new Material(*other);
+//    }
+//    return new Material();
+//}
 
-SimpleRenderer::SimpleRenderer() : _flip(0), _sprite(nullptr), _matrix(JMatrix4f::Identity), _layer(1) {}
+SimpleRenderer::SimpleRenderer() : _flip(0), _sprite(nullptr), _matrix(1.0f), _layer(1) {}
 
 SimpleRenderer::SimpleRenderer(JEngine::Sprite* sprite) : SimpleRenderer() {
     setTRS({ 0, 0 }, 0, { 1, 1 });
@@ -27,13 +27,13 @@ bool SimpleRenderer::getFlipY() const { return bool(_flip & FLIP_Y); }
 
 void SimpleRenderer::setSprite(JEngine::Sprite* sprite) {
     _sprite = sprite;
-    Material* mat = _material.getPtr();
-    Texture* texture = mat ? mat->getMainTexturePtr() : nullptr;
-
-    if (!mat || texture != sprite->getTexturePtr()) {
-        Material* newMat = getNewMaterial(mat);
-        newMat->setMainTexture(sprite->getTexture());
-    }
+    //Material* mat = _material.getPtr();
+    //Texture* texture = mat ? mat->getMainTexturePtr() : nullptr;
+    //
+    //if (!mat || texture != sprite->getTexturePtr()) {
+    //    Material* newMat = getNewMaterial(mat);
+    //    newMat->setMainTexture(sprite->getTexture());
+    //}
 }
 
 bool SimpleRenderer::canRender() const {
@@ -56,7 +56,7 @@ int32_t SimpleRenderer::getIndexCount() const {
     return _sprite ? _sprite->getIndexCount() : 0;
 }
 
-const JVertex2f* SimpleRenderer::getVertices() const {
+const JVertex* SimpleRenderer::getVertices() const {
     return _sprite ? _sprite->getVertices(_flip) : nullptr;
 }
 

@@ -1,14 +1,25 @@
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project ("J-Editor")
+project ("JE-Editor")
 set(JENGINE_EDITOR_SOURCES )
 
 add_compile_definitions(JEDITOR_RES_PATH="${CMAKE_SOURCE_DIR}/J-Editor/res")
+add_compile_definitions(JENGINE_RES_PATH="${CMAKE_SOURCE_DIR}/J-Engine/res")
 add_compile_definitions(GAME_RES_PATH="${CMAKE_SOURCE_DIR}/Game/res")
 
+add_compile_definitions(JEDITOR_DB_PATH="${CMAKE_SOURCE_DIR}/AssetDB/J-Editor/res")
+add_compile_definitions(JENGINE_DB_PATH="${CMAKE_SOURCE_DIR}/AssetDB/J-Engine/res")
+add_compile_definitions(GAME_DB_PATH="${CMAKE_SOURCE_DIR}/AssetDB/Game/res")
+
+add_compile_definitions(JEDITOR_USER_DATA_PATH="${CMAKE_SOURCE_DIR}/Userdata")
+
+add_compile_definitions(JENGINE_EDITOR)
+
 set(JENGINE_MAIN_SRC
-	"src/JEditor/JEditorApp.cpp"
+	"src/main.cpp"
+	"include/JEditor/JEditor.h"
+	"src/JEditor/JEditor.cpp"
 )
 source_group("J-Editor" FILES ${JENGINE_MAIN_SRC})
 list(APPEND JENGINE_EDITOR_SOURCES ${JENGINE_MAIN_SRC})
@@ -49,10 +60,10 @@ set(JENGINE_MAIN_SRC
 source_group("J-Editor/GUI/Panels" FILES ${JENGINE_MAIN_SRC})
 list(APPEND JENGINE_EDITOR_SOURCES ${JENGINE_MAIN_SRC})
 
-add_executable(J-Editor ${JENGINE_EDITOR_SOURCES})
-target_link_libraries(J-Editor J-Engine ImGUI Game)
+add_executable(JE-Editor ${JENGINE_EDITOR_SOURCES})
+target_link_libraries(JE-Editor J-Engine-Editor ImGUI Game-Editor)
 
-set_target_properties(J-Editor PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Builds/Editor/ )
+set_target_properties(JE-Editor PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Builds/Editor/ )
 
 include_directories("include")
 include_directories("${CMAKE_SOURCE_DIR}/J-Engine/include")
@@ -62,7 +73,7 @@ include_directories("${CMAKE_SOURCE_DIR}/J-Engine/ext/spdlog/include")
 include_directories("${CMAKE_SOURCE_DIR}/J-Engine/ext/YAML/include")
 
 
-set_target_properties(J-Editor  ${PROJECT_NAME} PROPERTIES OUTPUT_NAME "J-Editor")
-set_target_properties(J-Editor PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:J-Editor>"
-                                              VS_DEBUGGER_COMMAND           "$<TARGET_FILE:J-Editor>"
+set_target_properties(JE-Editor ${PROJECT_NAME} PROPERTIES OUTPUT_NAME "J-Editor")
+set_target_properties(JE-Editor PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:JE-Editor>"
+                                              VS_DEBUGGER_COMMAND           "$<TARGET_FILE:JE-Editor>"
                                               VS_DEBUGGER_ENVIRONMENT       "PATH=%PATH%;${CMAKE_PREFIX_PATH}/bin")

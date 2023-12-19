@@ -3,6 +3,7 @@
 #include <JEngine/Core/Log.h>
 #include <JEngine/Core/Assert.h>
 #include <JEngine/Utility/DataUtilities.h>
+#include <spdlog/fmt/bundled/core.h>
 
 namespace JEngine {
     template<typename T> 
@@ -13,6 +14,12 @@ namespace JEngine {
         Span() : _ptr(nullptr), _length() {}
         Span(void* ptr, size_t length) : _ptr(reinterpret_cast<T*>(ptr)), _length(length) {}
         Span(T* ptr, size_t length) : _ptr(ptr), _length(length) {}
+        Span(Span<T>& other) : _ptr(other._ptr), _length(other._length) {}
+
+        Span(T* val);
+
+        template<typename U>
+        Span(U& val);
 
         size_t length() const { return _length; }
 
@@ -40,18 +47,42 @@ namespace JEngine {
             memcpy(other, _ptr, _length * sizeof(T));
         }
 
-        int32_t indexOf(const T& find) const {
-            for (int32_t i = 0; i < _length; i++) {
+        size_t indexOf(const T& find) const {
+            for (size_t i = 0; i < _length; i++) {
                 if (_ptr[i] == find) { return i; }
             }
-            return -1;
+            return SIZE_MAX;
         }
 
-        int32_t indexOfLast(const T& find) const {
-            for (int32_t i = int32_t(_length) - 1; i >= 0; i--) {
+        size_t indexOfLast(const T& find) const {
+            if (_length < 1) { return SIZE_MAX; }
+
+            for (size_t i = _length - 1; i >= 0; i--) {
                 if (_ptr[i] == find) { return i; }
             }
-            return -1;
+            return SIZE_MAX;
+        }
+
+        size_t indexOfAny(T const* find, size_t count) const {
+            for (size_t i = 0; i < _length; i++) {
+                const auto& val = _ptr[i];
+                for (size_t k = 0; k < count; k++) {
+                    if (val == find[k]) { return i; }
+                }
+            }
+            return SIZE_MAX;
+        }
+
+        size_t indexOfAnyLast(T const* find, size_t count) const {
+            if (_length < 1) { return SIZE_MAX; }
+
+            for (size_t i = _length - 1; i >= 0; i--) {
+                const auto& val = _ptr[i];
+                for (size_t k = 0; k < count; k++) {
+                    if (val == find[k]) { return i; }
+                }
+            }
+            return SIZE_MAX;
         }
 
         size_t split(Span<T>* buffer, size_t maxCount, const T& value) const {
@@ -295,8 +326,6 @@ namespace JEngine {
             return Span<U>(_ptr, (_length * sizeof(T) / sizeof(U)));
         }
 
-        operator ConstSpan<T>() const;
-
         template<typename U>
         ConstSpan<U> castToConst() const;
 
@@ -311,6 +340,12 @@ namespace JEngine {
         ConstSpan() : _ptr(nullptr), _length() {}
         ConstSpan(const void* ptr, size_t length) : _ptr(reinterpret_cast<const T*>(ptr)), _length(length) {}
         ConstSpan(const T* ptr, size_t length) : _ptr(ptr), _length(length) {}
+ 
+        ConstSpan(Span<T> input) : _ptr(input.get()), _length(input.length()) {}
+        ConstSpan(const T* input);
+        
+        template<typename U>
+        ConstSpan(const U& input);
 
         size_t length() const { return _length; }
 
@@ -343,18 +378,59 @@ namespace JEngine {
             memcpy(other, _ptr, _length * sizeof(T));
         }
 
-        int32_t indexOf(const T& find) const {
+        size_t indexOf(const T& find) const {
             for (size_t i = 0; i < _length; i++) {
                 if (_ptr[i] == find) { return int32_t(i); }
             }
-            return -1;
+            return SIZE_MAX;
         }
 
-        int32_t indexOfLast(const T& find) const {
-            for (int32_t i = int32_t(_length) - 1; i >= 0; i--) {
+        size_t indexOfLast(const T& find) const {
+            if (_length < 1) { return SIZE_MAX; }
+
+            for (size_t i = _length - 1; i >= 0; i--) {
                 if (_ptr[i] == find) { return int32_t(i); }
             }
-            return -1;
+            return SIZE_MAX;
+        }
+
+        size_t indexNotOf(const T& find) const {
+            for (size_t i = 0; i < _length; i++) {
+                if (_ptr[i] != find) { return int32_t(i); }
+            }
+            return SIZE_MAX;
+        }
+
+        size_t indexNotOfLast(const T& find) const {
+            if (_length < 1) { return SIZE_MAX; }
+
+            for (size_t i = _length - 1; i >= 0; i--) {
+                if (_ptr[i] != find) { return int32_t(i); }
+            }
+            return SIZE_MAX;
+        }
+
+
+        size_t indexOfAny(T const* find, size_t count) const {
+            for (size_t i = 0; i < _length; i++) {
+                const auto& val = _ptr[i];
+                for (size_t k = 0; k < count; k++) {
+                    if (val == find[k]) { return i; }
+                }
+            }
+            return SIZE_MAX;
+        }
+
+        size_t indexOfAnyLast(T const* find, size_t count) const {
+            if (_length < 1) { return SIZE_MAX; }
+
+            for (size_t i = _length - 1; i >= 0; i--) {
+                const auto& val = _ptr[i];
+                for (size_t k = 0; k < count; k++) {
+                    if (val == find[k]) { return i; }
+                }
+            }
+            return SIZE_MAX;
         }
 
         bool equals(const Span<T>& other);
@@ -489,124 +565,6 @@ namespace JEngine {
         const T* _ptr;
         size_t _length;
     };
-
-    inline int32_t indexOf(JEngine::Span<char> span, const char* string, size_t len) {
-        if (len < 1) { return -1; }
-
-        int32_t inRow = 0;
-        int32_t index = -1;
-        for (size_t i = 0; i < span.length(); i++) {
-            if (span[i] == string[inRow]) {
-                if (inRow == 0) {
-                    index = int32_t(i);
-                }
-                inRow++;
-                if (inRow >= len) { return index; }
-            }
-            else if (inRow > 0) {
-                inRow = 0;
-            }
-        }
-        return -1;
-    }
-
-    inline int32_t indexOf(JEngine::ConstSpan<char> span, const char* string, size_t len) {
-        if (len < 1) { return -1; }
-
-        int32_t inRow = 0;
-        int32_t index = -1;
-        for (size_t i = 0; i < span.length(); i++) {
-            if (span[i] == string[inRow]) {
-                if (inRow == 0) {
-                    index = int32_t(i);
-                }
-                inRow++;
-                if (inRow >= len) { return index; }
-            }
-            else if (inRow > 0) {
-                inRow = 0;
-            }
-        }
-        return -1;
-    }
-
-    inline int32_t indexOf(JEngine::Span<char> span, const char* string) {
-        return indexOf(span, string, strlen(string));
-    }
-    inline int32_t indexOf(JEngine::ConstSpan<char> span, const char* string) {
-        return indexOf(span, string, strlen(string));
-    }
-    inline int32_t indexOf(JEngine::Span<char> span, JEngine::Span<char> string) {
-        return indexOf(span, string.get(), string.length());
-    }
-    inline int32_t indexOf(JEngine::ConstSpan<char> span, JEngine::Span<char> string) {
-        return indexOf(span, string.get(), string.length());
-    }
-    inline int32_t indexOf(JEngine::Span<char> span, JEngine::ConstSpan<char> string) {
-        return indexOf(span, string.get(), string.length());
-    }
-    inline int32_t indexOf(JEngine::ConstSpan<char> span, JEngine::ConstSpan<char> string) {
-        return indexOf(span, string.get(), string.length());
-    }
-
-
-    inline int32_t indexOfLast(JEngine::Span<char> span, const char* string, size_t len) {
-        if (len < 1) { return -1; }
-        int32_t inRow = 0;
-        int32_t index = -1;
-        int32_t sLen = int32_t(span.length() - 1);
-        for (int32_t i = sLen; i >= 0; i--) {
-            if (span[i] == string[inRow]) {
-                if (inRow == 0) {
-                    index = i;
-                }
-                inRow++;
-                if (inRow >= len) { return index; }
-            }
-            else if (inRow > 0) {
-                inRow = 0;
-            }
-        }
-        return -1;
-    }
-    inline int32_t indexOfLast(JEngine::ConstSpan<char> span, const char* string, size_t len) {
-        if (len < 1) { return -1; }
-        int32_t inRow = 0;
-        int32_t index = -1;
-        int32_t sLen = int32_t(span.length() - 1);
-        for (int32_t i = sLen; i >= 0; i--) {
-            if (span[i] == string[inRow]) {
-                if (inRow == 0) {
-                    index = i;
-                }
-                inRow++;
-                if (inRow >= len) { return index; }
-            }
-            else if (inRow > 0) {
-                inRow = 0;
-            }
-        }
-        return -1;
-    }
-
-    inline int32_t indexOfLast(JEngine::Span<char> span, const char* string) {
-        return indexOfLast(span, string, strlen(string));
-    }
-    inline int32_t indexOfLast(JEngine::ConstSpan<char> span, const char* string) {
-        return indexOfLast(span, string, strlen(string));
-    }
-    inline int32_t indexOfLast(JEngine::Span<char> span, JEngine::Span<char> string) {
-        return indexOfLast(span, string.get(), string.length());
-    }
-    inline int32_t indexOfLast(JEngine::ConstSpan<char> span, JEngine::Span<char> string) {
-        return indexOfLast(span, string.get(), string.length());
-    }
-    inline int32_t indexOfLast(JEngine::Span<char> span, JEngine::ConstSpan<char> string) {
-        return indexOfLast(span, string.get(), string.length());
-    }
-    inline int32_t indexOfLast(JEngine::ConstSpan<char> span, JEngine::ConstSpan<char> string) {
-        return indexOfLast(span, string.get(), string.length());
-    }
 }
 
 template<typename T>
@@ -635,10 +593,24 @@ inline bool JEngine::ConstSpan<T>::equals(const JEngine::Span<T>& other) {
     return true;
 }
 
-template<typename T>
-inline JEngine::Span<T>::operator JEngine::ConstSpan<T>() const {
-    return JEngine::ConstSpan<T>(_ptr, _length);
-}
+template<>
+inline JEngine::ConstSpan<char>::ConstSpan(const char* input) : _ptr(input), _length(strlen(input)) { }
+
+template<>
+template<>
+inline JEngine::ConstSpan<char>::ConstSpan(const std::string_view& input) : _ptr(input.data()), _length(input.length()) { }
+
+template<>
+template<>
+inline JEngine::ConstSpan<char>::ConstSpan(const std::string& input) : _ptr(input.data()), _length(input.length()) { }
+
+template<>
+template<>
+inline JEngine::Span<char>::Span(std::string& input) : _ptr(input.data()), _length(input.length()) { }
+
+template<>
+inline JEngine::Span<char>::Span(char* input) : _ptr(input), _length(strlen(input)) { }
+
 
 template<>
 inline JEngine::Span<char> JEngine::Span<char>::trim() const {
@@ -780,3 +752,18 @@ inline JEngine::ConstSpan<char> JEngine::ConstSpan<char>::trim(const char& value
     if (startI >= endI) { return ConstSpan<char>(_ptr + startI, 0); }
     return ConstSpan<char>(_ptr + startI, endI - startI);
 }
+
+
+template <>
+struct fmt::formatter<JEngine::ConstSpan<char>> : formatter<string_view> {
+    auto format(JEngine::ConstSpan<char> spn, format_context& ctx) const {
+        return formatter<string_view>::format(string_view(spn.get(), spn.length()), ctx);
+    }
+};
+
+template <>
+struct fmt::formatter<JEngine::Span<char>> : formatter<string_view> {
+    auto format(JEngine::Span<char> spn, format_context& ctx) const {
+        return formatter<string_view>::format(string_view(spn.get(), spn.length()), ctx);
+    }
+};

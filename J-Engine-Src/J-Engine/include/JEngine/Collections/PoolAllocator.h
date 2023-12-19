@@ -44,10 +44,10 @@ namespace JEngine {
     template<typename T, uint32_t init = 0>
     class PoolAllocator {
     public:
-        PoolAllocator() : _chunk(nullptr), _chunkCount(0) {
+        PoolAllocator() : _chunk(nullptr), _chunkCount(init) {
+#if init > 0
             PoolChunk<T>* prev = _chunk;
-            _chunkCount = init;
-            for (size_t i = 0; i < init; i++) {
+            for (uint32_t i = 0; i < _chunkCount; i++) {
                 PoolChunk<T>* chunk = new PoolChunk<T>();
                 if (_chunk) {
                     prev->next = chunk;
@@ -57,6 +57,7 @@ namespace JEngine {
                 }
                 prev = chunk;
             }
+#endif
         }
         ~PoolAllocator() {
             clear(true);

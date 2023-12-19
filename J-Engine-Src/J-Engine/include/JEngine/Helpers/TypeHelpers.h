@@ -1,41 +1,76 @@
 #pragma once
-#include <JEngine/Cryptography/UUID.h>
-#include <typeindex>
+#include <JEngine/Utility/DataUtilities.h>
 #include <vector>
-#include <string>
+#include <string_view>
 #define NAMEOF(name) #name
 
 namespace JEngine {
-    static constexpr size_t TYPE_UUID_BLOCK_SIZE = 8;
-
     struct Type {
-        std::string name;
-        size_t size;
-        UUID16 hash;
+        std::string_view name{};
+        uint32_t hash{};
+        size_t size{};
 
-        Type() : name(""), hash(), size(-1) {}
+        constexpr Type() : name(""), hash(), size(SIZE_MAX) {}
+        constexpr Type(std::string_view name, uint32_t hash, size_t size) : name(name), hash(hash), size(size) {}
     };
+
+    namespace Types {
+
+        template <typename T>
+        constexpr std::string_view getTypeName() {
+#if defined(__clang__)
+            constexpr auto prefix = std::string_view{ "[T = " };
+            constexpr auto suffix = "]";
+            constexpr auto function = std::string_view{ __PRETTY_FUNCTION__ };
+#elif defined(__GNUC__)
+            constexpr auto prefix = std::string_view{ "with T = " };
+            constexpr auto suffix = "; ";
+            constexpr auto function = std::string_view{ __PRETTY_FUNCTION__ };
+#elif defined(_MSC_VER)
+            constexpr auto prefix = std::string_view{ "getTypeName<" };
+            constexpr auto suffix = ">(";
+            constexpr auto function = std::string_view{ __FUNCSIG__ };
+#else
+# error Unsupported compiler
+#endif
+
+            const auto start = function.find(prefix) + prefix.size();
+            const auto end = function.find(suffix);
+            const auto size = end - start;
+
+            return function.substr(start, size);
+        }
+
+        template<typename T>
+        constexpr std::string_view getTypeName(const T& obj) {
+            return getTypeName<T>();
+        }
+
+        constexpr uint32_t calculateNameHash(std::string_view name) {
+            uint32_t hash = Data::calcualteCRC(&name[0], name.length());
+            return hash == 0x00 ? 1 : hash;
+        }
+
+        template<typename T>
+        constexpr uint32_t getTypeHash() {
+            return Data::calculateCRC<std::string_view>(getTypeName<T>());
+        }
+
+        template<typename T>
+        constexpr uint32_t getTypeHash(const T& obj) {
+            return calculateNameHash(getTypeName<T>());
+        }
+    }
 
     class TypeHelpers {
     public:
-        template<typename T> static Type* getType() {
-            static_assert("Not implemented for given type!");
-        }
-        static std::vector<Type*>& getTypes();
+        static std::vector<Type const*>& getTypes();
 
-        const static std::pair<const UUID16, const std::string> getTypePair(const std::type_index& indx) {
-            std::string tname = indx.name();
-            size_t ind = tname.find(' ', 0);
-            if (ind != std::string::npos) {
-                tname.erase(0, ind + 1);
-            }
+        template<typename T>
+        static Type const& getType();
 
-            UUID16 hash;
-            hash.computeHash(tname.c_str(), tname.length(), TYPE_UUID_BLOCK_SIZE);
-            return std::pair<const UUID16, const std::string>(hash, tname);
-        }
-
-        const static Type* getTypeByHash(const UUID16& hash) {
+        static Type const* getTypeByHash(uint32_t hash) {
+            if (hash == 0x00) { return nullptr; }
             auto& types = getTypes();
             for (size_t i = 0; i < types.size(); i++) {
                 if (types[i]->hash == hash) { return types[i]; }
@@ -43,44 +78,28 @@ namespace JEngine {
             return nullptr;
         }
 
-        const static std::string getTypeName(const UUID16& id) {
+        static std::string_view getTypeName(uint32_t id) {
             auto type = getTypeByHash(id);
-            return type ? type->name : "";
+            return type ? type->name : std::string_view();
         }
 
         template<typename T>
-        const static std::string getTypeName() {
-            Type* type = JEngine::TypeHelpers::getType<T>();
-            return type ? type->name : "";
+        static uint32_t getTypeHash() {
+            Type const* type = JEngine::TypeHelpers::getType<T>();
+            return type ? type->hash : 0x00;
         }
-
-        template<typename T>
-        const static std::string getTypeName(const T& obj) {
-            const std::type_index& typeInf = typeid(obj);
-            return getTypePair(typeInf).second;
-        }
-
-        template<typename T>
-        const static UUID16 getTypeHash() {
-            Type* type = JEngine::TypeHelpers::getType<T>();
-            return type ? type->hash : UUID16();
-        }
-
-        template<typename T>
-        const static UUID16 getTypeHash(const T& obj) {
-            const std::type_index& typeInf = typeid(obj);
-            auto pair = getTypePair(typeInf);
-            return pair.first;
-        }
-
-        static void addType(Type& type, const size_t size, const std::pair<const UUID16, const std::string>& data);
     };
 }
 
-#define DEFINE_TYPE(TYPE) \
-template<> \
-inline JEngine::Type* JEngine::TypeHelpers::getType<TYPE>() { \
-    static JEngine::Type type; \
-    JEngine::TypeHelpers::addType(type, sizeof(TYPE), JEngine::TypeHelpers::getTypePair(typeid(TYPE)));\
-    return &type;\
-}\
+#define DEFINE_TYPE(TYPE)\
+template<> inline JEngine::Type const& JEngine::TypeHelpers::getType<TYPE>() { \
+        static bool init{ false }; \
+        static constexpr JEngine::Type type( \
+            JEngine::Types::getTypeName<TYPE>(), \
+            JEngine::Types::getTypeHash<TYPE>(), sizeof(TYPE)); \
+    if (!init) { \
+        JEngine::TypeHelpers::getTypes().push_back(&type); \
+        init = true; \
+    } \
+    return type; \
+} \

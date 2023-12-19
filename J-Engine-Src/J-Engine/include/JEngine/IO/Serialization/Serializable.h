@@ -129,8 +129,8 @@ namespace JEngine {
         }
 
         static bool serializeJson(const T& itemRef, json& jsonF) {
-            static_assert("JSON Serialization not implemented for this type!");
-            return false;
+            jsonF = itemRef;
+            return true;
         }
 
         static bool deserializeBinary(T& itemRef, const Stream& stream) {
@@ -370,11 +370,6 @@ namespace JEngine {
         }
 
         template<typename T>
-        bool deserialize(T& itemRef, json& jsonF, const T& defaultVal = T()) {
-            return Serializable<T>::deserializeJson(itemRef, jsonF, defaultVal);
-        }
-
-        template<typename T>
         bool deserialize(T& itemRef, const json& jsonF, const T& defaultVal = T()) {
             return Serializable<T>::deserializeJson(itemRef, jsonF, defaultVal);
         }
@@ -386,6 +381,15 @@ namespace JEngine {
                 return false;
             }
             return true;
+        }
+
+        template<typename T>
+        bool deserialize(const yamlNode& yamlIn, const T& defaultVal = T()) {
+            T val = defaultVal;
+            if (!YAML::convert<T>::decode(yamlIn, val)) {
+                return false;
+            }
+            return val;
         }
 
         template<typename T>

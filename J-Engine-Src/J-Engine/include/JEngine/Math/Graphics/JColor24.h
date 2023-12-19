@@ -3,10 +3,12 @@
 #include <cstdint>
 
 namespace JEngine {
+
     struct JColor;
     struct JColor32;
     struct JColor555;
     struct JColor565;
+
     struct JColor24 {
         static const JColor24 White;
         static const JColor24 Black;

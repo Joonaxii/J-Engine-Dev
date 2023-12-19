@@ -28,8 +28,9 @@ namespace JEngine::IO {
     std::string openFile(const char* filter, const size_t maxPathLen = 260, bool allowCreate = false, bool noValidate = false, size_t filterTypes = 1);
     std::string openFolder(const char* title, const size_t maxPathLen = 260);
 
-    std::string combine(const char* lhs, size_t lenLhs, const char* rhs, size_t lenRhs);
-    std::string combine(const std::string& lhs, const std::string& rhs);
+    std::string combine(ConstSpan<char> lhs, ConstSpan<char> rhs);
+
+    ConstSpan<char> getDirectory(ConstSpan<char> path);
 
     std::string getExeDir();
 
@@ -40,23 +41,42 @@ namespace JEngine::IO {
     bool getAllFilesByExt(const char* path, std::vector<fs::path>& paths, const char* ext, bool recursive = false);
     bool getAllFilesByExt(const char* path, std::vector<fs::path>& paths, const char** ext, size_t extCount = 1, bool recursive = false);
 
-    void enumerateFiles(const std::string& path, const std::string& extension, std::function<const void(const std::string&)> callback, const bool fixPath = true, const bool reverse = false);
-    void enumerateFiles(const std::string& path, const std::string& extension, std::vector<std::string>& paths, const bool fixPath = true, const bool reverse = false);
+    void enumerateFiles(ConstSpan<char> path, ConstSpan<char> extension, std::function<const void(ConstSpan<char>)> callback, bool fixPath = true, bool reverse = false);
+    void enumerateFiles(ConstSpan<char> path, ConstSpan<char> extension, std::vector<std::string>& paths, bool fixPath = true, bool reverse = false);
 
-    bool exists(const char* path, size_t length);
-    bool exists(const char* path);
-    bool exists(const std::string& path);
-   
-    bool isFile(const std::string& path);
-    bool isDir(const std::string& path);
+    bool exists_FS(const fs::path& path);
+    bool isDir_FS(const fs::path& path);
+    bool isFile_FS(const fs::path& path);
+    bool createDir_FS(const fs::path& path);
 
-    void delDirRecursively(const std::string& path);
-    void copyRecursively(const std::filesystem::path& src, const std::filesystem::path& target) noexcept;
+    bool delFile_FS(const fs::path& path);
+    bool delDirRecursively_FS(const fs::path& path);
+    void copyRecursively_FS(const std::filesystem::path& src, const std::filesystem::path& target) noexcept;
 
-    void fixPath(std::string& path);
-    void fixPath(char* path);
-    void fixPath(char* path, size_t length);
+    inline bool exists(ConstSpan<char> path) { 
+        return IO::exists_FS(fs::path(path.get(), path.get() + path.length())); 
+    }
+    inline bool isDir(ConstSpan<char> path) {
+        return IO::isDir_FS(fs::path(path.get(), path.get() + path.length()));
+    }
+    inline bool isFile(ConstSpan<char> path) {
+        return IO::isFile_FS(fs::path(path.get(), path.get() + path.length()));
+    }
+    inline bool createDir(ConstSpan<char> path) {
+        return IO::createDir_FS(fs::path(path.get(), path.get() + path.length()));
+    }
+    inline bool delDirRecursively(ConstSpan<char> path) {
+        return IO::delDirRecursively_FS(fs::path(path.get(), path.get() + path.length()));
+    }
+    inline bool delFile(ConstSpan<char> path) {
+        return IO::delFile_FS(fs::path(path.get(), path.get() + path.length()));
+    }
 
+    inline void copyRecursively(ConstSpan<char> src, ConstSpan<char> target) noexcept {
+        return IO::copyRecursively_FS(fs::path(src.get(), src.get() + src.length()), fs::path(target.get(), target.get() + target.length()));
+    }
+
+    void fixPath(Span<char> path);
     bool pathsAreEqual(ConstSpan<char> lhs, ConstSpan<char> rhs);
 
 }
