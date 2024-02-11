@@ -27,7 +27,7 @@ namespace JEngine {
             if (fs.isOpen()) {
                 return decode(fs, audio);
             }
-            JENGINE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to open file '{0}' for reading!", path);
+            JE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to open file '{0}' for reading!", path);
             return false;
         }
 
@@ -41,19 +41,19 @@ namespace JEngine {
                 strncmp(header.riff, "RIFF", 4) != 0 ||
                 strncmp(header.wave, "WAVE", 4) != 0 ||
                 header.size <= 36) {
-                JENGINE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to decode wav, not a WAVE file!");
+                JE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to decode wav, not a WAVE file!");
                 return false;
             }
             FormatChunk fmtCh{};
             stream.readValue(fmtCh, false);
 
             if (strncmp(fmtCh.fmt, "fmt ", 4) != 0) {
-                JENGINE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to decode wav, SubChunk 1 is not where it should be!");
+                JE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to decode wav, SubChunk 1 is not where it should be!");
                 return false;
             }
 
             if (fmtCh.type != 1) {
-                JENGINE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to decode wav, PCM is only supported but found type '{0}'!", fmtCh.type);
+                JE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to decode wav, PCM is only supported but found type '{0}'!", fmtCh.type);
                 return false;
             }
 
@@ -63,7 +63,7 @@ namespace JEngine {
             stream.read(temp, 4, false);
 
             if (strncmp(temp, "data", 4) != 0) {
-                JENGINE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to decode wav, SubChunk 2 is not where it should be!");
+                JE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to decode wav, SubChunk 2 is not where it should be!");
                 return false;
             }
 
@@ -80,7 +80,7 @@ namespace JEngine {
             audio.sampleCount = fmtCh.byteRate < 1 ? 0 : (size / fmtCh.byteRate);
 
             if (!audio.doAllocate(size)) {
-                JENGINE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to allocate audio data buffer!");
+                JE_ERROR("[Audio-IO] (WAV) Decode Error: Failed to allocate audio data buffer!");
                 return false;
             }
             stream.read(audio.data, size, false);

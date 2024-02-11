@@ -7,7 +7,9 @@ namespace JEngine {
     namespace Gui {
         bool drawScalar(const char* label, bool isSlider, bool isAngle, int32_t dataType, void* value, float speed, const void* min, const void* max, const char* format, int32_t flags) { 
             if (isAngle && dataType == ImGuiDataType_Float) {
-                return ImGui::SliderAngle(label, reinterpret_cast<float*>(value), min ? *reinterpret_cast<const float*>(min), max ? *reinterpret_cast<const float*>(max), format, flags);
+                return ImGui::SliderAngle(label, reinterpret_cast<float*>(value), 
+                    min ? *reinterpret_cast<const float*>(min) : -360.0f
+                    , max ? *reinterpret_cast<const float*>(max) : 360.0f, format, flags);
             }
 
             return isSlider ? ImGui::SliderScalar(label, dataType, value, min, max, format, flags) :

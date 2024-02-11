@@ -9,7 +9,7 @@ namespace JEngine {
     }
 
     void Component::init(CompRef compRef, uint16_t flags) {
-        initObj(compRef.uuid, flags & FLAGS_INSTANCE);
+        initObj(compRef.uuid, flags & OBJ_FLAGS_INSTANCE);
         onInit();
     }
 

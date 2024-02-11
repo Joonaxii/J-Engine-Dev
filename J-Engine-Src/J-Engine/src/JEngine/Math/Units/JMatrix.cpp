@@ -1,6 +1,5 @@
 #include <JEngine/Math/Units/JMatrix.h>
 #include <JEngine/Math/Math.h>
-#include <xmmintrin.h>
 
 namespace JEngine {
     JMatrix4f::JMatrix4f(const JVector2f& position, float rotation, const JVector2f& scale) : JMatrix4f(1.0f) {
@@ -54,22 +53,22 @@ namespace JEngine {
     }
 
     float& JMatrix4f::operator[](int32_t i) {
-        JENGINE_CORE_ASSERT(i > -1 && i < 16 && "Index out of range of matrix!");
+        JE_CORE_ASSERT(i > -1 && i < 16 && "Index out of range of matrix!");
         return _mat[i];
     }
     const float& JMatrix4f::operator[](int32_t i) const {
-        JENGINE_CORE_ASSERT(i > -1 && i < 16 && "Index out of range of matrix!");
+        JE_CORE_ASSERT(i > -1 && i < 16 && "Index out of range of matrix!");
         return _mat[i];
     }
 
     float& JMatrix4f::at(int32_t column, int32_t row) {
-        JENGINE_CORE_ASSERT(column > -1 && column < 4 && "Column outside the range of matrix!");
-        JENGINE_CORE_ASSERT(row > -1 && row < 4 && "Row outside the range of matrix!");
+        JE_CORE_ASSERT(column > -1 && column < 4 && "Column outside the range of matrix!");
+        JE_CORE_ASSERT(row > -1 && row < 4 && "Row outside the range of matrix!");
         return _mat[row * 4 + column];
     }
     const float& JMatrix4f::at(int32_t column, int32_t row) const {
-        JENGINE_CORE_ASSERT(column > -1 && column < 4 && "Column outside the range of matrix!");
-        JENGINE_CORE_ASSERT(row > -1 && row < 4 && "Row outside the range of matrix!");
+        JE_CORE_ASSERT(column > -1 && column < 4 && "Column outside the range of matrix!");
+        JE_CORE_ASSERT(row > -1 && row < 4 && "Row outside the range of matrix!");
         return _mat[row * 4 + column];
     }
 
@@ -85,38 +84,33 @@ namespace JEngine {
     }
 
     JMatrix4f& JMatrix4f::combine(const JMatrix4f& matrix) {
-        //__m128 row1 = _mm_load_ps(matrix._mat + 0);
-        //__m128 row2 = _mm_load_ps(matrix._mat + 4);
-        //__m128 row3 = _mm_load_ps(matrix._mat + 8);
-        //__m128 row4 = _mm_load_ps(matrix._mat + 12);
-        //for (int i = 0, j = 0; i < 4; i++, j += 4) {
-        //    __m128 brod1 = _mm_set1_ps(_mat[j + 0]);
-        //    __m128 brod2 = _mm_set1_ps(_mat[j + 1]);
-        //    __m128 brod3 = _mm_set1_ps(_mat[j + 2]);
-        //    __m128 brod4 = _mm_set1_ps(_mat[j + 3]);
-        //    __m128 row = _mm_add_ps(
-        //        _mm_add_ps(
-        //            _mm_mul_ps(brod1, row1),
-        //            _mm_mul_ps(brod2, row2)),
-        //        _mm_add_ps(
-        //            _mm_mul_ps(brod3, row3),
-        //            _mm_mul_ps(brod4, row4)));
-        //    _mm_store_ps(&_mat[j], row);
-        //}
+        // Should probably look into SIMD operations 
+        // for combining matrices
 
-       const float* a = _mat;
-       const float* b = matrix._mat;
-       
-       *this = JMatrix4f(
-           a[0x0] * b[0x0] + a[0x4] * b[0x1] + a[0xC] * b[0x3],
-           a[0x0] * b[0x4] + a[0x4] * b[0x5] + a[0xC] * b[0x7],
-           a[0x0] * b[0xC] + a[0x4] * b[0xD] + a[0xC] * b[0xF],
-           a[0x1] * b[0x0] + a[0x5] * b[0x1] + a[0xD] * b[0x3],
-           a[0x1] * b[0x4] + a[0x5] * b[0x5] + a[0xD] * b[0x7],
-           a[0x1] * b[0xC] + a[0x5] * b[0xD] + a[0xD] * b[0xF],
-           a[0x3] * b[0x0] + a[0x7] * b[0x1] + a[0xF] * b[0x3],
-           a[0x3] * b[0x4] + a[0x7] * b[0x5] + a[0xF] * b[0x7],
-           a[0x3] * b[0xC] + a[0x7] * b[0xD] + a[0xF] * b[0xF]);
+        const float* a = _mat;
+        const float* b = matrix._mat;
+
+        *this = JMatrix4f(
+            a[0x0] * b[0x0] + a[0x1] * b[0x4] + a[0x2] * b[0x8] + a[0x3] * b[0xC],
+            a[0x0] * b[0x1] + a[0x1] * b[0x5] + a[0x2] * b[0x9] + a[0x3] * b[0xD],
+            a[0x0] * b[0x2] + a[0x1] * b[0x6] + a[0x2] * b[0xA] + a[0x3] * b[0xE],
+            a[0x0] * b[0x3] + a[0x1] * b[0x7] + a[0x2] * b[0xB] + a[0x3] * b[0xF],
+
+            a[0x4] * b[0x0] + a[0x5] * b[0x4] + a[0x6] * b[0x8] + a[0x7] * b[0xC],
+            a[0x4] * b[0x1] + a[0x5] * b[0x5] + a[0x6] * b[0x9] + a[0x7] * b[0xD],
+            a[0x4] * b[0x2] + a[0x5] * b[0x6] + a[0x6] * b[0xA] + a[0x7] * b[0xE],
+            a[0x4] * b[0x3] + a[0x5] * b[0x7] + a[0x6] * b[0xB] + a[0x7] * b[0xF],
+
+            a[0x8] * b[0x0] + a[0x9] * b[0x4] + a[0xA] * b[0x8] + a[0xB] * b[0xC],
+            a[0x8] * b[0x1] + a[0x9] * b[0x5] + a[0xA] * b[0x9] + a[0xB] * b[0xD],
+            a[0x8] * b[0x2] + a[0x9] * b[0x6] + a[0xA] * b[0xA] + a[0xB] * b[0xE],
+            a[0x8] * b[0x3] + a[0x9] * b[0x7] + a[0xA] * b[0xB] + a[0xB] * b[0xF],
+
+            a[0xC] * b[0x0] + a[0xD] * b[0x4] + a[0xE] * b[0x8] + a[0xF] * b[0xC],
+            a[0xC] * b[0x1] + a[0xD] * b[0x5] + a[0xE] * b[0x9] + a[0xF] * b[0xD],
+            a[0xC] * b[0x2] + a[0xD] * b[0x6] + a[0xE] * b[0xA] + a[0xF] * b[0xE],
+            a[0xC] * b[0x3] + a[0xD] * b[0x7] + a[0xE] * b[0xB] + a[0xF] * b[0xF]
+        );
         return *this;
     }
 
@@ -304,7 +298,7 @@ namespace JEngine {
         return this->scale(scale.x, scale.y, scale.z);
     }
 
-    JMatrix4f JMatrix4f::ortho(const float left, const float right, const float bottom, const float top) {
+    JMatrix4f JMatrix4f::ortho(float left, float right, float bottom, float top) {
         JMatrix4f mat(1.0f);
 
         mat.at(0, 0) = 2.0f / (right - left);
@@ -315,7 +309,7 @@ namespace JEngine {
         return mat;
     }
 
-    JMatrix4f JMatrix4f::ortho(const float left, const float right, const float bottom, const float top, const float zNear, const float zFar) {
+    JMatrix4f JMatrix4f::ortho(float left, float right, float bottom, float top, float zNear, float zFar) {
         JMatrix4f mat(1.0f);
 
         mat.at(0, 0) = 2.0f / (right - left);

@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project (JE-Player)
 set(GAME_SOURCES )
 
+add_platform_stuff()
+
 set(PLAYER_SRC
 	"src/main.cpp"
 )

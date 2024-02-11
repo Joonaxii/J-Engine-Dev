@@ -27,7 +27,7 @@ namespace JEngine {
 
         template<typename T>
         void push(const uint32_t count) {
-            JENGINE_CORE_ERROR("Buffer Layout has no implementation for type '{0}'", typeid(T).name());
+            JE_CORE_ERROR("Buffer Layout has no implementation for type '{0}'", typeid(T).name());
         }
 
         template<>

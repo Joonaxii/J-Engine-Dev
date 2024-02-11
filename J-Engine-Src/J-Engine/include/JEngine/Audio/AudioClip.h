@@ -1,4 +1,5 @@
 #pragma once
+#include <JEngine/Core.h>
 #include <JEngine/IO/AudioUtils.h>
 #include <JEngine/Assets/IAsset.h>
 #include <JEngine/Assets/IAssetSerializer.h>
@@ -12,7 +13,7 @@ namespace JEngine {
         Loop,
     };
 
-#pragma pack(push, 1)
+JE_BEG_PACK
     struct AudioSection {
         enum : uint8_t {
             AUD_NULL_SECTION = 0xFF
@@ -23,11 +24,11 @@ namespace JEngine {
         uint32_t endSample{};
 
         uint32_t getSampleLength() const { 
-            JENGINE_CORE_ASSERT(startSample <= endSample, "End sample position must be greater or equal to start sample position!")
+            JE_CORE_ASSERT(startSample <= endSample, "End sample position must be greater or equal to start sample position!")
             return endSample - startSample; 
         }
     };
-#pragma pack(pop)
+JE_END_PACK
 
     class AudioClip : public IAsset {
     public:

@@ -1,18 +1,12 @@
 #pragma once
-#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Math/Units/JRect.h>
-#include <JEngine/Utility/Span.h>
 #include <JEngine/Math/Units/JVector.h>
+#include <JEngine/Utility/Span.h>
+#include <JEngine/Utility/SIMD.h>
 #include <array>
 
 namespace JEngine {
-    namespace detail {
-        inline uint32_t getSIMDMaskAND(const __m128& simd) {
-            return simd.m128_u32[0] & simd.m128_u32[1] & simd.m128_u32[2] & simd.m128_u32[3];
-        }
-    }
-
-    struct alignas(16) JMatrix4f {
+    struct SIMD_ALIGN JMatrix4f {
     public:
         constexpr JMatrix4f() : _mat{
             0, 0, 0, 0,
@@ -63,18 +57,19 @@ namespace JEngine {
         Span<float> asSpan() { return Span<float>(_mat, 16); }
         ConstSpan<float> asConstSpan() const { return ConstSpan<float>(_mat, 16); }
 
+        float* getMatrix() { return _mat; }
         const float* getMatrix() const { return _mat; }
 
-        bool operator==(const JMatrix4f& rhs) const {
+        FORCE_INLINE constexpr bool operator==(const JMatrix4f& rhs) const {
             return (
-                detail::getSIMDMaskAND(_mm_cmpeq_ps(_matVec[0], rhs._matVec[0])) &
-                detail::getSIMDMaskAND(_mm_cmpeq_ps(_matVec[1], rhs._matVec[1])) &
-                detail::getSIMDMaskAND(_mm_cmpeq_ps(_matVec[2], rhs._matVec[2])) &
-                detail::getSIMDMaskAND(_mm_cmpeq_ps(_matVec[3], rhs._matVec[3]))
-                ) == 0xFFFFFFFFU;
+                SIMD::getSIMDMaskAND_UI64(_mm_cmpeq_ps(_matVec[0], rhs._matVec[0])) &
+                SIMD::getSIMDMaskAND_UI64(_mm_cmpeq_ps(_matVec[1], rhs._matVec[1])) &
+                SIMD::getSIMDMaskAND_UI64(_mm_cmpeq_ps(_matVec[2], rhs._matVec[2])) &
+                SIMD::getSIMDMaskAND_UI64(_mm_cmpeq_ps(_matVec[3], rhs._matVec[3]))
+                ) == UINT64_MAX;
         }
 
-        bool operator!=(const JMatrix4f& rhs) const {
+        FORCE_INLINE constexpr bool operator!=(const JMatrix4f& rhs) const {
             return !(*this == rhs);
         }
 
@@ -119,9 +114,6 @@ namespace JEngine {
         static JMatrix4f ortho(float left, float right, float bottom, float top, float zNear, float zFar);
 
     private:
-        friend struct Serializable<JMatrix4f>;
-        friend struct YAML::convert<JMatrix4f>;
-
         union {
             float _mat[16];
             __m128 _matVec[4];
@@ -133,63 +125,3 @@ namespace JEngine {
     JMatrix4f& operator *=(JMatrix4f& lhs, const JMatrix4f& rhs);
 
 }
-
-
-#pragma region Serialization
-//YAML
-namespace YAML {
-    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JMatrix4f& itemRef) {
-        yamlOut << YAML::Flow;
-        yamlOut << YAML::BeginSeq;
-
-        const float* mat = reinterpret_cast<const float*>(&itemRef);
-        for (size_t i = 0; i < 16; i++) {
-            yamlOut << mat[i];
-        }
-        yamlOut << YAML::EndSeq;
-        return yamlOut;
-    }
-
-    template<>
-    struct convert<JEngine::JMatrix4f> {
-        static Node encode(const JEngine::JMatrix4f& rhs) {
-            Node node;
-            for (size_t i = 0; i < 16; i++) {
-                node.push_back(rhs._mat[i]);
-            }
-            return node;
-        }
-
-        static bool decode(const Node& node, JEngine::JMatrix4f& rhs) {
-            if (!node.IsSequence() || node.size() < 16) { return false; }
-            for (size_t i = 0; i < 16; i++) {
-                rhs._mat[i] = node[i].as<float>();
-            }
-            return true;
-        }
-    };
-}
-
-//JSON
-namespace JEngine {
-    template<>
-    inline bool Serializable<JMatrix4f>::deserializeJson(JMatrix4f& itemRef, const json& jsonF, const JMatrix4f& defaultValue) {
-        itemRef = defaultValue;
-        const size_t size = jsonF.size() > 16 ? 16 : jsonF.size();
-        if (size > 0) {
-            for (size_t i = 0; i < size; i++) {
-                itemRef._mat[i] = jsonF.at(i).get<float>();
-            }
-        }
-        return true;
-    }
-
-    template<>
-    inline bool Serializable<JMatrix4f>::serializeJson(const JMatrix4f& itemRef, json& jsonF) {
-        for (size_t i = 0; i < 16; i++) {
-            jsonF.push_back(itemRef._mat[i]);
-        }
-        return true;
-    }
-}
-#pragma endregion

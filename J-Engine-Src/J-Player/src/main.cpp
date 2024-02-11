@@ -11,7 +11,9 @@ namespace JEngine {
 
 		bool init() override {
 			if (Application::init()) {
+#ifndef JE_DEBUG
 				hideConsole();
+#endif
 				return true;
 			}
 			return false;
@@ -37,21 +39,21 @@ namespace JEngine {
 		AppSpecs specs;
 
 		char temp[513]{ 0 };
-		sprintf_s(temp, "J-Player V%s [%s]", JENGINE_VERSION.toString().c_str(), JENGINE_VERSION_STR);
+		sprintf_s(temp, "J-Player V%s [%s]", JE_VERSION.toString().c_str(), JE_VERSION_STR);
 
 		specs.name = std::string(temp);
 		specs.workingDir = IO::getExeDir();
 		specs.args = args;
 
 		//ConstSpan<char> roots[JEngine::AssetDB::AssetSourceType::SRC_COUNT]{
-		//	JENGINE_RES_PATH,
+		//	JE_RES_PATH,
 		//	JEDITOR_RES_PATH,
 		//	GAME_RES_PATH,
 		//	""
 		//};
 		//
 		//ConstSpan<char> rootsDB[JEngine::AssetDB::AssetSourceType::SRC_COUNT]{
-		//	JENGINE_DB_PATH,
+		//	JE_DB_PATH,
 		//	JEDITOR_DB_PATH,
 		//	GAME_DB_PATH,
 		//	""

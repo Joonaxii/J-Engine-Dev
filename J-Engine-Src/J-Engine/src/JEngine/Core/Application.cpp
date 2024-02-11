@@ -13,10 +13,10 @@ namespace JEngine {
     }
 
     bool Application::init() {
-        JENGINE_CORE_TRACE("Initializing: '{0}'", _specs.name.c_str());
+        JE_CORE_TRACE("Initializing: '{0}'", _specs.name.c_str());
         auto now = std::chrono::system_clock::now();
-        JENGINE_CORE_TRACE(" - Start Time: {0}", now);
-        JENGINE_CORE_TRACE(" - Working Directory: '{0}'", _specs.workingDir.c_str());
+        JE_CORE_TRACE(" - Start Time: {0}", now);
+        JE_CORE_TRACE(" - Working Directory: '{0}'", _specs.workingDir.c_str());
 
         if (!_renderer.init(_specs.name.c_str())) {
             return false;

@@ -8,7 +8,7 @@ namespace JEngine {
     struct SortingLayer {
     public:
         static constexpr size_t MAX_NAME_LEN = 32;
-#pragma pack(push, 1)
+JE_BEG_PACK
         struct LayerName {
             char buffer[MAX_NAME_LEN + 1]{ 0 };
 
@@ -23,7 +23,7 @@ namespace JEngine {
             }
             const char* getName() const { return buffer; }
         };
-#pragma pack(pop)
+JE_END_PACK
 
         constexpr SortingLayer::SortingLayer() : _order(0), _layer(0) { }
         constexpr SortingLayer::SortingLayer(int32_t order, int32_t layer) : _order(order + INT16_MIN), _layer(layer) { }

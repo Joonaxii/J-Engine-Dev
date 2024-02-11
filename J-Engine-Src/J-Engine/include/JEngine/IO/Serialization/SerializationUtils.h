@@ -1,22 +1,21 @@
 #pragma once
-#ifdef JENGINE_EDITOR
 #include <vector>
 #include <Editor/Core/EditorEssentials.h>
 #include <JEngine/Rendering/ImGui/ImGuiUtils.h>
 
 namespace JEngine {
-    struct SerializedNode;
+    struct SerializedItem;
     namespace detail {
         struct CustomSer {
             const Type* type;
-            bool (*drawSelf)(SerializedNode& node);
+            bool (*drawSelf)(SerializedItem& node);
 
             CustomSer() : type(nullptr), drawSelf(nullptr) {}
-            CustomSer(const Type& type, bool (*drawSelf)(SerializedNode& node)) : type(&type), drawSelf(drawSelf) {}
+            CustomSer(const Type& type, bool (*drawSelf)(SerializedItem& node)) : type(&type), drawSelf(drawSelf) {}
         };
     }
 
-    struct SerializedNode;
+    struct SerializedItem;
     struct CustomSerializables {
 
         static std::vector<detail::CustomSer*>& getCustomSers() {
@@ -36,7 +35,7 @@ namespace JEngine {
         static detail::CustomSer& getCustom();
 
         template<typename T>
-        static bool drawSelf(SerializedNode& node);
+        static bool drawSelf(SerializedItem& node);
 
         template<typename T>
         static constexpr ValueType getValueType() {
@@ -53,7 +52,7 @@ namespace JEngine {
             return Gui::Styles::Default;
         }
 
-        static uint8_t customDraw(SerializedNode& node, uint32_t id) {
+        static uint8_t customDraw(SerializedItem& node, uint32_t id) {
             auto ser = findCustomSerByID(id);
             if (ser && ser->drawSelf) {
                 return ser->drawSelf(node) ? 0x01 : 0x00;
@@ -61,6 +60,12 @@ namespace JEngine {
             return 0x2;
         }
     };
+
+    namespace Serialization {
+
+
+        void registerAll();
+    }
 }
 
 #define REGISTER_SERIALIZABLE(TYPE)\
@@ -99,12 +104,3 @@ inline constexpr const JEngine::GUIStyle& JEngine::CustomSerializables::getDefau
 } \
 
 
-#else
-#include <JEngine/IO/Serialization/SerializationConsts.h>
-
-#define REGISTER_SERIALIZABLE(TYPE)
-
-#define DEFINE_SERIALIZABLE_TYPE(TYPE, VTYPE, STYPE)
-#define DEFINE_STYLED_SERIALIZABLE_TYPE(TYPE, VTYPE, STYPE, STYLE)
-
-#endif

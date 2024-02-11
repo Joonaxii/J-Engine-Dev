@@ -19,7 +19,7 @@ namespace JEngine {
 
     void VFS::changeRoot(ConstSpan<char> root, uint32_t flags) {
         if(Helpers::strIEquals(root, _rootPath)) {
-            JENGINE_CORE_WARN("[VFS] Warning: Given root path is already setup! Nothing changed.");
+            JE_CORE_WARN("[VFS] Warning: Given root path is already setup! Nothing changed.");
             return;
         }
 
@@ -77,7 +77,7 @@ namespace JEngine {
 
     bool VFS::buildFromRoot() {
         if (_rootSpan.length() < 1 || !IO::exists(_rootSpan)) {
-            JENGINE_CORE_ERROR("[VFS] Error: Failed to build VFS from root path '{0}' (Either the given directory doesn't exist or path string is empty)", _rootPath.c_str());
+            JE_CORE_ERROR("[VFS] Error: Failed to build VFS from root path '{0}' (Either the given directory doesn't exist or path string is empty)", _rootPath.c_str());
             return false; 
         }
 
@@ -120,7 +120,7 @@ namespace JEngine {
         }
 
         if (source < 0 && dataInfo == FILE_EINF) {
-            JENGINE_CORE_WARN("[VFS] Warning: Given path '{0}' couldn't be added! (File source is invalid, if part of a JPAK add the file beforehand)", tempBuf);
+            JE_CORE_WARN("[VFS] Warning: Given path '{0}' couldn't be added! (File source is invalid, if part of a JPAK add the file beforehand)", tempBuf);
             goto failure;
         }
 
@@ -177,7 +177,7 @@ namespace JEngine {
                 }
             }
             else {
-                JENGINE_CORE_WARN("[VFS] Warning: Given path '{0}' isn't a valid path!", tempBuf);
+                JE_CORE_WARN("[VFS] Warning: Given path '{0}' isn't a valid path!", tempBuf);
                 goto failure;
             }
             _freea(pathParts);
@@ -277,7 +277,7 @@ namespace JEngine {
                     len += _rootSpan.length();
                     if (IO::exists(ConstSpan<char>( buffer, len))) { continue; }
                     removeEntry(fEnt->id);
-                    JENGINE_CORE_TRACE("[VFS] Removed missing path '{0}'", fileStart);
+                    JE_CORE_TRACE("[VFS] Removed missing path '{0}'", fileStart);
                 }
             }
         }

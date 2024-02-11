@@ -1,22 +1,21 @@
 #pragma once
-#include <JEngine/IO/Serialization/Serializable.h>
+#include <JEngine/Core.h>
 #include <string_view>
 
 namespace JEngine {
     struct LayerMask {
     public:
         static constexpr size_t MAX_NAME_LEN = 32;
-#pragma pack(push, 1)
+JE_BEG_PACK
         struct LayerName {
             char buffer[MAX_NAME_LEN + 1]{ 0 };
-
             constexpr LayerName() : buffer{ 0 } {}
 
             LayerName(const char* input) : buffer{ 0 } {
                 memcpy(buffer, input, std::min(MAX_NAME_LEN, strlen(input)));
             }
         };
-#pragma pack(pop)
+JE_END_PACK
 
         constexpr LayerMask() : _value(0) {}
         constexpr LayerMask(uint32_t value) : _value(value) {}
@@ -164,48 +163,6 @@ namespace JEngine {
 #pragma endregion
     private:
         static LayerName LayerNames[32];
-
-        friend struct Serializable<LayerMask>;
-        friend struct YAML::convert<LayerMask>;
         uint32_t _value;
     };
 }
-
-#pragma region Serialization
-//YAML
-namespace YAML {
-    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::LayerMask& itemRef) {
-        yamlOut << YAML::Hex << static_cast<const uint32_t>(itemRef);
-        return yamlOut;
-    }
-
-    template<>
-    struct convert<JEngine::LayerMask> {
-        static Node encode(const JEngine::LayerMask& rhs) {
-            Node node;
-            node.push_back(static_cast<const uint32_t>(rhs));
-            return node;
-        }
-
-        static bool decode(const Node& node, JEngine::LayerMask& rhs) {
-            rhs = JEngine::LayerMask(node.as<uint32_t>());
-            return true;
-        }
-    };
-}
-
-//JSON
-namespace JEngine {
-    template<>
-    inline bool Serializable<LayerMask>::deserializeJson(LayerMask& itemRef, const json& jsonF, const LayerMask& defaultValue) {
-        itemRef._value = jsonF.is_number_integer() ? jsonF.get<uint32_t>() : defaultValue._value;
-        return true;
-    }
-
-    template<>
-    inline bool Serializable<LayerMask>::serializeJson(const LayerMask& itemRef, json& jsonF) {
-        jsonF.update(itemRef._value);
-        return true;
-    }
-}
-#pragma endregion

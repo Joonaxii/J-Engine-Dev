@@ -92,7 +92,7 @@ namespace JEngine {
     }
 
     bool RenderTexture::serializeBinary(const Stream& stream) const {
-        stream.writeValue(DataHeader<FMT_JRTX>::Value);
+        Format::writeHeader(stream, FMT_JRTX);
         return true;
     }
 

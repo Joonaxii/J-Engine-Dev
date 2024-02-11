@@ -1,9 +1,19 @@
 #pragma once
 #include <cstdint>
-#include <JEngine/Helpers/TypeHelpers.h>
+
+//Builtin types
+#include <JEngine/Math/Graphics/JColor.h>
+#include <JEngine/Math/Graphics/JColor24.h>
+#include <JEngine/Math/Graphics/JColor32.h>
+#include <JEngine/Math/Graphics/JColor4444.h>
+#include <JEngine/Math/Units/JMatrix.h>
+#include <JEngine/Math/Units/JRect.h>
+#include <JEngine/Math/Units/JVector.h>
+#include <JEngine/Core/LayerMask.h>
+#include <JEngine/Rendering/SortingLayer.h>
 
 namespace JEngine {
-    enum class ValueType : uint8_t {
+    enum class VType : uint16_t {
         VTYPE_NONE = 0x00,
 
         VTYPE_INT8,
@@ -17,7 +27,9 @@ namespace JEngine {
 
         VTYPE_INT64,
         VTYPE_UINT64,
-        
+
+        VTYPE_ENUM,
+
         VTYPE_FLOAT,
         VTYPE_DOUBLE,
 
@@ -37,23 +49,11 @@ namespace JEngine {
         VTYPE_RECTI,
         VTYPE_RECTF,
 
-        VTYPE_COLOR32,
         VTYPE_COLOR24,
+        VTYPE_COLOR32,
         VTYPE_COLOR,
 
         VTYPE_STRING,
-        
-        //----------------------------------------
-        //Note: For now, ignore these color types
-        //Most likely will never be used in the
-        //inspector/serialization context anyways
-        //----------------------------------------
-        //VTYPE_COLOR565,
-        //VTYPE_COLOR555,
-        //VTYPE_COLOR4444,
-
-        //VTYPE_COLOR48,
-        //VTYPE_COLOR64,
 
         VTYPE_LAYER_MASK,
         VTYPE_SORTING_LAYER,
@@ -62,149 +62,77 @@ namespace JEngine {
         VTYPE_COMPONENT_REF,
         VTYPE_ASSET_REF,
 
-        VTYPE_CUSTOM,
-        VTYPE_PROPERTY,
-    };
-    enum class SubValueType : uint8_t {
-        SUB_VTYPE_NONE = 0x00,
-        SUB_VTYPE_BIT_MASK = 0x1,
-        SUB_VTYPE_ENUM = 0x2,
-    };
-    enum class NodeType : uint8_t {
-        NTYPE_VALUE = 0x00,
-        NTYPE_ARRAY = 0x01,
-        NTYPE_FIXED_BUFFER = 0x02,
+        VTYPE_DATA,
     };
 
-    static constexpr size_t valueTypeToSize(ValueType type) {
+    static constexpr size_t valueTypeToSize(VType type) {
         switch (type) {
-            case ValueType::VTYPE_INT8:
-                return sizeof(int8_t);
-            case ValueType::VTYPE_UINT8:
-                return sizeof(uint8_t);
+        case VType::VTYPE_INT8:
+            return sizeof(int8_t);
+        case VType::VTYPE_UINT8:
+            return sizeof(uint8_t);
 
-            case ValueType::VTYPE_INT16:
-                return sizeof(int16_t);
-            case ValueType::VTYPE_UINT16:
-                return sizeof(uint16_t);
+        case VType::VTYPE_INT16:
+            return sizeof(int16_t);
+        case VType::VTYPE_UINT16:
+            return sizeof(uint16_t);
 
-            case ValueType::VTYPE_INT32:
-                return sizeof(int32_t);
-            case ValueType::VTYPE_UINT32:
-                return sizeof(uint32_t);
+        case VType::VTYPE_INT32:
+            return sizeof(int32_t);
+        case VType::VTYPE_UINT32:
+            return sizeof(uint32_t);
 
-            case ValueType::VTYPE_INT64:
-                return sizeof(int64_t);
-            case ValueType::VTYPE_UINT64:
-                return sizeof(uint64_t);
+        case VType::VTYPE_INT64:
+            return sizeof(int64_t);
+        case VType::VTYPE_UINT64:
+            return sizeof(uint64_t);
 
-            case ValueType::VTYPE_FLOAT:
-                return sizeof(float);
-            case ValueType::VTYPE_DOUBLE:
-                return sizeof(double);
+        case VType::VTYPE_FLOAT:
+            return sizeof(float);
+        case VType::VTYPE_DOUBLE:
+            return sizeof(double);
 
-            case ValueType::VTYPE_VEC_2I:
-            case ValueType::VTYPE_VEC_2F:
-                return 2 * sizeof(int32_t);
+        case VType::VTYPE_VEC_2I:
+            return sizeof(JVector2i);
+        case VType::VTYPE_VEC_2F:
+            return sizeof(JVector2f);
 
-            case ValueType::VTYPE_VEC_3I:
-            case ValueType::VTYPE_VEC_3F:
-                return 3 * sizeof(int32_t);
+        case VType::VTYPE_VEC_3I:
+            return sizeof(JVector3i);
+        case VType::VTYPE_VEC_3F:
+            return sizeof(JVector3f);
 
-            case ValueType::VTYPE_VEC_4I:
-            case ValueType::VTYPE_VEC_4F:
-                return 4 * sizeof(int32_t);
+        case VType::VTYPE_VEC_4I:
+            return sizeof(JVector4i);
+        case VType::VTYPE_VEC_4F:
+            return sizeof(JVector4f);
 
-            case ValueType::VTYPE_MATRIX:
-                return sizeof(float) * 16;
+        case VType::VTYPE_MATRIX:
+            return sizeof(JMatrix4f);
 
-            case ValueType::VTYPE_RECTI:
-            case ValueType::VTYPE_RECTF:
-                return (2 * (sizeof(int32_t) * 2));
+        case VType::VTYPE_RECTI:
+            return sizeof(JRecti);
+        case VType::VTYPE_RECTF:
+            return sizeof(JRectf);
 
-            case ValueType::VTYPE_COLOR24:
-                return 3;
-            case ValueType::VTYPE_COLOR32:
-                return 4;
-            case ValueType::VTYPE_COLOR:
-                return 16;
+        case VType::VTYPE_COLOR24:
+            return sizeof(JColor24);
+        case VType::VTYPE_COLOR32:
+            return sizeof(JColor32);
+        case VType::VTYPE_COLOR:
+            return sizeof(JColor);
 
-            case ValueType::VTYPE_LAYER_MASK:
-            case ValueType::VTYPE_SORTING_LAYER:
-                return sizeof(uint32_t);
+        case VType::VTYPE_LAYER_MASK:
+            return sizeof(LayerMask);
+        case VType::VTYPE_SORTING_LAYER:
+            return sizeof(SortingLayer);
 
-            case ValueType::VTYPE_GAME_OBJECT_REF:
-            case ValueType::VTYPE_COMPONENT_REF:
-            case ValueType::VTYPE_ASSET_REF:
-                return sizeof(uint32_t);
-            default: return 0;
+        case VType::VTYPE_GAME_OBJECT_REF:
+        case VType::VTYPE_COMPONENT_REF:
+        case VType::VTYPE_ASSET_REF:
+            return sizeof(Ref);
+        default: return 0;
         }
     }
 
-    namespace detail {
-        struct TSDescriptor {
-            Type const* type;
-
-            ValueType valueType;
-            SubValueType subValueType;
-            NodeType nodeType;
-
-            constexpr TSDescriptor() :
-                type{ nullptr },
-                valueType{ ValueType::VTYPE_PROPERTY },
-                subValueType{ SubValueType::SUB_VTYPE_NONE },
-                nodeType{ NodeType::NTYPE_VALUE }
-            {}
-
-            constexpr TSDescriptor(Type const& type) :
-                type{ &type },
-                valueType{ ValueType::VTYPE_PROPERTY },
-                subValueType{ SubValueType::SUB_VTYPE_NONE },
-                nodeType{ NodeType::NTYPE_VALUE }
-            {}
-
-            constexpr TSDescriptor(Type const& type, ValueType vType) :
-                type{ &type },
-                valueType{ vType },
-                subValueType{ SubValueType::SUB_VTYPE_NONE },
-                nodeType{ NodeType::NTYPE_VALUE }
-            {}
-
-            constexpr TSDescriptor(Type const& type, ValueType vType, SubValueType sVType) :
-                type{ &type },
-                valueType{ vType },
-                subValueType{ sVType },
-                nodeType{ NodeType::NTYPE_VALUE }
-            {}
-
-            constexpr TSDescriptor(Type const& type, ValueType vType, SubValueType sVType, NodeType nType) :
-                type{ &type },
-                valueType{ vType },
-                subValueType{ sVType },
-                nodeType{ nType }
-            {}
-        };
-    }
-
-    namespace Serialization {
-        template<typename T>
-        static detail::TSDescriptor const& getDescriptor() {
-            return detail::TSDescriptor(TypeHelpers::getType<T>());
-        }
-
-        template<typename T>
-        static detail::TSDescriptor const& getDescriptor(ValueType vType) {
-            return detail::TSDescriptor(TypeHelpers::getType<T>(), vType);
-        }
-
-        template<typename T>
-        static detail::TSDescriptor const& getDescriptor(ValueType vType, SubValueType sVType) {
-            return detail::TSDescriptor(TypeHelpers::getType<T>(), vType, sVType);
-        }
-
-        template<typename T>
-        static detail::TSDescriptor const& getDescriptor(ValueType vType, SubValueType sVType, NodeType nType) {
-            return detail::TSDescriptor(TypeHelpers::getType<T>(), vType, sVType, nType);
-        }
-    }
 }

@@ -127,7 +127,7 @@ namespace JEngine {
         auto clip = _aSource->_clip;
 
         if (clip->getSampleRate() > AUDIO_SAMPLE_RATE) {
-            JENGINE_CORE_WARN("[Audio Engine] Warning: Audio sample rate must be less or equal to '{0}' but is '{1}'!", AUDIO_SAMPLE_RATE, clip->getSampleRate());
+            JE_CORE_WARN("[Audio Engine] Warning: Audio sample rate must be less or equal to '{0}' but is '{1}'!", AUDIO_SAMPLE_RATE, clip->getSampleRate());
             return;
         }
 
@@ -152,7 +152,7 @@ namespace JEngine {
         GetAudioSample getSample{nullptr};
         switch (clipData.depth) {
             default:
-                JENGINE_CORE_WARN("[Audio Engine] Warning: Audio bit depth '{0}' not supported!", int32_t(clipData.depth));
+                JE_CORE_WARN("[Audio Engine] Warning: Audio bit depth '{0}' not supported!", int32_t(clipData.depth));
                 return;
             case 8:
                 getSample = clipData.sampleType == AudioSampleType::Signed ? getSampleF<8, AudioSampleType::Signed> : getSampleF<8, AudioSampleType::Unsigned>;
@@ -205,7 +205,7 @@ namespace JEngine {
         _dBuffer = _dBuffer ? _dBuffer : allocator.allocate();
         
         if (!_dBuffer) {
-            JENGINE_CORE_ERROR("[Audio Engine] Error: Failed to allocate/retrieve audio buffer!");
+            JE_CORE_ERROR("[Audio Engine] Error: Failed to allocate/retrieve audio buffer!");
             return false;
         }
 

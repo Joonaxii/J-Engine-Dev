@@ -2,6 +2,7 @@
 #include <JEngine/Math/Graphics/JColor24.h>
 #include <JEngine/Math/Graphics/JColor555.h>
 #include <JEngine/Math/Graphics/JColor565.h>
+#include <JEngine/Math/Graphics/JColor4444.h>
 #include <JEngine/Math/Graphics/JColor.h>
 #include <JEngine/IO/ImageUtils.h>
 #include <JEngine/Math/Math.h>
@@ -9,17 +10,13 @@
 
 namespace JEngine {
 
-    JColor32::JColor32() : r(0), g(0), b(0), a(0) { }
-    JColor32::JColor32(const uint8_t r, const uint8_t g, const uint8_t b) : r(r), g(g), b(b), a(0xFF) { }
-    JColor32::JColor32(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) : r(r), g(g), b(b), a(a) { }
-
     JColor32::JColor32(const JColor24& rgb) :
         r(rgb.r),
         g(rgb.g),
         b(rgb.b),
         a(0xFF) { }
 
-    JColor32::JColor32(const JColor24& rgb, const uint8_t alpha) :
+    JColor32::JColor32(const JColor24& rgb, uint8_t alpha) :
         r(rgb.r),
         g(rgb.g),
         b(rgb.b),
@@ -32,20 +29,17 @@ namespace JEngine {
         a(Math::scalarToUInt<uint8_t, float>(rgba.a)) { }
 
 
-    JColor32::JColor32(const JColor555& rgb) {
-        unpackRGB555(rgb.data, r, g, b, a);
-    }
-
-    JColor32::JColor32(const JColor555& rgb, const uint8_t alpha) {
-        unpackRGB555(rgb.data, r, g, b, a);
-        a = alpha;
-    }
+    JColor32::JColor32(const JColor555& rgba) : JColor32(rgba, 0xFF) { }
+    JColor32::JColor32(const JColor555& rgba, uint8_t alpha) :
+        r(rgba.getR_UI8()), g(rgba.getG_UI8()), b(rgba.getB_UI8()), a(alpha) {}
 
     JColor32::JColor32(const JColor565& rgb) : JColor32(rgb, 0xFF) { }
-    JColor32::JColor32(const JColor565& rgb, const uint8_t alpha) {
-        unpackRGB565(rgb.data, r, g, b);
-        a = alpha;
-    }
+    JColor32::JColor32(const JColor565& rgb, uint8_t alpha) :
+        r(rgb.getR_UI8()), g(rgb.getG_UI8()), b(rgb.getB_UI8()), a(alpha) {}
+    
+    JColor32::JColor32(const JColor4444& rgba) : JColor32(rgba, rgba.getA_UI8()) { }
+    JColor32::JColor32(const JColor4444& rgba, uint8_t alpha) :
+        r(rgba.getR_UI8()), g(rgba.getG_UI8()), b(rgba.getB_UI8()), a(alpha) {}
 
 
     JColor32::operator JColor24() const {
@@ -76,13 +70,26 @@ namespace JEngine {
         b = rgb.b;
     }
 
-    void JColor32::set(const uint8_t r, const uint8_t g, const uint8_t b) {
+    void JColor32::set(uint8_t gray) {
+        r = gray;
+        g = gray;
+        b = gray;
+    }
+
+    void JColor32::set(uint8_t gray, uint8_t alpha) {
+        r = gray;
+        g = gray;
+        b = gray;
+        a = alpha;
+    }
+
+    void JColor32::set(uint8_t r, uint8_t g, uint8_t b) {
         this->r = r;
         this->g = g;
         this->b = b;
     }
 
-    void JColor32::set(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) {
+    void JColor32::set(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
         this->r = r;
         this->g = g;
         this->b = b;

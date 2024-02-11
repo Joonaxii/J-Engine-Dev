@@ -5,7 +5,7 @@ namespace JEngine {
 
     AssetDB::AssetDB() : _allSources{} { }
 //
-//#ifdef JENGINE_EDITOR
+//#ifdef JE_EDITOR
 //#else
 //    AssetDB::AssetDB(const std::string roots[SRC_COUNT]) : _allSources{} {
 //        for (size_t i = 0; i < MAX_ASSET_SOURCES; i++) {
@@ -41,7 +41,7 @@ namespace JEngine {
 
     AssetRef AssetDB::createAsset(const UUID16& type, ConstSpan<char> path, uint8_t flags, uint8_t source) {
        //if (source >= AssetSourceType::SRC_COUNT) {
-       //    JENGINE_CORE_WARN("[J-Engine - AssetDB] Warning: Couldn't create asset '{0}', given VFS type was invalid!", path);
+       //    JE_CORE_WARN("[J-Engine - AssetDB] Warning: Couldn't create asset '{0}', given VFS type was invalid!", path);
        //    return nullptr;
        //}
        //
@@ -49,19 +49,19 @@ namespace JEngine {
        //FileEntry* entry = vfs.getEntryByPath(path);
        //
        //if (entry) {
-       //    JENGINE_CORE_WARN("[J-Engine - AssetDB] Warning: Asset with path '{0}' already exists!", path);
+       //    JE_CORE_WARN("[J-Engine - AssetDB] Warning: Asset with path '{0}' already exists!", path);
        //    return nullptr;
        //}
        //bool addedNew = false;
        //
        //FileID ind = vfs.addEntry(-1, true, path, RUNTIME_EINF, &addedNew);
        //if (ind < 0) {
-       //    JENGINE_CORE_WARN("[J-Engine - AssetDB] Warning: Failed to add path '{0}' to VFS!", path);
+       //    JE_CORE_WARN("[J-Engine - AssetDB] Warning: Failed to add path '{0}' to VFS!", path);
        //    return nullptr;
        //}
        //
        //if (!addedNew) {
-       //    JENGINE_CORE_WARN("[J-Engine - AssetDB] Warning: Asset with path '{0}' already exists in VFS!", path);
+       //    JE_CORE_WARN("[J-Engine - AssetDB] Warning: Asset with path '{0}' already exists in VFS!", path);
        //    return nullptr;
        //}
        //
@@ -80,13 +80,13 @@ namespace JEngine {
        //}
        //detail::Asset* assetDet = detail::Asset::getAssetByHash(type);
        //if (!assetDet) {
-       //    JENGINE_CORE_WARN("[J-Engine - AssetDB] Warning: Failed to add asset '{0}', asset type doesn't seem to be registered!", path);
+       //    JE_CORE_WARN("[J-Engine - AssetDB] Warning: Failed to add asset '{0}', asset type doesn't seem to be registered!", path);
        //    return nullptr;
        //}
        //
        //IAsset* asset = assetDet->createAsset(, flags);
        //if (!asset) {
-       //    JENGINE_CORE_WARN("[J-Engine - AssetDB] Warning: Failed to create asset '{0}', something went wrong when creating a new instance!", path);
+       //    JE_CORE_WARN("[J-Engine - AssetDB] Warning: Failed to create asset '{0}', something went wrong when creating a new instance!", path);
        //    return nullptr;
        //}
        //
@@ -139,7 +139,7 @@ namespace JEngine {
         return index >= SRC_COUNT ? nullptr : &_allSources[index].vfs;
     }
 
-#ifdef JENGINE_EDITOR
+#ifdef JE_EDITOR
 
     void AssetDB::initialize(const ConstSpan<char> roots[SRC_COUNT], const ConstSpan<char> dbRoots[SRC_COUNT]) {
         for (size_t i = 0; i < SRC_COUNT; i++) {
@@ -153,7 +153,7 @@ namespace JEngine {
 
     uint32_t AssetDB::packAssets(uint32_t sources, ConstSpan<char> destination) {
         if (!IO::exists(destination) || !IO::isDir(destination)) {
-            JENGINE_CORE_ERROR("[AssetDB] Error: Cannot pack assets to '{0}', either it doesn't exist or it's not a directory path!", destination);
+            JE_CORE_ERROR("[AssetDB] Error: Cannot pack assets to '{0}', either it doesn't exist or it's not a directory path!", destination);
             return UINT32_MAX;
         }
 
@@ -177,7 +177,7 @@ namespace JEngine {
         }
 
         if (count < 1) {
-            JENGINE_CORE_WARN("[AssetDB] Warning: Did not pack any asset sources!");
+            JE_CORE_WARN("[AssetDB] Warning: Did not pack any asset sources!");
         }
         return count;
     }

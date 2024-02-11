@@ -289,7 +289,7 @@ namespace JEngine {
 
             GLCall(int32_t location = glGetUniformLocation(_shaderID, temp));
             if (location == -1) {
-                JENGINE_CORE_WARN("Shader", "Warning: Uniform", name, "doesn't exist");
+                JE_CORE_WARN("Shader", "Warning: Uniform", name, "doesn't exist");
             }
             _uniformCache[hash] = location;
 

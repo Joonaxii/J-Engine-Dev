@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
-#include <JEngine/Core/Log.h>
+#include <string>
+#include <string_view>
+#include <JEngine/Core.h>
 #include <JEngine/Core/Assert.h>
 #include <JEngine/Utility/DataUtilities.h>
 #include <spdlog/fmt/bundled/core.h>
@@ -11,11 +13,10 @@ namespace JEngine {
     template<typename T>
     class Span {
     public:
-        Span() : _ptr(nullptr), _length() {}
+        constexpr Span() : _ptr(nullptr), _length() {}
         Span(void* ptr, size_t length) : _ptr(reinterpret_cast<T*>(ptr)), _length(length) {}
         Span(T* ptr, size_t length) : _ptr(ptr), _length(length) {}
-        Span(Span<T>& other) : _ptr(other._ptr), _length(other._length) {}
-
+    
         Span(T* val);
 
         template<typename U>
@@ -30,7 +31,7 @@ namespace JEngine {
         const T* get() const { return _ptr; }
 
         Span<T> slice(int64_t index, size_t length) const {
-            JENGINE_CORE_ASSERT(_length - index >= length, "Invalid index or length!");
+            JE_CORE_ASSERT(_length - index >= length, "Invalid index or length!");
             return Span<T>(_ptr + index, length);
         }
 
@@ -39,7 +40,7 @@ namespace JEngine {
         }
 
         void copyTo(Span<T>& other) const {
-            JENGINE_CORE_ASSERT(_length <= other._length, "Target Span is too small!");
+            JE_CORE_ASSERT(_length <= other._length, "Target Span is too small!");
             memcpy(other._ptr, _ptr, _length * sizeof(T));
         }
 
@@ -189,8 +190,8 @@ namespace JEngine {
         Span<T> trim() const;
         Span<T> trim(const T& value) const;
 
-        bool equals(const ConstSpan<T>& other);
-        bool equals(const void* data, size_t size) {
+        bool equals(const ConstSpan<T>& other) const;
+        bool equals(const void* data, size_t size) const {
             if (size != (_length * sizeof(T))) { return false; }
 
             const T* asT = reinterpret_cast<const T*>(data);
@@ -200,7 +201,7 @@ namespace JEngine {
             return true;
         }
 
-        bool equals(const Span<T>& other) {
+        bool equals(const Span<T>& other) const {
             if(_length != other._length) { return false; }
             for (size_t i = 0; i < _length; i++) {
                 if (other._ptr[i] != _ptr[i]) { return false; }
@@ -211,7 +212,7 @@ namespace JEngine {
         template<typename U>
         U read(const size_t start, const bool isBigEndian = false) const {
             if ((_length - start) < 1 || !_ptr) { return U(); }
-            JENGINE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
+            JE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
 
             U value = *reinterpret_cast<U*>(_ptr + start);
             if (isBigEndian) {
@@ -226,7 +227,7 @@ namespace JEngine {
                 value = 0;
                 return value;
             }
-            JENGINE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
+            JE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
             value = *reinterpret_cast<U*>(_ptr + start);
             if (isBigEndian) {
                 Data::reverseEndianess(&value);
@@ -237,7 +238,7 @@ namespace JEngine {
         template<typename U>
         U read(const bool isBigEndian = false) const {
             if (_length < 1 || !_ptr) { return U(); }
-            JENGINE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
+            JE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
 
             U value = *reinterpret_cast<U*>(_ptr);
             if (isBigEndian) {
@@ -252,7 +253,7 @@ namespace JEngine {
                 value = 0;
                 return value;
             }
-            JENGINE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
+            JE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
             value = *reinterpret_cast<U*>(_ptr);
             
             if (isBigEndian) {
@@ -263,7 +264,7 @@ namespace JEngine {
 
         template<typename U>
         void writeAt(const size_t start, const U& value, const bool isBigEndian = false) const {
-            JENGINE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span isn't large enough!");
+            JE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span isn't large enough!");
             memcpy(reinterpret_cast<uint8_t*>(_ptr) + start, &value, sizeof(U));
 
             if (isBigEndian) {
@@ -273,7 +274,7 @@ namespace JEngine {
         
         template<typename U>
         void writeValuesAt(const size_t start, const U& value, size_t count, const bool isBigEndian = false) const {
-            JENGINE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U) * count, "Span isn't large enough!");
+            JE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U) * count, "Span isn't large enough!");
             std::fill_n(reinterpret_cast<U*>(reinterpret_cast<uint8_t*>(_ptr) + start), count, value);
 
             if (isBigEndian) {
@@ -283,7 +284,7 @@ namespace JEngine {
 
         template<typename U>
         void writeAt(const size_t start, const U* value, const size_t count, const bool isBigEndian = false) const {
-            JENGINE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U) * count, "Span isn't large enough!");
+            JE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U) * count, "Span isn't large enough!");
             memcpy(reinterpret_cast<uint8_t*>(_ptr) + start, value, sizeof(U) * count);
 
             if (isBigEndian) {
@@ -293,7 +294,7 @@ namespace JEngine {
 
         template<typename U>
         void write(const U& value, const bool isBigEndian = false) const {
-            JENGINE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span isn't large enough!");
+            JE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span isn't large enough!");
             memcpy(_ptr, &value, sizeof(U));
 
             if (isBigEndian) {
@@ -303,7 +304,7 @@ namespace JEngine {
 
         template<typename U>
         void write(const U& value, size_t count, const bool isBigEndian = false) const {
-            JENGINE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U) * count, "Span isn't large enough!");
+            JE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U) * count, "Span isn't large enough!");
             std::fill_n(reinterpret_cast<U*>(_ptr), count, value);
 
             if (isBigEndian) {
@@ -313,7 +314,7 @@ namespace JEngine {
 
         template<typename U>
         void write(const U* value, const size_t count, const bool isBigEndian = false) const {
-            JENGINE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U) * count, "Span isn't large enough!");
+            JE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U) * count, "Span isn't large enough!");
             memcpy(_ptr, value, sizeof(U) * count);
 
             if (isBigEndian) {
@@ -337,9 +338,9 @@ namespace JEngine {
     template<typename T>
     class ConstSpan {
     public:
-        ConstSpan() : _ptr(nullptr), _length() {}
+        constexpr ConstSpan() : _ptr(nullptr), _length() {}
         ConstSpan(const void* ptr, size_t length) : _ptr(reinterpret_cast<const T*>(ptr)), _length(length) {}
-        ConstSpan(const T* ptr, size_t length) : _ptr(ptr), _length(length) {}
+        constexpr ConstSpan(const T* ptr, size_t length) : _ptr(ptr), _length(length) {}
  
         ConstSpan(Span<T> input) : _ptr(input.get()), _length(input.length()) {}
         ConstSpan(const T* input);
@@ -361,7 +362,7 @@ namespace JEngine {
         }
 
         ConstSpan<T> slice(int64_t index, size_t length) const {
-            JENGINE_CORE_ASSERT(_length - index >= length, "Invalid index or length!");
+            JE_CORE_ASSERT(_length - index >= length, "Invalid index or length!");
             return ConstSpan<T>(_ptr + index, length);
         }
 
@@ -370,7 +371,7 @@ namespace JEngine {
         }
 
         void copyTo(Span<T>& other) const {
-            JENGINE_CORE_ASSERT(_length <= other._length, "Target Span is too small!");
+            JE_CORE_ASSERT(_length <= other._length, "Target Span is too small!");
             memcpy(other._ptr, _ptr, _length * sizeof(T));
         }
 
@@ -433,8 +434,8 @@ namespace JEngine {
             return SIZE_MAX;
         }
 
-        bool equals(const Span<T>& other);
-        bool equals(const void* data, size_t size) {
+        bool equals(const Span<T>& other) const;
+        bool equals(const void* data, size_t size) const {
             if (size != (_length * sizeof(T))) { return false; }
 
             const T* asT = reinterpret_cast<const T*>(data);
@@ -444,7 +445,7 @@ namespace JEngine {
             return true;
         }
 
-        bool equals(const ConstSpan<T>& other) {
+        bool equals(const ConstSpan<T>& other) const {
             if (_length != other.length()) { return false; }
 
             for (size_t i = 0; i < _length; i++) {
@@ -506,7 +507,7 @@ namespace JEngine {
         template<typename U>
         U read(const size_t start, const bool isBigEndian = false) const {
             if ((_length - start) < 1 || !_ptr) { return U(); }
-            JENGINE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
+            JE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
 
             U value = *reinterpret_cast<U*>(_ptr + start);
             if (isBigEndian) {
@@ -521,7 +522,7 @@ namespace JEngine {
                 value = 0;
                 return value;
             }
-            JENGINE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
+            JE_CORE_ASSERT((_length - start) * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
             value = *reinterpret_cast<U*>(_ptr + start);
             if (isBigEndian) {
                 Data::reverseEndianess(&value);
@@ -532,7 +533,7 @@ namespace JEngine {
         template<typename U>
         U read(const bool isBigEndian = false) const {
             if (_length < 1 || !_ptr) { return U(); }
-            JENGINE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
+            JE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
 
             U value = *reinterpret_cast<U*>(_ptr);
             if (isBigEndian) {
@@ -547,7 +548,7 @@ namespace JEngine {
                 value = 0;
                 return value;
             }
-            JENGINE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
+            JE_CORE_ASSERT(_length * sizeof(T) >= sizeof(U), "Span doesn't contain enough data!");
             value = *reinterpret_cast<U*>(_ptr);
 
             if (isBigEndian) {
@@ -568,7 +569,7 @@ namespace JEngine {
 }
 
 template<typename T>
-inline bool JEngine::Span<T>::equals(const JEngine::ConstSpan<T>& other) {
+inline bool JEngine::Span<T>::equals(const JEngine::ConstSpan<T>& other) const {
     if (_length != other.length()) { return false; }
 
     for (size_t i = 0; i < _length; i++) {
@@ -584,7 +585,7 @@ inline JEngine::ConstSpan<U> JEngine::Span<T>::castToConst() const {
 }
 
 template<typename T>
-inline bool JEngine::ConstSpan<T>::equals(const JEngine::Span<T>& other) {
+inline bool JEngine::ConstSpan<T>::equals(const JEngine::Span<T>& other) const {
     if (_length != other.length()) { return false; }
 
     for (size_t i = 0; i < _length; i++) {

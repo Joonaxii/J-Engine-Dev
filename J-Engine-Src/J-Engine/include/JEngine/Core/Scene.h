@@ -27,7 +27,9 @@ namespace JEngine {
 
     private:
         TAssetRef<SceneAsset> _sceneAsset;
+
         ChunkedLUT<GameObject> _gameObjects;
+        ChunkedLUT<GameObject> _singletons;
 
         Scene(const Scene& other) = delete;
         Scene(Scene&& other) = delete;

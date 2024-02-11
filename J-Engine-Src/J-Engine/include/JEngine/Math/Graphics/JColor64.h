@@ -1,14 +1,8 @@
 #pragma once
 #include <cstdint>
-#include <algorithm>
 
 namespace JEngine {
-    struct JColor24;
-    struct JColor32;
-    struct JColor565;
-    struct JColor555;
     struct JColor48;
-    struct JColor4444;
     struct JColor;
     struct JColor64 {
         uint16_t r;
@@ -24,44 +18,29 @@ namespace JEngine {
 
         JColor64(const JColor48& rgb);
 
-        JColor64(const JColor24& rgb);
-        JColor64(const JColor32& rgba);
-
         JColor64(const JColor& rgba);
-
-        JColor64(const JColor555& rgb);
-        JColor64(const JColor565& rgba);
-
-        JColor64(const JColor4444& rgba);
 
         operator uint64_t() const { return *reinterpret_cast<const uint64_t*>(this); }
 
-        void set(uint16_t gray) {
-            r = g = b = gray;
-            a = 0xFFFF;
-        }
-
-        void set(uint16_t gray, uint16_t alpha) {
-            r = g = b = gray;
-            a = alpha;
-        }  
+        void set(uint16_t gray);
+        void set(uint16_t gray, uint16_t alpha);
         
-        void set(uint16_t r, uint16_t g, uint16_t b) {
-            this->r = r;
-            this->g = g;
-            this->b = b;
-            a = 0xFFFF;
-        }  
-        
-        void set(uint16_t r, uint16_t g, uint16_t b, uint16_t a) {
-            this->r = r;
-            this->g = g;
-            this->b = b;
-            this->a = a;
-        }
+        void set(uint16_t r, uint16_t g, uint16_t b);
+        void set(uint16_t r, uint16_t g, uint16_t b, uint16_t a);
 
-        void flipRB() {
-            std::swap(r, b);
-        }
+        void flipRB();
+    };
+
+    struct Colors64 {
+        static constexpr JColor64 Clear{0x00, 0x00, 0x00, 0x00};
+        static constexpr JColor64 White{0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
+        static constexpr JColor64 Black{0x00, 0x00, 0x00, 0xFFFF};
+        static constexpr JColor64 Gray{0x7FFF, 0x7FFF, 0x7FFF, 0xFFFF};
+        static constexpr JColor64 Red{0xFFFF, 0x00, 0x00, 0xFFFF};
+        static constexpr JColor64 Green{0x00, 0xFFFF, 0x00, 0xFFFF};
+        static constexpr JColor64 Blue{0x00, 0x00, 0xFFFF, 0xFFFF};
+        static constexpr JColor64 Magenta{0xFFFF, 0x00, 0xFFFF, 0xFFFF};
+        static constexpr JColor64 Yellow{0xFFFF, 0xFFFF, 0x00, 0xFFFF};
+        static constexpr JColor64 Cyan{0x00, 0xFFFF, 0xFFFF, 0xFFFF};
     };
 }

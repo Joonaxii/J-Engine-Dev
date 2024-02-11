@@ -6,7 +6,7 @@
 #include <JEngine/Assets/IAsset.h>
 
 namespace JEngine {
-    GORef::GORef(const GameObject* go) : uuid(go ? go->getUUID() : detail::NULL_GAME_OBJECT) { }
+    GORef::GORef(const GameObject* go) : Ref(go ? go->getUUID() : detail::NULL_GAME_OBJECT) { }
     GameObject* GORef::get() const {
         return Application::get()->getScene().getByUUID(uuid);
     }
@@ -18,9 +18,9 @@ namespace JEngine {
         return Application::get()->getScene().findComponent(*this);
     }
 
-    AssetRef::AssetRef(const IAsset* asset) : _uuid(asset ? asset->getUUID() : detail::NULL_ASSET) { }
+    AssetRef::AssetRef(const IAsset* asset) : Ref(asset ? asset->getUUID() : detail::NULL_ASSET) { }
     IAsset* AssetRef::get() const {
         if (!isValid()) { return nullptr; }
-        return Application::get()->getAssetDB().getAssetByUUID(_uuid);
+        return Application::get()->getAssetDB().getAssetByUUID(*this, bool(uuid & detail::FROM_DB_MASK));
     }
 }

@@ -11,7 +11,7 @@ namespace JEngine {
         a(1.0f) {
     }
 
-    JColor::JColor(const JColor24& rgb, const float alpha) :
+    JColor::JColor(const JColor24& rgb, float alpha) :
         r(Math::uintToScalar<uint8_t, float>(rgb.r)),
         g(Math::uintToScalar<uint8_t, float>(rgb.g)),
         b(Math::uintToScalar<uint8_t, float>(rgb.b)),
@@ -46,18 +46,32 @@ namespace JEngine {
         b = Math::uintToScalar<uint8_t, float>(rgb.b);
     }
 
-    void JColor::set(const float r, const float g, const float b) {
+    void JColor::set(float r, float g, float b) {
         this->r = r;
         this->g = g;
         this->b = b;
     }
 
-    void JColor::set(const float r, const float g, const float b, const float a) {
+    void JColor::set(float r, float g, float b, float a) {
         this->r = r;
         this->g = g;
         this->b = b;
         this->a = a;
     }
+
+    void JColor::set(float gray) {
+        r = gray;
+        g = gray;
+        b = gray;
+    }
+
+    void JColor::set(float gray, float alpha) {
+        r = gray;
+        g = gray;
+        b = gray;
+        a = alpha;
+    }
+
 
     JColor JColor::operator-(const JColor& other) const {
         return JColor(r - other.r, g - other.g, b - other.b, a - other.a);
@@ -131,5 +145,9 @@ namespace JEngine {
         b *= other.b;
         a *= other.a;
         return *this;
+    }
+
+    void JColor::flipRB() {
+        std::swap(r, b);
     }
 }

@@ -9,7 +9,7 @@ namespace JEngine {
     public:
         virtual ~IAsset() {};
         virtual bool unload() {
-            UI16Flags& flags = getFlags();
+            UI64Flags& flags = getFlags();
             if (flags & FLAG_IS_LOADED) {
                 flags &= ~FLAG_IS_LOADED;
                 return true;

@@ -1,12 +1,8 @@
 #pragma once
 #include <cstdint>
-#include <JEngine/IO/Serialization/Serializable.h>
+#include <JEngine/Math/Math.h>
 
 namespace JEngine {
-    static constexpr uint16_t RED_MASK_555 = 0x1F;
-    static constexpr uint16_t GREEN_MASK_555 = 0x3E0;
-    static constexpr uint16_t BLUE_MASK_555 = 0x7C00;
-    static constexpr uint16_t ALPHA_MASK_555 = 0x8000;
 
     struct JColor565;
     struct JColor24;
@@ -25,58 +21,48 @@ namespace JEngine {
 
         uint16_t data{ 0 };
 
-        JColor555() : data(0) {}
-        JColor555(uint16_t value) : data(value) {}
-        JColor555(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha);
-        JColor555(uint8_t r, uint8_t g, uint8_t b);
+        constexpr JColor555() : data(0) {}
+        constexpr JColor555(uint16_t value) : data(value) {}
+        constexpr JColor555(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : 
+            data(Math::remapBitsFromUI8<uint16_t, 5>(r) | 
+                (Math::remapBitsFromUI8<uint16_t, 5>(g) << 5) | 
+                (Math::remapBitsFromUI8<uint16_t, 5>(b) << 10) | 
+                (Math::remapBitsFromUI8<uint16_t, 1>(a))) {}
+        constexpr JColor555(uint8_t r, uint8_t g, uint8_t b) :
+            data(Math::remapBitsFromUI8<uint16_t, 5>(r) | 
+                (Math::remapBitsFromUI8<uint16_t, 5>(g) << 5) | 
+                (Math::remapBitsFromUI8<uint16_t, 5>(b) << 10) | 0x8000) {}
 
         JColor555(const JColor565& rgb);
         JColor555(const JColor24& rgb);
         JColor555(const JColor32& rgba);
+
+        constexpr uint8_t getR_UI8() const { return Math::remapBitsToUI8<5>(data & 0x1F); }
+        constexpr uint8_t getG_UI8() const { return Math::remapBitsToUI8<5>((data >> 5) & 0x1F); }
+        constexpr uint8_t getB_UI8() const { return Math::remapBitsToUI8<5>((data >> 10) & 0x1F); }
+        constexpr uint8_t getA_UI8() const { return Math::remapBitsToUI8<1>((data >> 15) & 0x1); }
+
+        constexpr uint8_t getR() const { return (data & 0x1F); }
+        constexpr uint8_t getG() const { return ((data >> 5) & 0x1F); }
+        constexpr uint8_t getB() const { return ((data >> 10) & 0x1F); }
+        constexpr uint8_t getA() const { return ((data >> 15) & 0x1); }
 
         constexpr bool operator <(const JColor555& other) const { return data < other.data; }
         constexpr bool operator >(const JColor555& other) const { return data > other.data; }
 
         void flipRB();
     };
-}
 
-
-
-#pragma region Serialization
-//YAML
-namespace YAML {
-    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JColor555& itemRef) {
-        return yamlOut << YAML::Hex << itemRef.data;
-    }
-
-    template<>
-    struct convert<JEngine::JColor555> {
-        static Node encode(const JEngine::JColor555& rhs) {
-            Node node(rhs.data);
-            return node;
-        }
-
-        static bool decode(const Node& node, JEngine::JColor555& rhs) {
-            if (!node.IsScalar() || node.size() < 1) { return false; }
-            rhs.data = node.as<uint16_t>();
-            return true;
-        }
+    struct Colors555 {
+        static constexpr JColor555 Clear{0x00, 0x00, 0x00, 0x00};
+        static constexpr JColor555 White{0xFF, 0xFF, 0xFF};
+        static constexpr JColor555 Black{0x00, 0x00, 0x00};
+        static constexpr JColor555 Gray{0x7F, 0x7F, 0x7F};
+        static constexpr JColor555 Red{0xFF, 0x00, 0x00};
+        static constexpr JColor555 Green{0x00, 0xFF, 0x00};
+        static constexpr JColor555 Blue{0x00, 0x00, 0xFF};
+        static constexpr JColor555 Magenta{0xFF, 0x00, 0xFF};
+        static constexpr JColor555 Yellow{0xFF, 0xFF, 0x00};
+        static constexpr JColor555 Cyan{0x00, 0xFF, 0xFF};
     };
 }
-
-//JSON
-namespace JEngine {
-    template<>
-    inline bool Serializable<JColor555>::deserializeJson(JColor555& itemRef, const json& jsonF, const JColor555& defaultValue) {
-        itemRef.data = jsonF.is_number_integer() ? jsonF.get<uint16_t>() : 0;
-        return true;
-    }
-
-    template<>
-    inline bool Serializable<JColor555>::serializeJson(const JColor555& itemRef, json& jsonF) {
-        Serialization::serialize(itemRef.data, jsonF);
-        return true;
-    }
-}
-#pragma endregion

@@ -170,18 +170,18 @@ namespace JEngine {
 
     bool Renderer::init(const char* title, const int32_t width, const int32_t height) {
         if (_initialized) {
-            JENGINE_CORE_WARN("[Renderer] Warning: Already initialized!");
+            JE_CORE_WARN("[Renderer] Warning: Already initialized!");
             return true;
         }
         const int32_t glfwErr = glfwInit();
         if (glfwErr == GLFW_FALSE) {
-            JENGINE_CORE_ERROR("[Renderer] Error: Failed to initialize GLFW!");
+            JE_CORE_ERROR("[Renderer] Error: Failed to initialize GLFW!");
             terminate();
             return false;
         }
 
         if (!_window.init(title, width, height)) {
-            JENGINE_CORE_ERROR("[Renderer] Error: Failed to initialize GLFW window!");
+            JE_CORE_ERROR("[Renderer] Error: Failed to initialize GLFW window!");
             terminate();
             return false;
         }
@@ -193,7 +193,7 @@ namespace JEngine {
         GLCall(glEnable(GL_BLEND));
         glEnable(GL_SCISSOR_TEST);
 
-        JENGINE_CORE_INFO("[Renderer] Init:\n  - Vendor         : {0}\n  - Renderer       : {1}\n  - Shader Version : {2}\n  - Version        : {3}", 
+        JE_CORE_INFO("[Renderer] Init:\n  - Vendor         : {0}\n  - Renderer       : {1}\n  - Shader Version : {2}\n  - Version        : {3}", 
             reinterpret_cast<const char*>(glGetString(GL_VENDOR)),
             reinterpret_cast<const char*>(glGetString(GL_RENDERER)),
             reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)),

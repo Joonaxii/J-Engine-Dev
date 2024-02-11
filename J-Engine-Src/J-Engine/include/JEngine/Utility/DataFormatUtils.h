@@ -1,10 +1,10 @@
 #pragma once
 #include <cstdint>
+#include <functional>
 #include <JEngine/IO/Stream.h>
 #include <JEngine/Utility/Span.h>
-#include <bitset>
-#include <functional>
 #include <JEngine/Utility/EnumUtils.h>
+#include <JEngine/Utility/HexStr.h>
 
 namespace JEngine {
     enum DataFormat : uint8_t {
@@ -63,22 +63,30 @@ namespace JEngine {
     };
 
     struct FormatInfo {
-        const char* signature{0};
+        StrBase signature{};
         uint64_t mask = 0;
-        size_t size = 0;
 
-        FormatInfo() : signature{0}, mask(0), size(0) {}
-        FormatInfo(const void* sig, uint64_t mask, size_t size) :
-            signature{reinterpret_cast<const char*>(sig)}, mask(mask), size(size > 64 ? 64 : size)
+        constexpr FormatInfo() : signature{}, mask(0) {}
+        constexpr FormatInfo(const StrBase& sig, uint64_t mask) :
+            signature{ sig }, mask(mask)
         {
         }
 
-        bool isValid(const void* data, size_t dataSize) const {
-            if (!data || size == 0 || dataSize < size || !signature) { return false; }
-            ConstSpan<char> headerPtr = ConstSpan<char>(signature, size);
-            ConstSpan<char> dataPtr   = ConstSpan<char>(reinterpret_cast<const char*>(data), size);
+        constexpr int32_t size() const {
+            return signature.length();
+        }
 
-            for (size_t i = 0, j = 1; i < size; i++, j <<= 1) {
+        void writeSignature(const Stream& stream, bool bigEndian = false) const {
+            stream.write(signature.data(), signature.length(), bigEndian);
+        }
+
+        bool isValid(const void* data, size_t dataSize) const {
+            if (!data || dataSize < signature.length() || !signature.isEmpty()) { return false; }
+
+            ConstSpan<char> headerPtr = ConstSpan<char>(signature.data(), signature.length());
+            ConstSpan<char> dataPtr   = ConstSpan<char>(reinterpret_cast<const char*>(data), signature.length());
+
+            for (size_t i = 0, j = 1; i < signature.length(); i++, j <<= 1) {
                 if ((mask & j) && (headerPtr[i] != dataPtr[i])) {
                     return false;
                 }
@@ -98,22 +106,68 @@ namespace JEngine {
     };
 
     namespace Format {
-        const char* getFormatStr(DataFormat format);
-        const FormatInfo* getFormats();
-        size_t getLargest();
+        static constexpr FormatInfo FORMATS[_FMT_COUNT]{
+                {}, {}, {}, {}, //Raw binary & text formats
+
+                {}, //Identifiable formats marker
+
+                FormatInfo(RAW_LE("‰PNG\x0D\x0A\x1A\x0A") , 0x0FF),
+                FormatInfo(RAW_LE("BM")                   , 0x003),
+                FormatInfo(RAW_LE("DDS ")                 , 0x00F),
+                FormatInfo(RAW_LE("\xFF\xD8\xFF\xDB")     , 0x00F),
+                FormatInfo(RAW_LE("GIF87a")               , 0x03F),
+                FormatInfo(RAW_LE("GIF89a")               , 0x03F),
+                FormatInfo(RAW_LE("RIFF\0\0\0\0WEBP")     , 0xF0F),
+
+                FormatInfo(RAW_LE("RIFF\0\0\0\0WAVE")     , 0xF0F),
+                FormatInfo(RAW_LE("OggS")                 , 0x00F),
+                FormatInfo(RAW_LE("ID3")                  , 0x007),
+
+                FormatInfo(RAW_LE("\x00\x01\x00\x00\x00") , 0x01F),
+                FormatInfo(RAW_LE("OTTO")                 , 0x00F),
+
+                // Engine Native formats
+                FormatInfo(RAW_LE("JPAK"), 0x00F),
+                FormatInfo(RAW_LE("JPRF"), 0x00F),
+                FormatInfo(RAW_LE("JMAT"), 0x00F),
+                FormatInfo(RAW_LE("JSHD"), 0x00F),
+                FormatInfo(RAW_LE("JGLI"), 0x00F),
+                FormatInfo(RAW_LE("JTEX"), 0x00F),
+                FormatInfo(RAW_LE("JRTX"), 0x00F),
+                FormatInfo(RAW_LE("JATL"), 0x00F),
+                FormatInfo(RAW_LE("JINP"), 0x00F),
+                FormatInfo(RAW_LE("JSCN"), 0x00F),
+                FormatInfo(RAW_LE("JPFB"), 0x00F),
+                FormatInfo(RAW_LE("JAUD"), 0x00F),
+                FormatInfo(RAW_LE("JSEC"), 0x00F),
+                FormatInfo(RAW_LE("JBPM"), 0x00F),
+                FormatInfo(RAW_LE("JDAT"), 0x00F),
+        };
+
+        FORCE_INLINE constexpr const StrBase& getFormatStr(DataFormat format) {
+            return FORMATS[format].signature;
+        }
+
+        FORCE_INLINE constexpr size_t getLargest() {
+            size_t largest = 0;
+            for (size_t i = _FMT_START + 1; i < _FMT_COUNT; i++)
+            {
+                largest = Math::max(largest, FORMATS[i].signature.length());
+            }
+            return largest;
+        }
+
+        FORCE_INLINE constexpr size_t getHeaderSize(DataFormat fmt) {
+            return FORMATS[fmt].signature.length();
+        }
+
         DataFormat getFormat(const Stream& stream, int64_t size = -1, DataFormatFlags flags = DataFormatFlags(0));
         DataFormat getFormat(const void* data, size_t size, DataFormatFlags flags = DataFormatFlags(0), bool containsData = false);
-        size_t getHeaderSize(DataFormat fmt);
-
+  
         void writeHeader(const Stream& stream, DataFormat format);
 
         bool formatMatch(const Stream& stream, DataFormat format);
         bool formatMatch(const void* data, size_t size, DataFormat format);
-    };
-    template<DataFormat format>
-    struct DataHeader {
-        static constexpr uint64_t Value = 0;
-        static constexpr uint8_t Length = 0;
     };
 
     template<>
@@ -169,42 +223,3 @@ namespace JEngine {
         return isNoName(names[index]);
     }
 }
-
-#define S_TO_UINT16(val) uint16_t(val[0] | (val[1] << 8))
-#define S_TO_UINT24(val) uint32_t(val[0] | (val[1] << 8) | (val[2] << 16))
-#define S_TO_UINT32(val) uint32_t(val[0] | (val[1] << 8) | (val[2] << 16) | (val[3] << 24))
-#define S_TO_UINT40(val) uint64_t(val[0] | (val[1] << 8) | (val[2] << 16) | (val[3] << 24) | (val[4] << 32))
-#define S_TO_UINT48(val) uint64_t(val[0] | (val[1] << 8) | (val[2] << 16) | (val[3] << 24) | (val[4] << 32) | (val[5] << 40))
-#define S_TO_UINT56(val) uint64_t(val[0] | (val[1] << 8) | (val[2] << 16) | (val[3] << 24) | (val[4] << 32) | (val[5] << 40) | (val[6] << 48))
-#define S_TO_UINT64(val) uint64_t(val[0] | (val[1] << 8) | (val[2] << 16) | (val[3] << 24) | (val[4] << 32) | (val[5] << 40) | (val[6] << 48) | (val[7] << 56))
-
-#define CS_TO_UI8(val) reinterpret_cast<const uint8_t*>(val)
-
-#define CREATE_DATA_HEADER(FORMAT, value, length) \
-template<> \
-inline constexpr uint64_t JEngine::DataHeader<FORMAT>::Value = value; \
-template<> \
-inline constexpr uint8_t JEngine::DataHeader<FORMAT>::Length = length; \
- \
-
-CREATE_DATA_HEADER(JEngine::FMT_JPAK, S_TO_UINT32("JPAK"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JPRF, S_TO_UINT32("JPRF"), 4);
-
-CREATE_DATA_HEADER(JEngine::FMT_JMAT, S_TO_UINT32("JMAT"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JSHD, S_TO_UINT32("JSHD"), 4);
-
-CREATE_DATA_HEADER(JEngine::FMT_JTEX, S_TO_UINT32("JTEX"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JRTX, S_TO_UINT32("JRTX"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JSPR, S_TO_UINT32("JSPR"), 4);
-
-CREATE_DATA_HEADER(JEngine::FMT_JINP, S_TO_UINT32("JINP"), 4);
-
-CREATE_DATA_HEADER(JEngine::FMT_JSCN, S_TO_UINT32("JSCN"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JPFB, S_TO_UINT32("JPFB"), 4);
-
-CREATE_DATA_HEADER(JEngine::FMT_JAUD, S_TO_UINT32("JAUD"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JSEC, S_TO_UINT32("JSEC"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JBPM, S_TO_UINT32("JBPM"), 4);
-
-CREATE_DATA_HEADER(JEngine::FMT_JFNT, S_TO_UINT32("JFNT"), 4);
-CREATE_DATA_HEADER(JEngine::FMT_JDAT, S_TO_UINT32("JDAT"), 4);

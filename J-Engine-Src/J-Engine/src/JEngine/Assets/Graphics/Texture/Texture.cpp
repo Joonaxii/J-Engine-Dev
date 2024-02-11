@@ -33,12 +33,12 @@ namespace JEngine {
         _valid = false;
         const bool isIndexed = format == TextureFormat::Indexed8 || format == TextureFormat::Indexed16;
         if (isIndexed && !Math::isAlignedToPalette(paletteSize)) {
-            JENGINE_CORE_WARN("Couldn't create texture, palette is not aligned to palette scan! ({0}, should be {1})", paletteSize, Math::alignToPalette(paletteSize));
+            JE_CORE_WARN("Couldn't create texture, palette is not aligned to palette scan! ({0}, should be {1})", paletteSize, Math::alignToPalette(paletteSize));
             return false;
         }
 
         if (format == TextureFormat::Unknown || width == 0 || height == 0) {
-            JENGINE_CORE_WARN("Couldn't create texture, given data was invalid! ({0}, {1}x{2})", getTextureFormatName(format), width, height);
+            JE_CORE_WARN("Couldn't create texture, given data was invalid! ({0}, {1}x{2})", getTextureFormatName(format), width, height);
             return false;
         }
 
@@ -107,12 +107,12 @@ namespace JEngine {
 
     bool Texture::update(const uint8_t* input, TextureFormat format, int32_t paletteSize, int32_t x, int32_t y, int32_t width, int32_t height, uint8_t flags) {
         if (_textureId == 0) {
-            JENGINE_CORE_WARN("Couldn't update texture, texture not created!");
+            JE_CORE_WARN("Couldn't update texture, texture not created!");
             return false;
         }
 
         if (format == TextureFormat::Unknown || width == 0 || height == 0) {
-            JENGINE_CORE_WARN("Couldn't update texture, given data was invalid! ({0}, {1}x{2})", getTextureFormatName(format), width, height);
+            JE_CORE_WARN("Couldn't update texture, given data was invalid! ({0}, {1}x{2})", getTextureFormatName(format), width, height);
             return false;
         }
 
@@ -120,19 +120,19 @@ namespace JEngine {
         int32_t leftY = _height - y;
 
         if (leftX < width || leftY < height) {
-            JENGINE_CORE_WARN("Couldn't update texture, given texture block was invalid! ({0}, {1}, {2}x{3} | {4}x{5})", x, y, width, height, _width, _height);
+            JE_CORE_WARN("Couldn't update texture, given texture block was invalid! ({0}, {1}, {2}x{3} | {4}x{5})", x, y, width, height, _width, _height);
             return false;
         }
 
         switch (_format) {
             default:
-                JENGINE_CORE_WARN("Couldn't update texture, unsupported format '{0}'!", getTextureFormatName(format));
+                JE_CORE_WARN("Couldn't update texture, unsupported format '{0}'!", getTextureFormatName(format));
                 return false;
 
             case TextureFormat::Indexed8:
             case TextureFormat::Indexed16:
                 if (_format != format) {
-                    JENGINE_CORE_WARN("Couldn't update texture, cannot convert from format '{0}' to '{1}'!", getTextureFormatName(format), getTextureFormatName(_format));
+                    JE_CORE_WARN("Couldn't update texture, cannot convert from format '{0}' to '{1}'!", getTextureFormatName(format), getTextureFormatName(_format));
                     return false;
                 }
                 break;

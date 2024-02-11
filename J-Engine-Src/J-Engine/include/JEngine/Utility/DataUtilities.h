@@ -1,9 +1,10 @@
 #pragma once 
+#include <JEngine/Core.h>
 #include <functional>
+#include <string_view>
 
 namespace JEngine {
     namespace Data {
-
         namespace detail {
             static constexpr uint32_t POLYNOMIAL = 0xEDB88320U;
             static constexpr uint32_t CRC_TABLE[256]{
@@ -86,20 +87,21 @@ namespace JEngine {
         constexpr uint32_t calculateCRC(const T& value) {
             const uint8_t* dataB = reinterpret_cast<const uint8_t*>(&value);
             uint32_t crc = 0xFFFFFFFFU;
-            for (size_t i = 0; i < sizeof(value); i++) {
+            for (size_t i = 0; i < sizeof(T); i++) {
                 crc = detail::CRC_TABLE[(crc ^ dataB[i]) & 0xFF] ^ (crc >> 8);
             }
             return crc ^ 0xFFFFFFFFU;
         }
 
         template<>
-        inline constexpr uint32_t calculateCRC<std::string_view>(const std::string_view& value) {
+        inline uint32_t calculateCRC<std::string_view>(const std::string_view& value) {
             uint32_t crc = 0xFFFFFFFFU;
             for (size_t i = 0; i < value.length(); i++) {
                 crc = detail::CRC_TABLE[(crc ^ value[i]) & 0xFF] ^ (crc >> 8);
             }
             return crc ^ 0xFFFFFFFFU;
         }
+
 
         template<typename T>
         constexpr uint32_t updateCRC(uint32_t crc, const T& value) {

@@ -1,41 +1,35 @@
 #pragma once
-#include <JEngine/IO/Serialization/Serializable.h>
 #include <cstdint>
+#include <ostream>
 
 namespace JEngine {
     struct JColor;
     struct JColor24;
+    struct JColor4444;
     struct JColor555;
     struct JColor565;
     struct JColor32 {
-        static const JColor32 White;
-        static const JColor32 Black;
-        static const JColor32 Gray;
-        static const JColor32 Clear;
-        static const JColor32 Red;
-        static const JColor32 Green;
-        static const JColor32 Blue;
-        static const JColor32 Magenta;
-        static const JColor32 Yellow;
-        static const JColor32 Cyan;
-
         uint8_t r;
         uint8_t g;
         uint8_t b;
         uint8_t a;
 
-        JColor32();
-        JColor32(const uint8_t r, const uint8_t g, const uint8_t b);
-        JColor32(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a);
+        constexpr JColor32() : r(0), g(0), b(0), a(0) { }
+        constexpr JColor32(uint8_t gray) : r(gray), g(gray), b(gray), a(0xFF) { }
+        constexpr JColor32(uint8_t gray, uint8_t alpha) : r(gray), g(gray), b(gray), a(alpha) { }
+        constexpr JColor32(uint8_t r, uint8_t g, uint8_t b) : r(r), g(g), b(b), a(0xFF) { }
+        constexpr JColor32(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) { }
 
         JColor32(const JColor& rgba);
         JColor32(const JColor24& rgba);
-        JColor32(const JColor24& rgb, const uint8_t alpha);
+        JColor32(const JColor24& rgb, uint8_t alpha);
 
-        JColor32(const JColor555& rgb);
-        JColor32(const JColor555& rgb, const uint8_t alpha);
+        JColor32(const JColor555& rgba);
+        JColor32(const JColor555& rgba, uint8_t alpha);
         JColor32(const JColor565& rgb);
-        JColor32(const JColor565& rgb, const uint8_t alpha);
+        JColor32(const JColor565& rgb, uint8_t alpha);
+        JColor32(const JColor4444& rgb);
+        JColor32(const JColor4444& rgb, uint8_t alpha);
 
         operator uint32_t() const { return *reinterpret_cast<const uint32_t*>(this); }
 
@@ -44,8 +38,10 @@ namespace JEngine {
 
         void set(const JColor& rgba);
         void set(const JColor24& rgb);
-        void set(const uint8_t r, const uint8_t g, const uint8_t b);
-        void set(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a);
+        void set(uint8_t gray);
+        void set(uint8_t gray, uint8_t alpha);
+        void set(uint8_t r, uint8_t g, uint8_t b);
+        void set(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
         bool operator==(const JColor32& other) const;
         bool operator!=(const JColor32& other) const;
@@ -74,10 +70,6 @@ namespace JEngine {
         bool operator>(const JColor32& other) const {
             return *reinterpret_cast<const uint32_t*>(this) > *reinterpret_cast<const uint32_t*>(&other);
         };
-
-        bool operator<(const JColor24& other) const;
-        bool operator>(const JColor24& other) const;
-
         void flipRB();
     };
 
@@ -86,87 +78,16 @@ namespace JEngine {
         return os;
     }
 
-    inline const JColor32 JColor32::Clear = JColor32(0x00, 0x00, 0x00, 0x00);
-    inline const JColor32 JColor32::White = JColor32(0xFF, 0xFF, 0xFF, 0xFF);
-    inline const JColor32 JColor32::Black = JColor32(0x00, 0x00, 0x00, 0xFF);
-    inline const JColor32 JColor32::Gray = JColor32(0x7F, 0x7F, 0x7F, 0xFF);
-
-    inline const JColor32 JColor32::Red = JColor32(0xFF, 0x00, 0x00, 0xFF);
-    inline const JColor32 JColor32::Green = JColor32(0x00, 0xFF, 0x00, 0xFF);
-    inline const JColor32 JColor32::Blue = JColor32(0x00, 0x00, 0xFF, 0xFF);
-    inline const JColor32 JColor32::Magenta = JColor32(0xFF, 0x00, 0xFF, 0xFF);
-    inline const JColor32 JColor32::Yellow = JColor32(0xFF, 0xFF, 0x00, 0xFF);
-    inline const JColor32 JColor32::Cyan = JColor32(0x00, 0xFF, 0xFF, 0xFF);
-
-}
-
-#pragma region Serialization
-//YAML
-namespace YAML {
-    inline yamlEmit& operator<<(yamlEmit& yamlOut, const JEngine::JColor32& itemRef) {
-        yamlOut << YAML::Flow << YAML::Hex;
-        yamlOut << YAML::BeginSeq << uint16_t(itemRef.r) << uint16_t(itemRef.g) << uint16_t(itemRef.b) << uint16_t(itemRef.a) << YAML::EndSeq;
-        return yamlOut;
-    }
-
-    template<>
-    struct convert<JEngine::JColor32> {
-        static Node encode(const JEngine::JColor32& rhs) {
-            Node node;
-            node.push_back(uint16_t(rhs.r));
-            node.push_back(uint16_t(rhs.g));
-            node.push_back(uint16_t(rhs.b));
-            node.push_back(uint16_t(rhs.a));
-            return node;
-        }
-
-        static bool decode(const Node& node, JEngine::JColor32& rhs) {
-            if (!node.IsSequence() || node.size() < 1) { return false; }
-
-            uint8_t r = node[0].as<uint8_t>();
-            uint8_t g = r;
-            uint8_t b = r;
-            uint8_t a = 0xFF;
-            switch (node.size()) {
-                case 1:     //Grayscale, same as init values
-                    break; 
-                case 2:     //RG
-                    g = node[1].as<uint8_t>();
-                    break;
-                case 3:     //RGB
-                    g = node[1].as<uint8_t>();
-                    b = node[2].as<uint8_t>();
-                    break;
-                default:    //RGBA
-                    g = node[1].as<uint8_t>();
-                    b = node[2].as<uint8_t>();
-                    a = node[2].as<uint8_t>();
-                    break;
-            }
-            rhs.set(r, g, b, a);
-            return true;
-        }
+    struct Colors32 {
+        static constexpr JColor32 Clear{0x00, 0x00, 0x00, 0x00};
+        static constexpr JColor32 White{0xFF, 0xFF, 0xFF, 0xFF};
+        static constexpr JColor32 Black{0x00, 0x00, 0x00, 0xFF};
+        static constexpr JColor32 Gray{0x7F, 0x7F, 0x7F, 0xFF};
+        static constexpr JColor32 Red{0xFF, 0x00, 0x00, 0xFF};
+        static constexpr JColor32 Green{0x00, 0xFF, 0x00, 0xFF};
+        static constexpr JColor32 Blue{0x00, 0x00, 0xFF, 0xFF};
+        static constexpr JColor32 Magenta{0xFF, 0x00, 0xFF, 0xFF};
+        static constexpr JColor32 Yellow{0xFF, 0xFF, 0x00, 0xFF};
+        static constexpr JColor32 Cyan{0x00, 0xFF, 0xFF, 0xFF};
     };
 }
-
-//JSON
-namespace JEngine {
-    template<>
-    inline bool Serializable<JColor32>::deserializeJson(JColor32& itemRef, const json& jsonF, const JColor32& defaultValue) {
-        Serialization::deserialize(itemRef.r, jsonF["r"], defaultValue.r);
-        Serialization::deserialize(itemRef.g, jsonF["g"], defaultValue.g);
-        Serialization::deserialize(itemRef.b, jsonF["b"], defaultValue.b);
-        Serialization::deserialize(itemRef.a, jsonF["a"], defaultValue.a);
-        return true;
-    }
-
-    template<>
-    inline bool Serializable<JColor32>::serializeJson(const JColor32& itemRef, json& jsonF) {
-        Serialization::serialize(itemRef.r, jsonF["r"]);
-        Serialization::serialize(itemRef.g, jsonF["g"]);
-        Serialization::serialize(itemRef.b, jsonF["b"]);
-        Serialization::serialize(itemRef.a, jsonF["a"]);
-        return true;
-    }
-}
-#pragma endregion

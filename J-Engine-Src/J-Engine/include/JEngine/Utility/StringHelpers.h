@@ -13,7 +13,7 @@ namespace JEngine::Helpers {
         IBase_10 = 0x0A,
     };
 
-    size_t strIIndexOf(ConstSpan<char>  strA, ConstSpan<char>  strB);
+    size_t strIIndexOf(ConstSpan<char> strA, ConstSpan<char>  strB);
 
     bool strIEquals(ConstSpan<char> strA, ConstSpan<char> strB);
     bool strIContains(ConstSpan<char> strA, ConstSpan<char> strB);
@@ -21,6 +21,28 @@ namespace JEngine::Helpers {
 
     bool shouldBeWide(const wchar_t* str, int32_t len);
     bool wideToASCII(wchar_t* str, int32_t len);
+
+    template<typename C>
+    void split(std::string_view view, C& collection, char separator = '.') {       
+        size_t pos = 0;
+        std::string_view str{};
+        while(true) {
+            size_t next = view.find(separator, pos);
+            if (next == std::string_view::npos) {
+                str = view.substr(pos);
+                if (str.length() > 0) {
+                    collection.push_back(view.substr(pos));
+                }
+                break;
+            }
+            str = view.substr(pos, next - pos);
+            if (str.length() > 0) {
+                collection.push_back(view.substr(pos, next - pos));
+            }
+            pos = next + 1;
+        }
+    }
+
 
     template<size_t bufSize>
     void formatDataSize(char(&buffer)[bufSize], size_t size) {

@@ -63,7 +63,7 @@ namespace JEngine {
 
     CompRef GameObject::addComponent(Component* comp, uint16_t flags, bool autoStart) {
         if (_compInfo.getCount() >= MAX_COMPONENTS) {
-            JENGINE_CORE_WARN("[GameObject] Warning: Max number of components ({0}) for GameObject '{1}' [0x{2:X}] has been reached!!", MAX_COMPONENTS, getName(), getUUID());
+            JE_CORE_WARN("[GameObject] Warning: Max number of components ({0}) for GameObject '{1}' [0x{2:X}] has been reached!!", MAX_COMPONENTS, getName(), getUUID());
             return CompRef();
         }
 

@@ -45,7 +45,7 @@ namespace JEngine {
         uint32_t uuid = uuidRef != UINT32_MAX ? scene._gameObjects.tryReserve(uuidRef, &go) : scene._gameObjects.popNext(&go);
 
         if (!go) {
-            JENGINE_CORE_ERROR("[Scene] Error: Couldn't allocate game object!");
+            JE_CORE_ERROR("[Scene] Error: Couldn't allocate game object!");
             return GORef(nullptr);
         }
 
@@ -69,7 +69,7 @@ namespace JEngine {
         if (scene._gameObjects.markFree(uuid)) {
             return true;
         }
-        JENGINE_CORE_ERROR("[Scene] Error: Couldn't deallocate game object! [{0:X}]", uuid);
+        JE_CORE_ERROR("[Scene] Error: Couldn't deallocate game object! [{0:X}]", uuid);
         return false;
     }
 

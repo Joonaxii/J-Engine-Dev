@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <stdlib.h>
 #include <JEngine/Math/Math.h>
+#include <JEngine/Core/Memory.h>
 
 namespace JEngine {
     template<typename T>
@@ -24,7 +25,7 @@ namespace JEngine {
 
         T* allocateSlot() {
             if (isFull()) { return nullptr; }
-            const int32_t newInd = Math::findFirstLSB(~_inUse);
+            int32_t newInd = Math::findFirstLSB(~_inUse);
 
             if (newInd < 0) { return nullptr; }
             _inUse |= (1ULL << newInd);
@@ -45,19 +46,20 @@ namespace JEngine {
     class PoolAllocator {
     public:
         PoolAllocator() : _chunk(nullptr), _chunkCount(init) {
-#if init > 0
-            PoolChunk<T>* prev = _chunk;
-            for (uint32_t i = 0; i < _chunkCount; i++) {
-                PoolChunk<T>* chunk = new PoolChunk<T>();
-                if (_chunk) {
-                    prev->next = chunk;
+            if (init > 0)
+            {
+                PoolChunk<T>* prev = _chunk;
+                for (uint32_t i = 0; i < _chunkCount; i++) {
+                    PoolChunk<T>* chunk = JE_NEW(PoolChunk<T>);
+                    if (_chunk) {
+                        prev->next = chunk;
+                    }
+                    else {
+                        _chunk = chunk;
+                    }
+                    prev = chunk;
                 }
-                else {
-                    _chunk = chunk;
-                }
-                prev = chunk;
             }
-#endif
         }
         ~PoolAllocator() {
             clear(true);
@@ -80,7 +82,7 @@ namespace JEngine {
             count = (count >> PoolChunk<T>::CHUNK_SHIFT) + 1;
 
             for (int64_t i = 0; i < count; i++) {
-                cChnk = new PoolChunk<T>();
+                cChnk = JE_NEW(PoolChunk<T>);
                 _chunkCount++;
                 if (prev) {
                     prev->next = cChnk;
@@ -104,7 +106,7 @@ namespace JEngine {
             }
 
             if (!cChnk) {
-                cChnk = new PoolChunk<T>();
+                cChnk = JE_NEW(PoolChunk<T>);
                 _chunkCount++;
                 if (prev) {
                     prev->next = cChnk;
@@ -129,7 +131,7 @@ namespace JEngine {
             }
 
             if (!cChnk) {
-                cChnk = new PoolChunk<T>();
+                cChnk = JE_NEW(PoolChunk<T>);
                 _chunkCount++;
                 if (prev) {
                     prev->next = cChnk;
@@ -150,7 +152,7 @@ namespace JEngine {
                 PoolChunk<T>* ptr = _chunk;
                 while (ptr) {
                     if (ptr->tryDeallocate(obj)) {
-                        obj->~T();
+                        memDestruct<T>(obj);
                         return true;
                     }
                     ptr = ptr->next;
@@ -172,7 +174,7 @@ namespace JEngine {
                     }
                     auto temp = ptr;
                     ptr = ptr->next;
-                    delete temp;
+                    memDelete(temp);
                     _chunkCount--;
                     continue;
                 }
@@ -198,7 +200,7 @@ namespace JEngine {
                 }
 
                 if (full) {
-                    delete temp;
+                    memDelete(temp);
                 }
             }
 
@@ -212,7 +214,7 @@ namespace JEngine {
         static PoolAllocator<T, init> Global;
         size_t _chunkCount;
         PoolChunk<T>* _chunk;
-        
+
     };
 
     template<typename T, uint32_t init>

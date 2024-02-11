@@ -39,7 +39,7 @@ namespace JEngine {
             NULL);
 
         if (_handle == INVALID_HANDLE_VALUE) {
-            JENGINE_CORE_ERROR("[DirectoryMonitor] Error: Failed to create handle to directory {0}!", path);
+            JE_CORE_ERROR("[DirectoryMonitor] Error: Failed to create handle to directory {0}!", path);
             return false;
         }
         memset(_changeBuffer, 0, CHANGE_BUFFER_SIZE);

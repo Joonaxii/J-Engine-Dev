@@ -4,10 +4,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project ("J-Engine")
 project ("J-Engine-Editor")
 
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
 add_subdirectory("ext/imgui")
 add_subdirectory("ext/YAML")
 add_subdirectory("ext/glfw-3.3.8")
@@ -15,24 +11,9 @@ add_subdirectory("ext/zlib")
 add_subdirectory("ext/spdlog")
 add_subdirectory("ext/nlohmann/json")
 
-set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
-set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+add_platform_stuff()
 
-add_compile_definitions(GLEW_STATIC)
-add_compile_definitions(YAML_CPP_STATIC_DEFINE)
-
-# Platform stuff
-IF (WIN32)
-	add_compile_definitions(WIN32_LEAN_AND_MEAN)
-	add_compile_definitions(NOMINMAX)
-	add_compile_definitions(JENGINE_PLATFORM_WINDOWS)
-ELSE()
-  # other platforms?
-ENDIF(WIN32)
-
-
-set(JENGINE_SOURCES )
+set(JE_SOURCES )
 
 # OpenGL Glew files
 set(GLEW_SRC
@@ -41,7 +22,7 @@ set(GLEW_SRC
 	"ext/src/glew.c"
 )
 source_group("JEngine/OpenGL/Glew" FILES ${GLEW_SRC})
-list(APPEND JENGINE_SOURCES ${GLEW_SRC})
+list(APPEND JE_SOURCES ${GLEW_SRC})
 
 # OpenGL files
 set(OPENGL_RENDERING_SRC
@@ -49,10 +30,10 @@ set(OPENGL_RENDERING_SRC
 	"src/JEngine/Rendering/OpenGL/GLHelpers.cpp"	
 )
 source_group("JEngine/OpenGL" FILES ${OPENGL_RENDERING_SRC})
-list(APPEND JENGINE_SOURCES ${OPENGL_RENDERING_SRC})
+list(APPEND JE_SOURCES ${OPENGL_RENDERING_SRC})
 
 # JEngine Debug files
-set(JENGINE_DEBUG_SRC
+set(JE_DEBUG_SRC
 	"include/JEngine/Debug/FPS.h"
 	"src/JEngine/Debug/FPS.cpp"
 	
@@ -61,11 +42,11 @@ set(JENGINE_DEBUG_SRC
 	"include/JEngine/Debug/Gizmos.h"
 	"src/JEngine/Debug/Gizmos.cpp"
 )
-source_group("JEngine/Debug" FILES ${JENGINE_DEBUG_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_DEBUG_SRC})
+source_group("JEngine/Debug" FILES ${JE_DEBUG_SRC})
+list(APPEND JE_SOURCES ${JE_DEBUG_SRC})
 
 # JEngine Audio files
-set(JENGINE_DEBUG_SRC
+set(JE_AUDIO_SRC
 	"include/JEngine/Audio/AudioEngine.h"
 	"src/JEngine/Audio/AudioEngine.cpp"
 	
@@ -78,11 +59,11 @@ set(JENGINE_DEBUG_SRC
 	"src/JEngine/Audio/IAudioSource.cpp"
 	"include/JEngine/Audio/IAudioSource.h"
 )
-source_group("JEngine/Audio" FILES ${JENGINE_DEBUG_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_DEBUG_SRC})
+source_group("JEngine/Audio" FILES ${JE_AUDIO_SRC})
+list(APPEND JE_SOURCES ${JE_AUDIO_SRC})
 
 # JEngine Import Settings files
-set(JENGINE_DEBUG_SRC
+set(JE_DEBUG_SRC
 	"include/JEngine/Assets/Import/ImportSettings.h"
 	
 	"include/JEngine/Assets/Import/AudioImportSettings.h"
@@ -91,12 +72,15 @@ set(JENGINE_DEBUG_SRC
 	"include/JEngine/Assets/Import/BeatMapImportSettings.h"
 	"src/JEngine/Assets/Import/BeatMapImportSettings.cpp"
 )
-source_group("JEngine/Assets/Import" FILES ${JENGINE_DEBUG_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_DEBUG_SRC})
+source_group("JEngine/Assets/Import" FILES ${JE_DEBUG_SRC})
+list(APPEND JE_SOURCES ${JE_DEBUG_SRC})
 
 # JEngine Utility files
-set(JENGINE_UTILITY_SRC
+set(JE_UTILITY_SRC
+	 "include/JEngine/Utility/HexStr.h"
 	 "include/JEngine/Utility/Version.h"
+	 "include/JEngine/Utility/SIMD.h"
+	 "include/JEngine/Utility/PrintableTypes.h"
 
      "include/JEngine/Utility/Flags.h"
      "include/JEngine/Utility/EnumUtils.h"
@@ -117,30 +101,30 @@ set(JENGINE_UTILITY_SRC
      "include/JEngine/Utility/StringHelpers.h"
      "src/JEngine/Utility/StringHelpers.cpp"
 )
-source_group("JEngine/Utility" FILES ${JENGINE_UTILITY_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_UTILITY_SRC})
+source_group("JEngine/Utility" FILES ${JE_UTILITY_SRC})
+list(APPEND JE_SOURCES ${JE_UTILITY_SRC})
 
 # JEngine Math files
-set(JENGINE_MATH_SRC
+set(JE_MATH_SRC
      "include/JEngine/Math/Math.h"
      "src/JEngine/Math/Math.cpp"
 )
-source_group("JEngine/Math" FILES ${JENGINE_MATH_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_MATH_SRC})
+source_group("JEngine/Math" FILES ${JE_MATH_SRC})
+list(APPEND JE_SOURCES ${JE_MATH_SRC})
 
 # JEngine RNG files
-set(JENGINE_MATH_RNG_SRC
+set(JE_MATH_RNG_SRC
 	 # RNG
      "include/JEngine/Math/Random/IWeighted.h"
      "include/JEngine/Math/Random/WeightedValue.h"
      "include/JEngine/Math/Random/RNG.h"
      "src/JEngine/Math/Random/RNG.cpp"
 )
-source_group("JEngine/Math/Random" FILES ${JENGINE_MATH_RNG_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_MATH_RNG_SRC})
+source_group("JEngine/Math/Random" FILES ${JE_MATH_RNG_SRC})
+list(APPEND JE_SOURCES ${JE_MATH_RNG_SRC})
 
 # JEngine Math Units
-set(JENGINE_MATH_UNITS_SRC
+set(JE_MATH_UNITS_SRC
 	"include/JEngine/Math/Units/JVector.h"
 	
 	"include/JEngine/Math/Units/JMatrix.h"
@@ -148,11 +132,11 @@ set(JENGINE_MATH_UNITS_SRC
 	
 	"include/JEngine/Math/Units/JRect.h"
 )
-source_group("JEngine/Math/Units" FILES ${JENGINE_MATH_UNITS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_MATH_UNITS_SRC})
+source_group("JEngine/Math/Units" FILES ${JE_MATH_UNITS_SRC})
+list(APPEND JE_SOURCES ${JE_MATH_UNITS_SRC})
 
 # JEngine Math Graphics
-set(JENGINE_MATH_GFX_SRC
+set(JE_MATH_GFX_SRC
 	"include/JEngine/Math/Graphics/JVertex.h"
 
 	"include/JEngine/Math/Graphics/JColor.h"
@@ -179,31 +163,46 @@ set(JENGINE_MATH_GFX_SRC
 	"include/JEngine/Math/Graphics/JColor64.h"
 	"src/JEngine/Math/Graphics/JColor64.cpp"
 )
-source_group("JEngine/Math/Graphics" FILES ${JENGINE_MATH_GFX_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_MATH_GFX_SRC})
+source_group("JEngine/Math/Graphics" FILES ${JE_MATH_GFX_SRC})
+list(APPEND JE_SOURCES ${JE_MATH_GFX_SRC})
 
 # JEngine Collection files
-set(JENGINE_COLLECTIONS_SRC
+set(JE_COLLECTIONS_SRC
 	 "include/JEngine/Collections/IReferenceProvider.h"
 	 "include/JEngine/Collections/IRef.h"
 	 "include/JEngine/Collections/ObjectRef.h"
+	 "include/JEngine/Collections/StackVector.h"
+	 "include/JEngine/Collections/Vector.h"	
+	 
+	 "include/JEngine/Collections/Bitset.h"
+	 "src/JEngine/Collections/Bitset.cpp"
+	 
+	 "include/JEngine/Collections/PoolVector.h"
 	 "include/JEngine/Collections/PoolAllocator.h"
 	 "include/JEngine/Collections/SubCollection.h"
 	 "include/JEngine/Collections/ReferenceVector.h"
 	 "include/JEngine/Collections/IndexStack.h"
 )
-source_group("JEngine/Collections" FILES ${JENGINE_COLLECTIONS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_COLLECTIONS_SRC})
+source_group("JEngine/Collections" FILES ${JE_COLLECTIONS_SRC})
+list(APPEND JE_SOURCES ${JE_COLLECTIONS_SRC})
+
+# JEngine GUI files
+set(JE_GUI_SRC
+	 "include/JEngine/GUI/Gui.h"
+	 "src/JEngine/GUI/Gui.cpp"
+)
+source_group("JEngine/GUI" FILES ${JE_GUI_SRC})
+list(APPEND JE_SOURCES ${JE_GUI_SRC})
 
 # JEngine Algorithm files
-set(JENGINE_ALGORITHM_SRC
+set(JE_ALGORITHM_SRC
 	 "include/JEngine/Algorithm/BinarySearch.h"
 )
-source_group("JEngine/Algorithm" FILES ${JENGINE_ALGORITHM_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_ALGORITHM_SRC})
+source_group("JEngine/Algorithm" FILES ${JE_ALGORITHM_SRC})
+list(APPEND JE_SOURCES ${JE_ALGORITHM_SRC})
 
 # JEngine Asset files
-set(JENGINE_ASSETS_SRC
+set(JE_ASSETS_SRC
 	 "include/JEngine/Assets/AssetType.h"
 	 "include/JEngine/Assets/AssetDataType.h"
 	 "src/JEngine/Assets/AssetDataType.cpp"
@@ -222,11 +221,11 @@ set(JENGINE_ASSETS_SRC
 	 "include/JEngine/Assets/SceneAsset.h"
      "src/JEngine/Assets/SceneAsset.cpp"
 )
-source_group("JEngine/Assets" FILES ${JENGINE_ASSETS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_ASSETS_SRC})
+source_group("JEngine/Assets" FILES ${JE_ASSETS_SRC})
+list(APPEND JE_SOURCES ${JE_ASSETS_SRC})
 
 # JEngine Algorithm files
-set(JENGINE_ASSET_SERIALIZER_SRC
+set(JE_ASSET_SERIALIZER_SRC
 	 "include/JEngine/Assets/Serializers/DataAssetSerializer.h"
 	 "src/JEngine/Assets/Serializers/DataAssetSerializer.cpp"
 	 
@@ -239,20 +238,20 @@ set(JENGINE_ASSET_SERIALIZER_SRC
 	 "include/JEngine/Assets/Serializers/BeatMapSerializer.h"
 	 "src/JEngine/Assets/Serializers/BeatMapSerializer.cpp"
 )
-source_group("JEngine/Assets/Serializers" FILES ${JENGINE_ASSET_SERIALIZER_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_ASSET_SERIALIZER_SRC})
+source_group("JEngine/Assets/Serializers" FILES ${JE_ASSET_SERIALIZER_SRC})
+list(APPEND JE_SOURCES ${JE_ASSET_SERIALIZER_SRC})
 
 
 # JEngine Scene Assets files
-set(JENGINE_SCENE_ASSETS_SRC 
+set(JE_SCENE_ASSETS_SRC 
 	 "include/JEngine/Assets/Scene/Scene.h"
 	 "src/JEngine/Assets/Scene/Scene.cpp"
 )
-source_group("JEngine/Assets/Scene" FILES ${JENGINE_SCENE_ASSETS_SRC})
-# list(APPEND JENGINE_SOURCES ${JENGINE_SCENE_ASSETS_SRC})
+source_group("JEngine/Assets/Scene" FILES ${JE_SCENE_ASSETS_SRC})
+# list(APPEND JE_SOURCES ${JE_SCENE_ASSETS_SRC})
 
 # JEngine Texture Assets files
-set(JENGINE_TEXTURE_ASSETS_SRC 
+set(JE_TEXTURE_ASSETS_SRC 
 	 "include/JEngine/Assets/Graphics/Texture/Texture2D.h"
      "src/JEngine/Assets/Graphics/Texture/Texture.cpp"
 	 "include/JEngine/Assets/Graphics/Texture/Texture.h"
@@ -260,47 +259,47 @@ set(JENGINE_TEXTURE_ASSETS_SRC
 	 "include/JEngine/Assets/Graphics/Texture/RenderTexture.h"
      "src/JEngine/Assets/Graphics/Texture/RenderTexture.cpp"
 )
-source_group("JEngine/Assets/Graphics/Texture" FILES ${JENGINE_TEXTURE_ASSETS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_TEXTURE_ASSETS_SRC})
+source_group("JEngine/Assets/Graphics/Texture" FILES ${JE_TEXTURE_ASSETS_SRC})
+list(APPEND JE_SOURCES ${JE_TEXTURE_ASSETS_SRC})
 
 # JEngine Material Assets files
-set(JENGINE_MATERIAL_ASSETS_SRC 
+set(JE_MATERIAL_ASSETS_SRC 
 	 "include/JEngine/Assets/Graphics/Material/Material.h"
      "src/JEngine/Assets/Graphics/Material/Material.cpp"
 	 "include/JEngine/Assets/Graphics/Material/MaterialProperty.h"
      "src/JEngine/Assets/Graphics/Material/MaterialProperty.cpp"
 )
-source_group("JEngine/Assets/Graphics/Material" FILES ${JENGINE_MATERIAL_ASSETS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_MATERIAL_ASSETS_SRC})
+source_group("JEngine/Assets/Graphics/Material" FILES ${JE_MATERIAL_ASSETS_SRC})
+list(APPEND JE_SOURCES ${JE_MATERIAL_ASSETS_SRC})
 
 # JEngine Shader Assets files
-set(JENGINE_SHADER_ASSETS_SRC 
+set(JE_SHADER_ASSETS_SRC 
 	 "include/JEngine/Assets/Graphics/Shader/Shader.h"
      "src/JEngine/Assets/Graphics/Shader/Shader.cpp"
 	 "include/JEngine/Assets/Graphics/Shader/ShaderLib.h"
      "src/JEngine/Assets/Graphics/Shader/ShaderLib.cpp"
 )
-source_group("JEngine/Assets/Graphics/Shader" FILES ${JENGINE_SHADER_ASSETS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_SHADER_ASSETS_SRC})
+source_group("JEngine/Assets/Graphics/Shader" FILES ${JE_SHADER_ASSETS_SRC})
+list(APPEND JE_SOURCES ${JE_SHADER_ASSETS_SRC})
 
 # JEngine Graphics Assets files
-set(JENGINE_GRAPHICS_ASSETS_SRC 
+set(JE_GRAPHICS_ASSETS_SRC 
 	 "include/JEngine/Assets/Graphics/Sprite.h"
      "src/JEngine/Assets/Graphics/Sprite.cpp"
 )
-source_group("JEngine/Assets/Graphics" FILES ${JENGINE_GRAPHICS_ASSETS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_GRAPHICS_ASSETS_SRC})
+source_group("JEngine/Assets/Graphics" FILES ${JE_GRAPHICS_ASSETS_SRC})
+list(APPEND JE_SOURCES ${JE_GRAPHICS_ASSETS_SRC})
 
 # JEngine Compression files
-set(JENGINE_COMPRESSION_SRC
+set(JE_COMPRESSION_SRC
 	 "include/JEngine/IO/Compression/ZLib.h"
      "src/JEngine/IO/Compression/ZLib.cpp"
 )
-source_group("JEngine/IO/Compression" FILES ${JENGINE_COMPRESSION_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_COMPRESSION_SRC})
+source_group("JEngine/IO/Compression" FILES ${JE_COMPRESSION_SRC})
+list(APPEND JE_SOURCES ${JE_COMPRESSION_SRC})
 
 # JEngine VFS files
-set(JENGINE_VFS_SRC
+set(JE_VFS_SRC
 	 "include/JEngine/IO/VFS/VFS.h"
      "src/JEngine/IO/VFS/VFS.cpp"
 	 "include/JEngine/IO/VFS/FileEntry.h"
@@ -308,19 +307,19 @@ set(JENGINE_VFS_SRC
 	 "include/JEngine/IO/VFS/FilePtr.h"
      "src/JEngine/IO/VFS/FilePtr.cpp"
 )
-source_group("JEngine/IO/VFS" FILES ${JENGINE_VFS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_VFS_SRC})
+source_group("JEngine/IO/VFS" FILES ${JE_VFS_SRC})
+list(APPEND JE_SOURCES ${JE_VFS_SRC})
 
 # JEngine IO Helper files
-set(JENGINE_IO_HELPERS_SRC
+set(JE_IO_HELPERS_SRC
 	 "include/JEngine/IO/Helpers/IOUtils.h"
      "src/JEngine/IO/Helpers/IOUtils.cpp"
 )
-source_group("JEngine/IO/Helpers" FILES ${JENGINE_IO_HELPERS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_IO_HELPERS_SRC})
+source_group("JEngine/IO/Helpers" FILES ${JE_IO_HELPERS_SRC})
+list(APPEND JE_SOURCES ${JE_IO_HELPERS_SRC})
 
 # JEngine IO Helper files
-set(JENGINE_IO_SRC
+set(JE_IO_SRC
 	 "include/JEngine/IO/Base64.h"
      "src/JEngine/IO/Base64.cpp"
 	 
@@ -347,59 +346,55 @@ set(JENGINE_IO_SRC
 	 "include/JEngine/IO/AudioUtils.h"
      "src/JEngine/IO/AudioUtils.cpp"
 )
-source_group("JEngine/IO" FILES ${JENGINE_IO_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_IO_SRC})
+source_group("JEngine/IO" FILES ${JE_IO_SRC})
+list(APPEND JE_SOURCES ${JE_IO_SRC})
 
 
 # JEngine Serialization files
-set(JENGINE_SERIALZIATION_SRC
+set(JE_SERIALZIATION_SRC
 	 "include/JEngine/IO/Serialization/SerializationConsts.h"
 	 "include/JEngine/IO/Serialization/SerializationUtils.h"
 	 "src/JEngine/IO/Serialization/SerializationUtils.cpp"
 	 "include/JEngine/IO/Serialization/Serializable.h"
-	 "include/JEngine/IO/Serialization/Serialize.h"
+	 "include/JEngine/IO/Serialization/Serialize.h"	 
+	 "include/JEngine/IO/Serialization/SerializedItem.h"
+	 "src/JEngine/IO/Serialization/SerializedItem.cpp"
 )
-source_group("JEngine/IO/Serialization" FILES ${JENGINE_SERIALZIATION_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_SERIALZIATION_SRC})
-
-# JEngine Cryptography files
-set(JENGINE_CRYPTOGRAPHY_SRC
-     "include/JEngine/Cryptography/UUIDFactory.h"
-     "src/JEngine/Cryptography/UUIDFactory.cpp"
-     "include/JEngine/Cryptography/UUID.h"
-     "src/JEngine/Cryptography/UUID.cpp"
-)
-source_group("JEngine/Cryptography" FILES ${JENGINE_CRYPTOGRAPHY_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_CRYPTOGRAPHY_SRC})
+source_group("JEngine/IO/Serialization" FILES ${JE_SERIALZIATION_SRC})
+list(APPEND JE_SOURCES ${JE_SERIALZIATION_SRC})
 
 # JEngine ImGui files
-set(JENGINE_IMGUI_SRC
+set(JE_IMGUI_SRC
      "include/JEngine/Rendering/ImGui/IImGuiDrawable.h"
      "include/JEngine/Rendering/ImGui/ImGuiUtils.h"
 )
-source_group("JEngine/Rendering/ImGui" FILES ${JENGINE_IMGUI_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_IMGUI_SRC})
+source_group("JEngine/Rendering/ImGui" FILES ${JE_IMGUI_SRC})
+list(APPEND JE_SOURCES ${JE_IMGUI_SRC})
 
 # JEngine Helper files
-set(JENGINE_HELPERS_SRC
+set(JE_HELPERS_SRC
      "include/JEngine/Helpers/Helpers.h"
      "src/JEngine/Helpers/Helpers.cpp"
      "include/JEngine/Helpers/TypeHelpers.h"
      "src/JEngine/Helpers/TypeHelpers.cpp"
 )
-source_group("JEngine/Helpers" FILES ${JENGINE_HELPERS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_HELPERS_SRC})
+source_group("JEngine/Helpers" FILES ${JE_HELPERS_SRC})
+list(APPEND JE_SOURCES ${JE_HELPERS_SRC})
 
 # JEngine files
-set(JENGINE_MAIN_SRC
+set(JE_MAIN_SRC
 	 "include/JEngine.h" 	 
 	 "include/JEngine/Core.h"
+	 "include/JEngine/Platform.h"
 )
-source_group("JEngine" FILES ${JENGINE_MAIN_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_MAIN_SRC})
+source_group("JEngine" FILES ${JE_MAIN_SRC})
+list(APPEND JE_SOURCES ${JE_MAIN_SRC})
 
 # JEngine Core files
-set(JENGINE_CORE_SRC
+set(JE_CORE_SRC
+	 "include/JEngine/Core/String.h"
+	 "src/JEngine/Core/String.cpp"
+	 
 	 "include/JEngine/Core/LayerMask.h"
 	 "src/JEngine/Core/LayerMask.cpp"
 	 
@@ -411,7 +406,9 @@ set(JENGINE_CORE_SRC
 	 "include/JEngine/Core/Assert.h"
 	 
 	 "include/JEngine/Core/IObject.h"
-	 "include/JEngine/Core/Reflection.h"
+	
+	 "include/JEngine/Core/Memory.h"
+     "src/JEngine/Core/Memory.cpp"
 	 
 	 "include/JEngine/Core/GameObject.h"
      "src/JEngine/Core/GameObject.cpp"
@@ -433,11 +430,11 @@ set(JENGINE_CORE_SRC
 
 	 "src/JEngine/Core/Log.cpp"
 )
-source_group("JEngine/Core" FILES ${JENGINE_CORE_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_CORE_SRC})
+source_group("JEngine/Core" FILES ${JE_CORE_SRC})
+list(APPEND JE_SOURCES ${JE_CORE_SRC})
 
 # JEngine Component files
-set(JENGINE_COMP_SRC
+set(JE_COMP_SRC
 	 "src/JEngine/Components/Component.cpp" 	 
 	 "include/JEngine/Components/Component.h"
 	 
@@ -448,12 +445,12 @@ set(JENGINE_COMP_SRC
 	 "include/JEngine/Components/CTransform.h"
 	 
 )
-source_group("JEngine/Components" FILES ${JENGINE_COMP_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_COMP_SRC})
+source_group("JEngine/Components" FILES ${JE_COMP_SRC})
+list(APPEND JE_SOURCES ${JE_COMP_SRC})
 
 
 # JEngine Rendering files
-set(JENGINE_RENDERING_CORE_SRC
+set(JE_RENDERING_CORE_SRC
      "include/JEngine/Rendering/RenderingConsts.h"
      "include/JEngine/Rendering/Window.h"
      "src/JEngine/Rendering/Window.cpp"
@@ -478,11 +475,11 @@ set(JENGINE_RENDERING_CORE_SRC
 	 "include/JEngine/Rendering/FrameBuffer.h"
 	 "src/JEngine/Rendering/FrameBuffer.cpp"
 )
-source_group("JEngine/Rendering" FILES ${JENGINE_RENDERING_CORE_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_RENDERING_CORE_SRC})
+source_group("JEngine/Rendering" FILES ${JE_RENDERING_CORE_SRC})
+list(APPEND JE_SOURCES ${JE_RENDERING_CORE_SRC})
 
 # JEngine Buffers files
-set(JENGINE_RENDERING_BUFFERS_SRC
+set(JE_RENDERING_BUFFERS_SRC
 	 # Buffers
 	 "include/JEngine/Rendering/Buffers/VertexBuffer.h"
 	 "src/JEngine/Rendering/Buffers/VertexBuffer.cpp"
@@ -493,44 +490,41 @@ set(JENGINE_RENDERING_BUFFERS_SRC
 	 "include/JEngine/Rendering/Buffers/VertexArray.h"
 	 "src/JEngine/Rendering/Buffers/VertexArray.cpp"
 )
-source_group("JEngine/Rendering/Buffers" FILES ${JENGINE_RENDERING_BUFFERS_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_RENDERING_BUFFERS_SRC})
+source_group("JEngine/Rendering/Buffers" FILES ${JE_RENDERING_BUFFERS_SRC})
+list(APPEND JE_SOURCES ${JE_RENDERING_BUFFERS_SRC})
 
 # JEngine Input files
-set(JENGINE_INPUT_SRC
+set(JE_INPUT_SRC
 	 "include/JEngine/Input/Input.h"
 	 "src/JEngine/Input/Input.cpp"
 )
-source_group("JEngine/Input" FILES ${JENGINE_INPUT_SRC})
-list(APPEND JENGINE_SOURCES ${JENGINE_INPUT_SRC})
+source_group("JEngine/Input" FILES ${JE_INPUT_SRC})
+list(APPEND JE_SOURCES ${JE_INPUT_SRC})
 
 
 set(JEDITOR_SOURCES )
-list(APPEND JEDITOR_SOURCES "${JENGINE_SOURCES}")
+list(APPEND JEDITOR_SOURCES "${JE_SOURCES}")
 
 
 # JEngine Editor IO files
-set(JENGINE_IO_SRC
+set(JE_IO_SRC
 	 "include/Editor/IO/DirectoryMonitor.h"
 	 "src/Editor/IO/DirectoryMonitor.cpp"
-	 
-	 "include/Editor/IO/SerializedNode.h"
-	 "src/Editor/IO/SerializedNode.cpp"
 )
-source_group("JEditor/IO" FILES ${JENGINE_IO_SRC})
-list(APPEND JEDITOR_SOURCES ${JENGINE_IO_SRC})
+source_group("Editor/IO" FILES ${JE_IO_SRC})
+list(APPEND JEDITOR_SOURCES ${JE_IO_SRC})
 
 
 # JEngine Editor Core files
-set(JENGINE_IO_SRC
+set(JE_IO_SRC
 	 "include/Editor/Core/EditorEssentials.h"
 	 "src/Editor/Core/EditorEssentials.cpp"
 )
-source_group("JEditor/Core" FILES ${JENGINE_IO_SRC})
-list(APPEND JEDITOR_SOURCES ${JENGINE_IO_SRC})
+source_group("Editor/Core" FILES ${JE_IO_SRC})
+list(APPEND JEDITOR_SOURCES ${JE_IO_SRC})
 
-add_lib_for(J-Engine-Editor "${JEDITOR_SOURCES}" JENGINE_EDITOR)
-add_lib_for(J-Engine-Player "${JENGINE_SOURCES}" JENGINE_PLAYER)
+add_lib_for(J-Engine-Editor "${JEDITOR_SOURCES}" JE_EDITOR)
+add_lib_for(J-Engine-Player "${JE_SOURCES}" JE_PLAYER)
 
 target_compile_options(
     J-Engine-Editor PUBLIC
@@ -545,7 +539,6 @@ target_compile_options(
 find_package(OpenGL REQUIRED)
 target_link_libraries(J-Engine-Player spdlog XInput OpenGL::GL glfw ImGUI zlibstatic yaml-cpp nlohmann_json XAudio2)
 target_link_libraries(J-Engine-Editor spdlog XInput OpenGL::GL glfw ImGUI zlibstatic yaml-cpp nlohmann_json XAudio2)
-
 
 include_directories("include")
 include_directories("ext/include")

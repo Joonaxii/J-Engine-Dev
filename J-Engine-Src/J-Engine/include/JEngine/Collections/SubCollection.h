@@ -17,13 +17,13 @@ namespace JEngine {
         }
 
         T& operator[](size_t index) override {
-            JENGINE_CORE_ASSERT(i > -1 && i < _count);
-            JENGINE_CORE_ASSERT(_collection, "Collection cannot be null!");
+            JE_CORE_ASSERT(i > -1 && i < _count);
+            JE_CORE_ASSERT(_collection, "Collection cannot be null!");
             return (*_collection)[_indices[index]];
         }
         const T& operator[](size_t index) const override {
-            JENGINE_CORE_ASSERT(i > -1 && i < _count);
-            JENGINE_CORE_ASSERT(_collection, "Collection cannot be null!");
+            JE_CORE_ASSERT(i > -1 && i < _count);
+            JE_CORE_ASSERT(_collection, "Collection cannot be null!");
             return (*_collection)[_indices[index]];
         }
 

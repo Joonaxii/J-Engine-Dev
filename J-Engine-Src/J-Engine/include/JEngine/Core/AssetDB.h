@@ -6,7 +6,7 @@
 #include <JEngine/Assets/IAssetSerializer.h>
 #include <JEngine/IO/VFS/VFS.h>
 
-#ifdef JENGINE_EDITOR
+#ifdef JE_EDITOR
 #include <Editor/IO/DirectoryMonitor.h>
 #endif
 
@@ -26,7 +26,7 @@ namespace JEngine {
         AssetDB();
 
         ~AssetDB();
-#ifdef JENGINE_EDITOR
+#ifdef JE_EDITOR
         void initialize(const ConstSpan<char> roots[SRC_COUNT], const ConstSpan<char> dbRoots[SRC_COUNT]);
 
         //void deserializeEditorAsset(FileEntry* entry);
@@ -93,7 +93,7 @@ namespace JEngine {
             VFS vfs{};
             ChunkedLUT<AssetInfo> assets{};
 
-#ifdef JENGINE_EDITOR
+#ifdef JE_EDITOR
             VFS vfsDB{};
             ChunkedLUT<AssetInfo> assetsDB{};
             DirectoryMonitor dirMonitor{};

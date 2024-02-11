@@ -1,33 +1,47 @@
 #pragma once
+#include <JEngine/Collections/Vector.h>
 #include <JEngine/Components/Component.h>
 #include <JEngine/Math/Units/JMatrix.h>
 #include <JEngine/Math/Units/JVector.h>
 #include <JEngine/Utility/EnumUtils.h>
 
 namespace JEngine {
+    enum SpaceType : uint8_t {
+        SPACE_FULL,
+        SPACE_PART,
+    };
+
     enum class Space : uint8_t {
         None,
         Local,
         World,
     };
+    CREATE_ENUM_OPERATORS_SELF(Space);
 
     template<>
-    inline constexpr int32_t EnumNames<Space>::Count{ 3 };
+    inline constexpr size_t EnumNames<Space, SPACE_FULL>::Count{ 3 };
 
     template<>
-    inline const char** EnumNames<Space>::getEnumNames() {
-        static const char* names[] =
-        {
-            "",
-            "Local",
-            "World",
-        };
-        return names;
-    }
+    inline constexpr std::string_view EnumNames<Space, SPACE_FULL>::Names[Count]
+    {
+        "None",
+        "Local",
+        "World",
+    };
+
     template<>
-    inline bool EnumNames<Space>::noDraw(int32_t index) {
-        return index < 1 || index >= Count;
-    }
+    inline constexpr size_t EnumNames<Space, SPACE_PART>::Count{ 2 };
+
+    template<>
+    inline constexpr uint8_t EnumNames<Space, SPACE_PART>::MinValue{ uint8_t(Space::World - Space::Local) };
+
+    template<>
+    inline constexpr std::string_view EnumNames<Space, SPACE_PART>::Names[Count]
+    {
+        "Local",
+        "World",
+    };
+
 
     class GameObject;
     class CTransform : public Component {
@@ -70,20 +84,14 @@ namespace JEngine {
         TCompRef<CTransform> getChildAt(size_t index) const;
         TCompRef<CTransform> find(std::string_view name) const;
 
+        static void bindFields(Type& type);
+
     protected:
         friend class GameObject;
+        friend class SerializedItem;
 
         void onInit() override;
-        virtual void doDelete() override;
-
-        void deserializeBinaryImpl(const Stream& stream) override;
-        void serializeBinaryImpl(const Stream& stream) const override;
-
-        void deserializeYAMLImpl(yamlNode& node) override;
-        void serializeYAMLImpl(yamlEmit& emit) const override;
-
-        void deserializeJSONImpl(json& jsonF) override;
-        void serializeJSONImpl(json& jsonF) const override;
+        JE_COMPONENT(JEngine::CTransform)
 
     private:
         JVector3f _lPos;
@@ -91,7 +99,7 @@ namespace JEngine {
         JVector3f _lSca;
 
         TCompRef<CTransform> _parent{};
-        std::vector<TCompRef<CTransform>> _children{};
+        Vector<TCompRef<CTransform>> _children{};
 
         void transform(const JVector3f* tra, const JVector3f* rot, const JVector3f* sca, Space space);
         void update(Space space, const JVector3f* pos, const JVector3f* rot, const JVector3f* scale);
@@ -104,6 +112,6 @@ namespace JEngine {
     inline constexpr ComponentFlags ComponentInfo<CTransform>::Flags = COMP_IS_TRANSFORM;
 
     template<>
-    inline constexpr const char* ComponentInfo<CTransform>::Name = "Transform";
+    inline constexpr const char* ComponentInfo<CTransform>::Name = "CTransform";
 }
 REGISTER_COMPONENT(JEngine::CTransform);

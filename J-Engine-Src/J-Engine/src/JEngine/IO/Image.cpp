@@ -1,6 +1,5 @@
+#include <JEngine/Core.h>
 #include <JEngine/IO/Image.h>
-#include <iostream>
-#include <JEngine/Core/Log.h>
 #include <JEngine/Math/Graphics/JColor24.h>
 #include <JEngine/Math/Graphics/JColor32.h>
 #include <JEngine/Math/Math.h>
@@ -32,7 +31,7 @@ namespace JEngine {
     }
 
     namespace Bmp {
-#pragma pack(push, 1)
+JE_BEG_PACK
         struct BmpHeader {
             //File Header
             uint16_t signature;
@@ -58,7 +57,7 @@ namespace JEngine {
             int32_t colorsUsed;
             int32_t numOfColors;
         };
-#pragma pack(pop, 1)
+JE_END_PACK
 
         bool decode(const std::string& path, ImageData& imgData, const ImageDecodeParams params) {
             return decode(path.c_str(), imgData, params);
@@ -80,7 +79,7 @@ namespace JEngine {
                 return getInfo(stream, imgData);
             }
 
-            JENGINE_ERROR("[Image-IO] (BMP) Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] (BMP) Error: Failed to open '{0}'!", path);
             return false;
         }
 
@@ -89,7 +88,7 @@ namespace JEngine {
             size_t dataSize = stream.size() - start;
 
             if (dataSize < 54) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data to read header!");
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data to read header!");
                 return false;
             }
 
@@ -97,11 +96,11 @@ namespace JEngine {
             stream.read(&header, sizeof(header), false);
 
             if (header.signature != 0x4D42U) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Invalid BMP signature!");
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Invalid BMP signature!");
                 return false;
             }
             if (header.length > dataSize) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data in stream!");
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data in stream!");
                 return false;
             }
 
@@ -112,11 +111,11 @@ namespace JEngine {
                 case 32:
                     break;
                 default:
-                    JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported bitdepth ({0})!", header.bpp);
+                    JE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported bitdepth ({0})!", header.bpp);
                     return false;
             }
             if (header.compression != 0 && header.compression != 0x3) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported compression mode ({0})!", header.compression);
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported compression mode ({0})!", header.compression);
                 return false;
             }
 
@@ -153,7 +152,7 @@ namespace JEngine {
                 return decode(stream, imgData, params);
             }
 
-            JENGINE_ERROR("[Image-IO] (BMP) Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] (BMP) Error: Failed to open '{0}'!", path);
             return false;
         }
 
@@ -162,7 +161,7 @@ namespace JEngine {
             size_t dataSize = stream.size() - start;
 
             if (dataSize < 54) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data to read header!");
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data to read header!");
                 return false;
             }
 
@@ -170,11 +169,11 @@ namespace JEngine {
             stream.read(&header, sizeof(header), false);
 
             if (header.signature != 0x4D42U) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Invalid BMP signature!");
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Invalid BMP signature!");
                 return false;
             }
             if (header.length > dataSize) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data in stream!");
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Not enough data in stream!");
                 return false;
             }
 
@@ -185,11 +184,11 @@ namespace JEngine {
                 case 32:
                     break;
                 default:
-                    JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported bitdepth ({0})!", header.bpp);
+                    JE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported bitdepth ({0})!", header.bpp);
                     return false;
             }
             if (header.compression != 0 && header.compression != 0x3) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported compression mode ({0})!", header.compression);
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Unsupported compression mode ({0})!", header.compression);
                 return false;
             }
 
@@ -209,7 +208,7 @@ namespace JEngine {
             char* scan = reinterpret_cast<char*>(_malloca(scanSize));
 
             if (!scan) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Failed to allocate scanline of size {0} bytes!", scanSize);
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Failed to allocate scanline of size {0} bytes!", scanSize);
                 return false;
             }
 
@@ -219,7 +218,7 @@ namespace JEngine {
             const uint32_t outSize = pixelDataSize + paletteOff;
 
             if (!imgData.doAllocate(outSize)) {
-                JENGINE_ERROR("[Image-IO] (BMP) Decode Error: Failed to allocate pixel buffer of size {0} bytes!", scanSize);
+                JE_ERROR("[Image-IO] (BMP) Decode Error: Failed to allocate pixel buffer of size {0} bytes!", scanSize);
                 _freea(scan);
                 return false;
             }
@@ -311,14 +310,14 @@ namespace JEngine {
             if (fs.open("wb")) {
                 return encode(fs, imgData, dpi);
             }
-            JENGINE_ERROR("[Image-IO] (BMP) Encode Error: Failed to open file '{0}' for writing!", path);
+            JE_ERROR("[Image-IO] (BMP) Encode Error: Failed to open file '{0}' for writing!", path);
             return false;
         }
 
         bool encode(const Stream& stream, const ImageData& imgData, uint32_t dpi) {
 
             if (!stream.isOpen()) {
-                JENGINE_ERROR("[Image-IO] (BMP) Encode Error: Stream isn't open!");
+                JE_ERROR("[Image-IO] (BMP) Encode Error: Stream isn't open!");
                 return false;
             }
 
@@ -326,7 +325,7 @@ namespace JEngine {
             static constexpr uint32_t HEADER_SIZE = 54;
 
             if (imgData.format == TextureFormat::Unknown) {
-                JENGINE_ERROR("[Image-IO] (BMP) Encode Error: Unknown texture format!");
+                JE_ERROR("[Image-IO] (BMP) Encode Error: Unknown texture format!");
                 return false;
             }
 
@@ -352,7 +351,7 @@ namespace JEngine {
 
             uint8_t* scan = reinterpret_cast<uint8_t*>(_malloca(scanSP));
             if (!scan) {
-                JENGINE_ERROR("[Image-IO] (BMP) Encode Error: Failed to allocate scanline buffer of size {0} bytes!", scanSP);
+                JE_ERROR("[Image-IO] (BMP) Encode Error: Failed to allocate scanline buffer of size {0} bytes!", scanSP);
                 return false;
             }
             memset(scan, 0, scanSP);
@@ -434,7 +433,7 @@ namespace JEngine {
             CH_IEND = 0x444E4549U,
         };
 
-#pragma pack(push, 1)
+JE_BEG_PACK
         struct PngChunk {
             uint32_t length{ 0 };
             PngChunkType type{};
@@ -459,8 +458,7 @@ namespace JEngine {
             uint8_t filter;
             uint8_t interlaced;
         };
-
-#pragma pack(pop, 1)
+JE_END_PACK
 
         static bool calculateDiff(const uint8_t* data, size_t width, size_t bpp, uint64_t& current) {
             uint64_t curVal = 0;
@@ -575,7 +573,7 @@ namespace JEngine {
                 return decode(stream, imgData, params);
             }
 
-            JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] (PNG) Decode Error: Failed to open '{0}'!", path);
             return false;
         }
 
@@ -585,7 +583,7 @@ namespace JEngine {
 
             stream.read(buffer, 8, false);
             if (std::memcmp(PNG_HEADER, buffer, 8)) {
-                JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Invalid PNG signature!");
+                JE_ERROR("[Image-IO] (PNG) Decode Error: Invalid PNG signature!");
                 return false;
             }
 
@@ -620,14 +618,14 @@ namespace JEngine {
                         stream.seek(4, SEEK_CUR);
 
                         /*  if (ihdr.interlaced) {
-                              JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Interlaced PNGs are note supported!");
+                              JE_ERROR("[Image-IO] (PNG) Decode Error: Interlaced PNGs are note supported!");
                               return false;
                           }*/
 
                         switch (ihdr.bitDepth)
                         {
                             default:
-                                JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported bitdepth {0}!", ihdr.bitDepth);
+                                JE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported bitdepth {0}!", ihdr.bitDepth);
                                 return false;
                             case 8:
                             case 16:
@@ -637,11 +635,11 @@ namespace JEngine {
                         switch (ihdr.colorType)
                         {
                             default:
-                                JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported color type {0}!", ihdr.colorType);
+                                JE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported color type {0}!", ihdr.colorType);
                                 return false;
                             case 0:
                                 if (ihdr.bitDepth != 8) {
-                                    JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported bitdepth {0}!", ihdr.bitDepth);
+                                    JE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported bitdepth {0}!", ihdr.bitDepth);
                                     return false;
                                 }
                                 imgData.format = TextureFormat::R8;
@@ -683,7 +681,7 @@ namespace JEngine {
             uint32_t rawSize = scanSP * imgData.height;
 
             if (!imgData.doAllocate(totalSize)) {
-                JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate pixel buffer! ({0} bytes)", totalSize);
+                JE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate pixel buffer! ({0} bytes)", totalSize);
                 return false;
             }
 
@@ -691,7 +689,7 @@ namespace JEngine {
             if (!rawBuffer) {
                 free(imgData.data);
                 imgData.data = nullptr;
-                JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate decompress buffer! ({0} bytes)", rawSize);
+                JE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate decompress buffer! ({0} bytes)", rawSize);
                 return false;
             }
 
@@ -700,7 +698,7 @@ namespace JEngine {
                 _freea(rawBuffer);
                 free(imgData.data);
                 imgData.data = nullptr;
-                JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate IDAT buffer! ({0} bytes)", totalIdat);
+                JE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate IDAT buffer! ({0} bytes)", totalIdat);
                 return false;
             }
 
@@ -714,7 +712,7 @@ namespace JEngine {
             _freea(compBuffer);
 
             if (ret == -1) {
-                JENGINE_ERROR("[Image-IO] (PNG) Decode Error: ZLib Inflate failed!");
+                JE_ERROR("[Image-IO] (PNG) Decode Error: ZLib Inflate failed!");
                 _freea(rawBuffer);
 
                 free(imgData.data);
@@ -724,7 +722,7 @@ namespace JEngine {
 
             uint8_t* scanBuffer = reinterpret_cast<uint8_t*>(_malloca(scanSP * 2));
             if (!scanBuffer) {
-                JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate scan buffer!");
+                JE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate scan buffer!");
                 _freea(rawBuffer);
 
                 free(imgData.data);
@@ -792,12 +790,12 @@ namespace JEngine {
             if (colorCount > 0 && canBuild) {
                 colorCount = fmt == TextureFormat::Indexed8 ? 256 : Math::alignToPalette(colorCount);
 
-                JENGINE_TRACE("[Image-IO] (PNG) Decode: Building palette with {0} colors!", colorCount);
+                JE_TRACE("[Image-IO] (PNG) Decode: Building palette with {0} colors!", colorCount);
                 totalSize = colorCount * 4 + (imgData.width * imgData.height * 2);
                 uint8_t* temp = reinterpret_cast<uint8_t*>(malloc(totalSize));
 
                 if (!temp) {
-                    JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate Indexed pixel buffer! ({0} bytes)", totalSize);
+                    JE_ERROR("[Image-IO] (PNG) Decode Error: Failed to allocate Indexed pixel buffer! ({0} bytes)", totalSize);
                     return false;
                 }
                 applyPalette(imgData.data, imgData.width, imgData.height, colorCount, imgData.format, temp, fmt, -1);
@@ -818,7 +816,7 @@ namespace JEngine {
                 return getInfo(stream, imgData);
             }
 
-            JENGINE_ERROR("[Image-IO] (PNG) Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] (PNG) Error: Failed to open '{0}'!", path);
             return false;
         }
 
@@ -828,7 +826,7 @@ namespace JEngine {
 
             stream.read(buffer, 8, false);
             if (std::memcmp(PNG_HEADER, buffer, 8)) {
-                JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Invalid PNG signature!");
+                JE_ERROR("[Image-IO] (PNG) Decode Error: Invalid PNG signature!");
                 return false;
             }
 
@@ -843,14 +841,14 @@ namespace JEngine {
                 }
             }
 
-            JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Couldn't find IHDR!");
+            JE_ERROR("[Image-IO] (PNG) Decode Error: Couldn't find IHDR!");
             return false;
 
         foundHeader:
             switch (ihdr.bitDepth)
             {
                 default:
-                    JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported bitdepth {0}!", ihdr.bitDepth);
+                    JE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported bitdepth {0}!", ihdr.bitDepth);
                     return false;
                 case 8:
                 case 16:
@@ -860,11 +858,11 @@ namespace JEngine {
             switch (ihdr.colorType)
             {
                 default:
-                    JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported color type {0}!", ihdr.colorType);
+                    JE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported color type {0}!", ihdr.colorType);
                     return false;
                 case 0:
                     if (ihdr.bitDepth != 8) {
-                        JENGINE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported bitdepth {0}!", ihdr.bitDepth);
+                        JE_ERROR("[Image-IO] (PNG) Decode Error: Unsupported bitdepth {0}!", ihdr.bitDepth);
                         return false;
                     }
                     imgData.format = TextureFormat::R8;
@@ -900,25 +898,25 @@ namespace JEngine {
             if (fs.open("wb")) {
                 return encode(fs, imgData, compression);
             }
-            JENGINE_ERROR("[Image-IO] (PNG) Encode Error: Failed to open file '{0}' for writing!", path);
+            JE_ERROR("[Image-IO] (PNG) Encode Error: Failed to open file '{0}' for writing!", path);
             return false;
         }
 
         bool encode(const Stream& stream, const ImageData& imgData, const uint32_t compression) {
             if (!stream.isOpen()) {
-                JENGINE_ERROR("[Image-IO] (PNG) Encode Error: Stream isn't open!");
+                JE_ERROR("[Image-IO] (PNG) Encode Error: Stream isn't open!");
                 return false;
             }
 
             if (!imgData.data) {
-                JENGINE_ERROR("[Image-IO] (PNG) Encode Error: Given pixel array is null!");
+                JE_ERROR("[Image-IO] (PNG) Encode Error: Given pixel array is null!");
                 return false;
             }
 
             switch (imgData.format)
             {
                 default:
-                    JENGINE_ERROR("[Image-IO] (PNG) Encode Error: Encoding for format '{0}' isn't supported!", getTextureFormatName(imgData.format));
+                    JE_ERROR("[Image-IO] (PNG) Encode Error: Encoding for format '{0}' isn't supported!", getTextureFormatName(imgData.format));
                     return false;
                 case TextureFormat::R8:
                 case TextureFormat::Indexed8:
@@ -929,7 +927,7 @@ namespace JEngine {
             }
 
             if (imgData.width < 1 || imgData.height < 1) {
-                JENGINE_ERROR("[Image-IO] (PNG) Encode Error: Invalid resolution ({0}x{1}) for encoding!", imgData.width, imgData.height);
+                JE_ERROR("[Image-IO] (PNG) Encode Error: Invalid resolution ({0}x{1}) for encoding!", imgData.width, imgData.height);
                 return false;
             }
 
@@ -1007,7 +1005,7 @@ namespace JEngine {
             uint32_t scanSP = scanSR + 1;
             uint8_t* scanBuffer = reinterpret_cast<uint8_t*>(malloc(scanSP * 6));
             if (!scanBuffer) {
-                JENGINE_ERROR("[Image-IO] (PNG) Encode Error: Couldn't allocate scan/filter buffer! ({0} bytes)", scanSP * 6);
+                JE_ERROR("[Image-IO] (PNG) Encode Error: Couldn't allocate scan/filter buffer! ({0} bytes)", scanSP * 6);
                 return false;
             }
 
@@ -1016,7 +1014,7 @@ namespace JEngine {
             Span<uint8_t> compBuf(compressBuf, cmpBufSize);
             if (!compressBuf) {
                 free(scanBuffer);
-                JENGINE_ERROR("[Image-IO] (PNG) Encode Error: Couldn't allocate compression buffer! ({0} bytes)", cmpBufSize);
+                JE_ERROR("[Image-IO] (PNG) Encode Error: Couldn't allocate compression buffer! ({0} bytes)", cmpBufSize);
                 return false;
             }
 
@@ -1183,7 +1181,7 @@ namespace JEngine {
             if (fs.open("rb")) {
                 return decodeDxt1(fs, imgData);
             }
-            JENGINE_ERROR("[Image-IO] (DXT1) Decode Error: Failed to open file '{0}' for reading!", path);
+            JE_ERROR("[Image-IO] (DXT1) Decode Error: Failed to open file '{0}' for reading!", path);
             return false;
         }
 
@@ -1319,7 +1317,7 @@ namespace JEngine {
             if (fs.open("rb")) {
                 return decodeDxt5(fs, imgData);
             }
-            JENGINE_ERROR("[Image-IO] (DXT5) Decode Error: Failed to open file '{0}' for reading!", path);
+            JE_ERROR("[Image-IO] (DXT5) Decode Error: Failed to open file '{0}' for reading!", path);
             return false;
         }
 
@@ -1363,14 +1361,14 @@ namespace JEngine {
             DDS_DXT5 = 0x35585444U,
         };
 
-#pragma pack(push, 1)
+JE_BEG_PACK
         struct DDSFormat {
             uint32_t flags{};
             DDSCompression compression{};
             uint32_t bitCount{};
             uint32_t compMasks[4]{};
         };
-#pragma pack(pop, 1)
+JE_END_PACK
 
         bool decode(const std::string& path, ImageData& imgData, const ImageDecodeParams params) {
             return decode(path.c_str(), imgData, params);
@@ -1391,13 +1389,13 @@ namespace JEngine {
                 return getInfo(stream, imgData);
             }
 
-            JENGINE_ERROR("[Image-IO] (DDS) Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] (DDS) Error: Failed to open '{0}'!", path);
             return false;
         }
 
         bool getInfo(const Stream& stream, ImageData& imgData) {
             if (!stream.isOpen()) {
-                JENGINE_ERROR("[Image-IO] (DDS) Decode Error: Stream isn't open!");
+                JE_ERROR("[Image-IO] (DDS) Decode Error: Stream isn't open!");
                 return false;
             }
 
@@ -1406,7 +1404,7 @@ namespace JEngine {
             stream.readValue(sig, false);
 
             if (sig != SIGNATURE) {
-                JENGINE_ERROR("[Image-IO] (DDS) Error: Signature isn't valid!");
+                JE_ERROR("[Image-IO] (DDS) Error: Signature isn't valid!");
                 return false;
             }
 
@@ -1429,7 +1427,7 @@ namespace JEngine {
             switch (fmt.compression)
             {
                 default:
-                    JENGINE_ERROR("[Image-IO] (DDS) Error: Unsupported compression format!");
+                    JE_ERROR("[Image-IO] (DDS) Error: Unsupported compression format!");
                     return false;
                 case DDS_None:
                     break;
@@ -1438,7 +1436,7 @@ namespace JEngine {
             switch (fmt.bitCount)
             {
                 default:
-                    JENGINE_ERROR("[Image-IO] (DDS) Error: Unsupported bit count!");
+                    JE_ERROR("[Image-IO] (DDS) Error: Unsupported bit count!");
                     return false;
                 case 16:
                     //TODO: Add additional checks for JColor565 and JColor555
@@ -1462,13 +1460,13 @@ namespace JEngine {
                 return decode(stream, imgData, params);
             }
 
-            JENGINE_ERROR("[Image-IO] (DDS) Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] (DDS) Error: Failed to open '{0}'!", path);
             return false;
         }
 
         bool decode(const Stream& stream, ImageData& imgData, const ImageDecodeParams params) {
             if (!stream.isOpen()) {
-                JENGINE_ERROR("[Image-IO] (DDS) Decode Error: Stream isn't open!");
+                JE_ERROR("[Image-IO] (DDS) Decode Error: Stream isn't open!");
                 return false;
             }
 
@@ -1477,7 +1475,7 @@ namespace JEngine {
             stream.readValue(sig, false);
 
             if (sig != SIGNATURE) {
-                JENGINE_ERROR("[Image-IO] (DDS) Error: Signature isn't valid!");
+                JE_ERROR("[Image-IO] (DDS) Error: Signature isn't valid!");
                 return false;
             }
 
@@ -1499,7 +1497,7 @@ namespace JEngine {
             switch (fmt.compression)
             {
                 default:
-                    JENGINE_ERROR("[Image-IO] (DDS) Error: Unsupported compression format!");
+                    JE_ERROR("[Image-IO] (DDS) Error: Unsupported compression format!");
                     return false;
                 case 0:
                     break;
@@ -1508,7 +1506,7 @@ namespace JEngine {
             switch (fmt.bitCount)
             {
                 default:
-                    JENGINE_ERROR("[Image-IO] (DDS) Error: Unsupported bit count!");
+                    JE_ERROR("[Image-IO] (DDS) Error: Unsupported bit count!");
                     return false;
                 case 16:
                     //TODO: Add additional checks for JColor565 and JColor555
@@ -1530,13 +1528,13 @@ namespace JEngine {
             }
 
             if (!imgData.doAllocate()) {
-                JENGINE_ERROR("[Image-IO] (DDS) Error: Failed to allocate image data!");
+                JE_ERROR("[Image-IO] (DDS) Error: Failed to allocate image data!");
                 return false;
             }
 
             uint8_t* scan = reinterpret_cast<uint8_t*>(_malloca(pitch));
             if (!scan) {
-                JENGINE_ERROR("[Image-IO] (DDS) Error: Failed to allocate scan buffer!");
+                JE_ERROR("[Image-IO] (DDS) Error: Failed to allocate scan buffer!");
                 return false;
             }
 
@@ -1609,19 +1607,19 @@ namespace JEngine {
             if (fs.open("wb")) {
                 return encode(fs, imgData);
             }
-            JENGINE_ERROR("[Image-IO] (DDS) Encode Error: Failed to open file '{0}' for writing!", path);
+            JE_ERROR("[Image-IO] (DDS) Encode Error: Failed to open file '{0}' for writing!", path);
             return false;
         }
 
         bool encode(const Stream& stream, const ImageData& imgData) {
             if (!stream.isOpen()) {
-                JENGINE_ERROR("[Image-IO] (DDS) Encode Error: Stream isn't open!");
+                JE_ERROR("[Image-IO] (DDS) Encode Error: Stream isn't open!");
                 return false;
             }
 
             switch (imgData.format) {
                 default:
-                    JENGINE_ERROR("[Image-IO] (DDS) Encode Error: Format '{0}' isn't supported!", getTextureFormatName(imgData.format));
+                    JE_ERROR("[Image-IO] (DDS) Encode Error: Format '{0}' isn't supported!", getTextureFormatName(imgData.format));
                     return false;
                 case TextureFormat::R8:
                 case TextureFormat::RGB24:
@@ -1670,7 +1668,7 @@ namespace JEngine {
 
             uint8_t* scan = reinterpret_cast<uint8_t*>(_malloca(pitch));
             if (!scan) {
-                JENGINE_ERROR("[Image-IO] (DDS) Error: Failed to allocate scan buffer!");
+                JE_ERROR("[Image-IO] (DDS) Error: Failed to allocate scan buffer!");
                 return false;
             }
             memset(scan, 0, pitch);
@@ -1752,17 +1750,17 @@ namespace JEngine {
                 return getInfo(stream, imgData);
             }
 
-            JENGINE_ERROR("[Image-IO] (JTEX) Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] (JTEX) Error: Failed to open '{0}'!", path);
             return false;
         }
 
         bool getInfo(const Stream& stream, ImageData& imgData) {
             if (!stream.isOpen()) {
-                JENGINE_ERROR("[Image-IO] (JTEX) Decode Error: Stream isn't open!");
+                JE_ERROR("[Image-IO] (JTEX) Decode Error: Stream isn't open!");
                 return false;
             }
 
-#pragma pack(push, 1)
+JE_BEG_PACK
             struct Header {
                 uint32_t sig;
                 JTEXFlags flags;
@@ -1772,13 +1770,13 @@ namespace JEngine {
                 int32_t paletteSize;
                 uint8_t imgFlags;
             };
-#pragma pack(pop, 1)
+JE_END_PACK
 
             Header hdr{};
             stream.readValue(hdr, false);
 
             if (hdr.sig != JTEX_SIG) {
-                JENGINE_ERROR("[Image-IO] (JTEX) Decode Error: Signature isn't valid!");
+                JE_ERROR("[Image-IO] (JTEX) Decode Error: Signature isn't valid!");
                 return false;
             }
 
@@ -1797,7 +1795,7 @@ namespace JEngine {
                 return decode(stream, imgData, params);
             }
 
-            JENGINE_ERROR("[Image-IO] (JTEX) Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] (JTEX) Error: Failed to open '{0}'!", path);
             return false;
         }
 
@@ -1807,7 +1805,7 @@ namespace JEngine {
             }
 
             if (!imgData.doAllocate()) {
-                JENGINE_ERROR("[Image-IO] (JTEX) Decode Error: Failed to allocate pixel buffer!");
+                JE_ERROR("[Image-IO] (JTEX) Decode Error: Failed to allocate pixel buffer!");
                 return false;
             }
             stream.read(imgData.data, imgData.getSize(), false);
@@ -1819,13 +1817,13 @@ namespace JEngine {
             if (fs.open("wb")) {
                 return encode(fs, imgData);
             }
-            JENGINE_ERROR("[Image-IO] (JTEX) Encode Error: Failed to open file '{0}' for writing!", path);
+            JE_ERROR("[Image-IO] (JTEX) Encode Error: Failed to open file '{0}' for writing!", path);
             return false;
         }
 
         bool encode(const Stream& stream, const ImageData& imgData) {
             if (!stream.isOpen()) {
-                JENGINE_ERROR("[Image-IO] (JTEX) Encode Error: Stream isn't open!");
+                JE_ERROR("[Image-IO] (JTEX) Encode Error: Stream isn't open!");
                 return false;
             }
 
@@ -1849,7 +1847,7 @@ namespace JEngine {
                 return tryGetInfo(stream, imgData, format);
             }
 
-            JENGINE_ERROR("[Image-IO] Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] Error: Failed to open '{0}'!", path);
             return false;
         }
 
@@ -1860,7 +1858,7 @@ namespace JEngine {
 
             switch (format) {
                 default:
-                    JENGINE_WARN("[Image-IO] Warning: Unsupported image format '{0}'!", EnumNames<DataFormat>::getEnumName(format));
+                    JE_WARN("[Image-IO] Warning: Unsupported image format '{0}'!", EnumNames<DataFormat>::getEnumName(format));
                     return false;
                 case DataFormat::FMT_PNG:
                     return Png::getInfo(stream, imgData);
@@ -1880,7 +1878,7 @@ namespace JEngine {
                 return tryDecode(stream, imgData, format, params);
             }
 
-            JENGINE_ERROR("[Image-IO] Error: Failed to open '{0}'!", path);
+            JE_ERROR("[Image-IO] Error: Failed to open '{0}'!", path);
             return false;
         }
 
@@ -1894,7 +1892,7 @@ namespace JEngine {
             switch (format)
             {
                 default:
-                    JENGINE_WARN("[Image-IO] Warning: Unsupported image format '{0}'!", EnumNames<DataFormat>::getEnumName(format));
+                    JE_WARN("[Image-IO] Warning: Unsupported image format '{0}'!", EnumNames<DataFormat>::getEnumName(format));
                     return false;
                 case DataFormat::FMT_PNG:
                     return Png::decode(stream, imgData, params);
@@ -1912,14 +1910,14 @@ namespace JEngine {
             if (fs.open("wb")) {
                 return tryEncode(fs, imgData, format, encodeParams);
             }
-            JENGINE_ERROR("[Image-IO] ({1}) Encode Error: Failed to open file '{0}' for writing!", path, EnumNames<DataFormat>::getEnumName(format));
+            JE_ERROR("[Image-IO] ({1}) Encode Error: Failed to open file '{0}' for writing!", path, EnumNames<DataFormat>::getEnumName(format));
             return false;
         }
 
         bool tryEncode(const Stream& stream, const ImageData& imgData, DataFormat format, const ImageEncodeParams& encodeParams) {
             switch (format) {
                 default:
-                    JENGINE_WARN("[Image-IO] Warning: Given encoding format is unsupported! ({0})", EnumNames<DataFormat>::getEnumName(format));
+                    JE_WARN("[Image-IO] Warning: Given encoding format is unsupported! ({0})", EnumNames<DataFormat>::getEnumName(format));
                     return false;
 
                 case JEngine::FMT_PNG:

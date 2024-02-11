@@ -17,7 +17,7 @@ namespace JEngine {
         char** args = nullptr;
 
         const char* operator[](int32_t index) const {
-            JENGINE_CORE_ASSERT(index >= 0 && index < count);
+            JE_CORE_ASSERT(index >= 0 && index < count);
             return args[index];
         }
     };

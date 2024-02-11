@@ -31,7 +31,7 @@ namespace JEngine {
 
         _window = glfwCreateWindow(width, height, title, NULL, NULL);
         if (!_window) {
-            JENGINE_CORE_ERROR("Failed to initialize GLFW Window!");
+            JE_CORE_ERROR("Failed to initialize GLFW Window!");
             return false;
         }
 
@@ -39,7 +39,7 @@ namespace JEngine {
 
         //Init Glew
         if (glewInit() != GLEW_OK) {
-            JENGINE_CORE_ERROR("Failed to initialize GLEW!");
+            JE_CORE_ERROR("Failed to initialize GLEW!");
             glfwTerminate();
             return false;
         }
@@ -53,7 +53,7 @@ namespace JEngine {
 
         glfwSetWindowSizeCallback(_window, windowResizeCallback);
         glfwSetWindowFocusCallback(_window, windowFocusCallback);
-        JENGINE_CORE_INFO("[J-Engine - Window] Init:\n  - Width: {0}\n  - Height: {1}\n  - Swap Interval: {2}", _size.x, _size.y, uint32_t(_swapInterval));
+        JE_CORE_INFO("[J-Engine - Window] Init:\n  - Width: {0}\n  - Height: {1}\n  - Swap Interval: {2}", _size.x, _size.y, uint32_t(_swapInterval));
         return true;
     }
 

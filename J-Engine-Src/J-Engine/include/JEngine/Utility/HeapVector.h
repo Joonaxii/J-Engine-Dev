@@ -127,9 +127,11 @@ namespace JEngine {
             _count--;
             return true;
         }
-        bool removeAt(const int32_t index) { return removeAt(false); }
+        bool removeAt(int32_t index) { 
+            return removeAt(false); 
+        }
 
-        bool removeAt(const int32_t* indices, int32_t count, const bool defrag) {
+        bool removeAt(const int32_t* indices, int32_t count, bool defrag) {
             if (!indices || !count) { return false; }
 
             while (count--) {
@@ -144,13 +146,13 @@ namespace JEngine {
             return true;
         }
 
-        bool remove(const T& item, const bool markDefault) {
+        bool remove(const T& item, bool markDefault) {
             int32_t ind = indexOf(item);
             return ind >= 0 && removeAt(ind, markDefault);
         }
         bool remove(const T& item) { return remove(item, false); }
 
-        bool remove(const T* items, const int32_t count, const bool defrag) {
+        bool remove(const T* items, int32_t count, bool defrag) {
             if (!items || !count) { return false; }
 
             int32_t* temp = reinterpret_cast<int32_t*>(_malloca(count * sizeof(int32_t)));
@@ -165,7 +167,7 @@ namespace JEngine {
             return deletedAny;
         }
 
-        void resize(const int32_t newSize) {
+        void resize(int32_t newSize) {
             if (newSize == _count || newSize < 0) { return; }
 
             T def{};
@@ -193,7 +195,7 @@ namespace JEngine {
             }
         }
 
-        void reserve(const int32_t capacity) {
+        void reserve(int32_t capacity) {
             if (!_items) {
                 _items = reinterpret_cast<T*>(malloc(capacity * sizeof(T)));
                 _capacity = capacity;

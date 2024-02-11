@@ -1,11 +1,13 @@
 #pragma once
 #include <cstdint>
+#include <vector>
+#include <JEngine/Math/Math.h>
 #include <JEngine/Utility/Flags.h>
 #include <JEngine/Audio/AudioClip.h>
 #include <JEngine/Assets/IAsset.h>
 
 namespace JEngine {
-#pragma pack(push, 1)
+JE_BEG_PACK
     struct Beat {
         enum : uint8_t {
             F_NONE = 0x00,
@@ -24,8 +26,8 @@ namespace JEngine {
         constexpr TimeSignature() noexcept : _signature(), _flags(), _offsets{} {}
         constexpr TimeSignature(int32_t numOfBeats, int32_t noteValue) noexcept :
             _signature(
-                uint8_t((std::clamp<int32_t>(numOfBeats, MIN_BEATS, MAX_BEATS) - MIN_BEATS)) |
-                uint8_t((std::clamp<int32_t>(noteValue, MIN_BEATS, MAX_BEATS) - MIN_BEATS) << 4)
+                uint8_t((Math::clamp<int32_t>(numOfBeats, MIN_BEATS, MAX_BEATS) - MIN_BEATS)) |
+                uint8_t((Math::clamp<int32_t>(noteValue, MIN_BEATS, MAX_BEATS) - MIN_BEATS) << 4)
             ), _flags(0x1), _offsets{ 0x00 } {
         }
 
@@ -74,7 +76,7 @@ namespace JEngine {
         uint32_t _flags{};
         uint16_t _offsets[MAX_BEATS]{ 0 };
     };
-#pragma pack(pop)
+JE_END_PACK
 
     class BeatMap : public IAsset {
     public:

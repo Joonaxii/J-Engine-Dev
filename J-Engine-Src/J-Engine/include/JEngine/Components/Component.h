@@ -1,13 +1,22 @@
 #pragma once
 #include <cstdint>
-#include <JEngine/Components/ComponentFactory.h>
-#include <JEngine/IO/Serialization/Serializable.h>
 #include <JEngine/Collections/PoolAllocator.h>
 #include <JEngine/Utility/Flags.h>
 #include <JEngine/Core/IObject.h>
 #include <JEngine/Core/Ref.h>
 
 namespace JEngine {
+    enum ComponentFlags : uint8_t {
+        COMP_IS_TRANSFORM = 0x1,
+    };
+
+    template<typename T>
+    struct ComponentInfo {
+        static inline constexpr size_t InitPool{ 0x00 };
+        static inline constexpr ComponentFlags Flags{ 0x00 };
+        static inline constexpr std::string_view Name{ "Component" };
+    };
+
     class GameObject;
     class Component : public IObject {
     public:
@@ -16,23 +25,19 @@ namespace JEngine {
   
         GORef getObject() const { return GORef(getUUID()); }
 
-        void deserializeBinary(const Stream& stream);
-        void serializeBinary(const Stream& stream) const;
-
-        void deserializeYAML(yamlNode& node);
-        void serializeYAML(yamlEmit& emit) const;
-
-        void deserializeJSON(json& jsonF);
-        void serializeJSON(json& jsonF) const;
-
         template<typename T, size_t init = ComponentInfo<T>::InitPool>
         static PoolAllocator<T, init>& getComponentAllocator() {
             return PoolAllocator<T, init>::getGlobal();
         }
 
+        CompRef getRef() const { return CompRef(getUUID()); }
+
+        NO_FIELDS;
+
     protected:
         friend class ComponentFactory;
         friend class GameObject;
+        friend struct SerializedItem;
 
         Component(const Component& other) = delete;
         Component(Component&& other) = delete;
@@ -41,31 +46,18 @@ namespace JEngine {
         void* operator new(size_t size) = delete;
         void operator delete(void* ptr) = delete;
 
-        virtual void doDelete() = 0;
-
         virtual void onInit() {};
         virtual void onSetup() {};
         virtual void onStart() {};
         virtual void onUpdate(float time, float delta) {};
         virtual void onDestroy() {};
 
-        virtual void deserializeBinaryImpl(const Stream& stream) = 0;
-        virtual void serializeBinaryImpl(const Stream& stream) const = 0;
-
-        virtual void deserializeYAMLImpl(yamlNode& node) = 0;
-        virtual void serializeYAMLImpl(yamlEmit& emit) const = 0;
-
-        virtual void deserializeJSONImpl(json& jsonF) = 0;
-        virtual void serializeJSONImpl(json& jsonF) const = 0;
-
-        template<typename T>
-        static void deleteComponent(T* ptr) {
-            getComponentAllocator<T>().deallocate(ptr);
-        }
+        virtual void doDelete() = 0;
+        virtual uint32_t getTypeHash() const = 0;
 
     private:
         friend class GameObject;
-
+   
         void init(CompRef compRef, uint16_t flags);
 
         void start();
@@ -73,3 +65,25 @@ namespace JEngine {
         void destroy();
     };
 }
+
+#define JE_COMPONENT(TYPE)\
+protected:\
+virtual uint32_t getTypeHash() const override;\
+virtual void doDelete() override {\
+    ::JEngine::Component::getComponentAllocator<TYPE>().deallocate(this); \
+}\
+public: \
+::JEngine::TCompRef<TYPE> getRef_T() const {\
+    return ::JEngine::TCompRef<TYPE>(getUUID()); \
+}
+
+#define JE_COMPONENT_DEF(TYPE)\
+uint32_t TYPE::getTypeHash() const {\
+    return ::JEngine::Types::getTypeHash<TYPE>(); \
+}
+
+#define REGISTER_COMPONENT(TYPE) \
+DEFINE_TYPE(TYPE); \
+DEFINE_COMPONENT(TYPE); \
+VALIDATE_COMPONENT(TYPE)\
+JE_COMPONENT_DEF(TYPE)

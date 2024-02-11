@@ -24,7 +24,7 @@ namespace JEngine {
             for (uint32_t i = 0; c < bufSize && i < MAX_COMPONENTS; i++) {
                 JEngine::Component** comp = _components.getAt(i);
                 if (comp) {
-                    buffer[c++] = ComponentRef(getUUID(), i);
+                    buffer[c++] = CompRef(getUUID(), i);
                 }
             }
         }
@@ -34,6 +34,7 @@ namespace JEngine {
         JTimeIndex getTimeSpace() const { return _timeSpace; }
         void setTimeSpace(JTimeIndex space) { _timeSpace = space; }
 
+        GORef getRef() const { return GORef(this); }
         TCompRef<CTransform> getTransform() const;
 
         template<typename T>
@@ -109,24 +110,24 @@ namespace JEngine {
         template<typename T>
         TCompRef<T> addComponent(uint16_t flags = 0, bool autoStart = true) {
             if (_compInfo.getCount() >= MAX_COMPONENTS) {
-                JENGINE_CORE_WARN("[GameObject] Warning: Max number of components ({0}) for GameObject '{1}' [0x{2:X}] has been reached!!", MAX_COMPONENTS, getName(), getUUID());
+                JE_CORE_WARN("[GameObject] Warning: Max number of components ({0}) for GameObject '{1}' [0x{2:X}] has been reached!!", MAX_COMPONENTS, getName(), getUUID());
                 return TCompRef<T>(nullptr);
             }
 
             if ((ComponentInfo<T>::Flags & COMP_IS_TRANSFORM) && _compInfo.getTrIndex() != NULL_TRANSFORM) {
-                JENGINE_CORE_ERROR("[GameObject] Error: Cannot add multiple transforms to one GameObject!");
+                JE_CORE_ERROR("[GameObject] Error: Cannot add multiple transforms to one GameObject!");
                 return TCompRef<T>(nullptr);
             }
 
             T* newComp = Component::getComponentAllocator<T>().allocate();
             if (!newComp) {
-                JENGINE_CORE_ERROR("[GameObject] Error: Failed to allocate Component!");
+                JE_CORE_ERROR("[GameObject] Error: Failed to allocate Component!");
                 return TCompRef<T>(nullptr);
             }
 
             Component* comp = dynamic_cast<Component*>(newComp);
             if (!comp) {
-                JENGINE_CORE_ERROR("[GameObject] Error: Given type isn't a Component!");
+                JE_CORE_ERROR("[GameObject] Error: Given type isn't a Component!");
                 Component::getComponentAllocator<T>().deallocate(newComp);
                 return TCompRef<T>(nullptr);
             }
@@ -135,7 +136,7 @@ namespace JEngine {
                 return TCompRef<T>(newComp);
             }
 
-            JENGINE_CORE_ERROR("[GameObject] Error: Failed to add Component!");
+            JE_CORE_ERROR("[GameObject] Error: Failed to add Component!");
             Component::getComponentAllocator<T>().deallocate(newComp);
             return TCompRef<T>(nullptr);
         }
@@ -151,7 +152,12 @@ namespace JEngine {
             constexpr CompInfo(uint8_t count, uint8_t trIndex) : 
                 _count((count & 0xF) | ((trIndex & 0xF) << 4)) {}
 
-            void setCount(uint8_t count) { _count = (_count & 0xF0) | (count & 0xF); }
+            constexpr void setCount(uint8_t count) { _count = (_count & 0xF0) | (count & 0xF); }
+            constexpr void setTrIndex(uint8_t index) { _count = (_count & 0xF) | ((index & 0xF) << 4); }
+            
+            constexpr uint8_t getCount() const { return _count & 0xF; }
+            constexpr uint8_t getTrIndex() const { return (_count >> 4) & 0xF; }
+
             CompInfo operator++(int) {
                 auto prev = *this;
                 if ((_count & 0xF) == 0xF) { 
@@ -183,10 +189,7 @@ namespace JEngine {
                 _count = ((_count & 0xF) - 1) | (_count & 0xF0);
                 return *this;
             }
-            void setTrIndex(uint8_t index) { _count = (_count & 0xF) | ((index & 0xF) << 4); }
 
-            uint8_t getCount() const { return _count & 0xF; }
-            uint8_t getTrIndex() const { return (_count >> 4) & 0xF; }
 
         private:
             uint8_t _count{ 0 };
@@ -211,5 +214,4 @@ namespace JEngine {
         void start();
         void update(const JTime& time);
     };
-    static constexpr size_t siz = sizeof(GameObject);
 }

@@ -2,14 +2,42 @@
 #include <JEngine/Core/GameObject.h>
 #include <JEngine/Core/Scene.h>
 #include <JEngine/Utility/StringHelpers.h>
+#include <JEngine/GUI/Gui.h>
 
 namespace JEngine {
+
+    static bool drawGui(SerializedItem& item) {
+        bool changed = false;
+        auto pos = item[STR(_lPos)];
+        auto rot = item[STR(_lRot)];
+        auto sca = item[STR(_lSca)];
+
+        JE_CORE_ASSERT(pos != nullptr, "Did not find field for Transform position!");
+        JE_CORE_ASSERT(rot != nullptr, "Did not find field for Transform rotation!");
+        JE_CORE_ASSERT(sca != nullptr, "Did not find field for Transform scale!");
+
+        changed |= Gui::drawBuiltIn("Position", VType::VTYPE_VEC_3F, pos->getData(), pos->getStyle());
+        changed |= Gui::drawBuiltIn("Rotation", VType::VTYPE_VEC_3F, rot->getData(), rot->getStyle());
+        changed |= Gui::drawBuiltIn("Scale", VType::VTYPE_VEC_3F, sca->getData(), sca->getStyle());
+        return changed;
+    }
+
     CTransform::CTransform() : Component(),
         _parent(nullptr),
         _lPos(), _lRot(), _lSca(1, 1) { }
 
     CTransform::~CTransform() { 
         destroyChildren();
+        constexpr std::string_view test = EnumNames<Space>::getEnumName(Space::Local);
+    }
+
+    void CTransform::bindFields(Type& type) {
+        ADD_FIELD(type, _lPos, CTransform, VType::VTYPE_VEC_3F, "position");
+        ADD_FIELD(type, _lRot, CTransform, VType::VTYPE_VEC_3F, "rotation");
+        ADD_FIELD(type, _lSca, CTransform, VType::VTYPE_VEC_3F, "scale");
+        ADD_FIELD(type, _parent, CTransform, VType::VTYPE_COMPONENT_REF, "parent", BUILD_FLAGS(0, CTransform));
+        ADD_FIELD(type, _children, CTransform, VType::VTYPE_COMPONENT_REF, "children", BUILD_FLAGS(FieldFlags::IS_VECTOR, CTransform));
+        type.customDraw = drawGui;
     }
 
     bool CTransform::setParent(TCompRef<CTransform> parent) {
@@ -24,6 +52,9 @@ namespace JEngine {
         if (_parent) {
             _parent->_children.emplace_back(this);
         }
+
+        Component* comp = this;
+        constexpr uint32_t test = comp->TYPE_HASH;
         return true;
     }
 
@@ -112,7 +143,7 @@ namespace JEngine {
     }
 
     TCompRef<CTransform> CTransform::getChildAt(const size_t index) const {
-        JENGINE_CORE_ASSERT(index >= 0 && index < _children.size(), "Index out of range!");
+        JE_CORE_ASSERT(index >= 0 && index < _children.size(), "Index out of range!");
         return _children[index];
     }
 
@@ -207,104 +238,5 @@ namespace JEngine {
         _lPos = { 0, 0 };
         _lRot = { 0.0f, 0.0f, 0.0f };
         _lSca = { 1, 1 };
-    }
-
-    void CTransform::doDelete() {
-        Component::deleteComponent<CTransform>(this);
-    }
-
-    void CTransform::deserializeBinaryImpl(const Stream& stream) {
-        uint32_t childCount{};
-
-        Serialization::deserialize(_parent, stream);
-        Serialization::deserialize(_lPos, stream);
-        Serialization::deserialize(_lRot, stream);
-        Serialization::deserialize(_lSca, stream);
-
-        Serialization::deserialize(childCount, stream);
-
-        _children.clear();
-        TCompRef<CTransform> trCH{};
-        for (uint32_t i = 0; i < childCount; i++) {
-            Serialization::deserialize(trCH, stream);
-            if (trCH.isValid()) {
-                _children.emplace_back(trCH);
-            }
-        }
-    }
-    void CTransform::serializeBinaryImpl(const Stream& stream) const {
-        Serialization::serialize(_parent, stream);
-        Serialization::serialize(_lPos, stream);
-        Serialization::serialize(_lRot, stream);
-        Serialization::serialize(_lSca, stream);
-
-        Serialization::serialize(uint32_t(_children.size()), stream);
-        for (auto& child : _children) {
-            Serialization::serialize(child, stream);
-        }
-    }
-
-    void CTransform::deserializeYAMLImpl(yamlNode& node) {
-        Serialization::deserialize(_parent.uuid, node["parent"]);
-        Serialization::deserialize(_lPos, node["position"]);
-        Serialization::deserialize(_lRot, node["rotation"]);
-        Serialization::deserialize(_lSca, node["scale"]);
-
-        auto& children = node["children"];
-
-        _children.clear();
-        if (children.IsSequence()) {
-            TCompRef<CTransform> trCH{};
-            uint32_t childCount = uint32_t(children.size());
-            for (uint32_t i = 0; i < childCount; i++) {
-                Serialization::deserialize(trCH.uuid, children[i]);
-                if (trCH.isValid()) {
-                    _children.emplace_back(trCH);
-                }
-            }
-        }
-    }
-    void CTransform::serializeYAMLImpl(yamlEmit& emit) const {
-        emit << YAML::Key << "parent" << YAML::Value << _parent;
-        emit << YAML::Key << "position" << YAML::Value << _lPos;
-        emit << YAML::Key << "rotation" << YAML::Value << _lRot;
-        emit << YAML::Key << "scale" << YAML::Value << _lSca;
-
-        emit << YAML::Key << "children" << YAML::Value << YAML::BeginSeq;
-        for (auto& child : _children) {
-            emit << child.uuid;
-        }
-        emit << YAML::EndSeq;
-    }
-
-    void CTransform::deserializeJSONImpl(json& jsonF) {
-        Serialization::deserialize(_parent.uuid, jsonF["parent"]);
-        Serialization::deserialize(_lPos, jsonF["position"]);
-        Serialization::deserialize(_lRot, jsonF["rotation"]);
-        Serialization::deserialize(_lSca, jsonF["scale"]);
-
-        auto& children = jsonF["children"];
-        _children.clear();
-        if (children.is_array()) {
-            TCompRef<CTransform> trCH{};
-            uint32_t childCount = uint32_t(children.size());
-            for (uint32_t i = 0; i < childCount; i++) {
-                Serialization::deserialize(trCH.uuid, children[i]);
-                if (trCH.isValid()) {
-                    _children.emplace_back(trCH);
-                }
-            }
-        }
-    }
-    void CTransform::serializeJSONImpl(json& jsonF) const {
-        Serialization::serialize(_parent.uuid, jsonF["parent"]);
-        Serialization::serialize(_lPos, jsonF["position"]);
-        Serialization::serialize(_lRot, jsonF["rotation"]);
-        Serialization::serialize(_lSca, jsonF["scale"]);
-
-        auto& chArr = jsonF["children"] = json::array_t{};
-        for (auto& child : _children) {
-            Serialization::serialize(child.uuid, chArr.emplace_back());
-        }
     }
 }

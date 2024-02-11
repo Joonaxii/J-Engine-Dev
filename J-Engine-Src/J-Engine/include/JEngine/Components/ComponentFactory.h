@@ -1,26 +1,16 @@
 #pragma once
+#include <cstdint>
 #include <map>
 #include <functional>
 #include <JEngine/Core/Ref.h>
 #include <JEngine/Collections/PoolAllocator.h>
-#include <JEngine/Helpers/TypeHelpers.h>
+#include <JEngine/IO/Serialization/Serialize.h>
 #define ADD_TO_GO_CALL(name) JEngine::CompRef(*name)(JEngine::GORef)
 
 namespace JEngine {
     using AddComponent = CompRef(*)(GORef);
     using TrimAllocPool = void (*)();
     using ClearAllocPool = void (*)(bool full);
-
-    enum ComponentFlags : uint8_t {
-        COMP_IS_TRANSFORM = 0x1,
-    };
-
-    template<typename T>
-    struct ComponentInfo {
-        static inline constexpr size_t InitPool{ 0x00 };
-        static inline constexpr ComponentFlags Flags{ 0x00 };
-        static inline constexpr const char* Name{ "Component" };
-    };
 
     struct Comp {
         Type const* type = nullptr;
@@ -106,13 +96,10 @@ inline JEngine::Comp const& JEngine::ComponentFactory::getComp<TYPE>() { \
         JEngine::ComponentFactory::getComps().push_back(&comp); \
     } \
     return comp; \
-} \
+}
 
-#define VALIDATE_COMPONENT(x) template<> \
-inline const JEngine::Comp* ValidatedComp<x>::Value = &JEngine::ComponentFactory::getComp<x>(); \
+#define VALIDATE_COMPONENT(x) \
+template<> inline const JEngine::Comp* ValidatedComp<x>::Value = &JEngine::ComponentFactory::getComp<x>();
 
-#define REGISTER_COMPONENT(x) \
-DEFINE_TYPE(x); \
-DEFINE_COMPONENT(x); \
-VALIDATE_COMPONENT(x); \
+
 

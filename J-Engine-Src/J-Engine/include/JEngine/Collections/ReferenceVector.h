@@ -26,12 +26,12 @@ namespace JEngine {
         }
 
         T& operator[](size_t i) override {
-            JENGINE_CORE_ASSERT(i >= 0 && i < _tail);
+            JE_CORE_ASSERT(i >= 0 && i < _tail);
             return _items[i];
         }
 
         const T& operator[](size_t i) const override {
-            JENGINE_CORE_ASSERT(i >= 0 && i < _tail);
+            JE_CORE_ASSERT(i >= 0 && i < _tail);
             return _items[i];
         }
         size_t size() const override { return _count; }

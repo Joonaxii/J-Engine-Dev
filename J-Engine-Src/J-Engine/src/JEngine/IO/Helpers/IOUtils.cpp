@@ -135,7 +135,7 @@ namespace JEngine::IO {
 
     bool getAll(const fs::path& path, uint8_t flags, std::vector<FilePath>& paths, bool recursive) {
         if ((flags & 0x3) == 0) {
-            JENGINE_CORE_WARN("[IOUtils] Warning: File search flags are set to 0!");
+            JE_CORE_WARN("[IOUtils] Warning: File search flags are set to 0!");
             return false;
         }
         size_t startC = paths.size();
@@ -214,7 +214,7 @@ namespace JEngine::IO {
 
     void enumerateFiles(ConstSpan<char> path, ConstSpan<char> extension, std::function<const void(ConstSpan<char>)> callback, bool fixPath, bool reverse) {
         if (!IO::exists(path)) {
-            JENGINE_CORE_WARN("[IOUtils] Warning: Path '{0}' was not found, cannot enumerate!", path);
+            JE_CORE_WARN("[IOUtils] Warning: Path '{0}' was not found, cannot enumerate!", path);
             return;
         }
         fs::path pth(std::string_view(path.get(), path.length()));
@@ -321,7 +321,7 @@ namespace JEngine::IO {
             std::filesystem::copy(src, target, std::filesystem::copy_options::overwrite_existing | std::filesystem::copy_options::recursive);
         }
         catch (std::exception& e) {
-            JENGINE_CORE_ERROR("[IOUtils - copyRecursive] Error: {0}", e.what());
+            JE_CORE_ERROR("[IOUtils - copyRecursive] Error: {0}", e.what());
         }
     }
 

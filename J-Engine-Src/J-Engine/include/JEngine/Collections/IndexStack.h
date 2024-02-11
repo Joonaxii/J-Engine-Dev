@@ -3,17 +3,17 @@
 #include <cstring>
 #include <stdlib.h>
 #include <vector>
-#include <JEngine/Math/Math.h>
 #include <new>
+#include <JEngine/Math/Math.h>
 
 namespace JEngine {
     namespace detail {
         struct Index {
-            uint32_t index{};
+            uint64_t index{};
             int32_t bit{};
 
             constexpr Index() : index(0), bit(0) {}
-            constexpr Index(uint32_t index, int32_t bit) : index(index), bit(bit) {}
+            constexpr Index(uint64_t index, int32_t bit) : index(index), bit(bit) {}
 
             constexpr bool operator==(const Index& other) const {
                 return index == other.index && bit == other.index;
@@ -23,6 +23,7 @@ namespace JEngine {
                 return index != other.index || bit != other.index;
             }
         };
+
         struct IDXMarkType {
             enum : uint8_t {
                 MARK_SUCCESS = 0x0,
@@ -45,12 +46,12 @@ namespace JEngine {
             return current + std::max(uint32_t(INDEX_MAX_EXPANSION * current), 1U);
         }
 
-        inline constexpr Index extractIndex(uint32_t index) {
-            const uint32_t lInd = index >> 6;
+        inline constexpr Index extractIndex(uint64_t index) {
+            const uint64_t lInd = index >> 6;
             return Index(lInd, int32_t(index - (lInd << 6)));
         }
 
-        inline constexpr uint32_t to1DIndex(const Index& index) {
+        inline constexpr uint64_t to1DIndex(const Index& index) {
             return (index.index << 6) + index.bit;
         }
     }
@@ -58,7 +59,7 @@ namespace JEngine {
     class IndexStack {
     public:
         IndexStack() : _availMask{nullptr}, _capacity(0) {}
-        IndexStack(uint32_t initCap) : IndexStack() {
+        IndexStack(uint64_t initCap) : IndexStack() {
             reserve(initCap);
         }
 
@@ -66,7 +67,7 @@ namespace JEngine {
             release();
         }
 
-        detail::Index getIfValid(uint32_t index) const {
+        detail::Index getIfValid(uint64_t index) const {
             detail::Index ret = detail::extractIndex(index);
             if (ret.index >= _capacity) { return detail::INVALID_INDEX; }
 
@@ -76,13 +77,13 @@ namespace JEngine {
             return detail::INVALID_INDEX;
         }
 
-        uint32_t popNextFree(detail::Index* outIdx = nullptr, bool allowReserve = true) {
+        uint64_t popNextFree(detail::Index* outIdx = nullptr, bool allowReserve = true) {
             auto ret = findNextFree();
 
             if (outIdx) { *outIdx = ret; }
             if (ret == detail::INVALID_INDEX) {
                 if(!allowReserve) { return detail::INVALID_INDEX.index; }
-                uint32_t oldCap = _capacity;
+                uint64_t oldCap = _capacity;
                 if (reserve(detail::getExpandedSize(_capacity))) {
                     ret = detail::extractIndex(oldCap);
                     if (ret == detail::INVALID_INDEX) { return detail::INVALID_INDEX.index; }
@@ -92,7 +93,7 @@ namespace JEngine {
             return detail::to1DIndex(ret);
         }
 
-        detail::IDXMarkType markAsFree_Internal(uint32_t index) {
+        detail::IDXMarkType markAsFree_Internal(uint64_t index) {
             if (index == detail::INVALID_INDEX.index) { return {detail::IDXMarkType::MARK_INDEX_INVALID, detail::INVALID_INDEX}; }
 
             auto ind = detail::extractIndex(index);
@@ -107,7 +108,7 @@ namespace JEngine {
             return { detail::IDXMarkType::MARK_ALREADY_MARKED, ind };
         }
 
-        bool markAsFree(uint32_t index) {
+        bool markAsFree(uint64_t index) {
             return markAsFree_Internal(index).result == detail::IDXMarkType::MARK_SUCCESS;
         }
 
@@ -133,7 +134,7 @@ namespace JEngine {
         uint64_t getChunkMask(uint32_t ch) const { return _availMask[ch]; }
 
     private:
-        uint32_t _capacity{};
+        uint64_t _capacity{};
         uint64_t* _availMask{};
 
         bool reserve(uint32_t count) {
@@ -156,7 +157,89 @@ namespace JEngine {
 
         detail::Index findNextFree() const {
             if (!_availMask) { return detail::INVALID_INDEX; }
-            for (uint32_t i = 0; i < _capacity; i++) {
+            for (uint64_t i = 0; i < _capacity; i++) {
+                uint64_t mask = ~_availMask[i];
+                if (mask != 0x00) {
+                    return detail::Index(i, Math::findFirstLSB(mask));
+                }
+            }
+            return detail::INVALID_INDEX;
+        }
+    };
+
+    template<uint64_t size>
+    class FixedIndexStack {
+    public:
+        FixedIndexStack() : _availMask{ nullptr }, _capacity(0) {}
+        FixedIndexStack(uint64_t initCap) : IndexStack() {
+            reserve(initCap);
+        }
+
+        ~FixedIndexStack() {
+            release();
+        }
+
+        detail::Index getIfValid(uint64_t index) const {
+            detail::Index ret = detail::extractIndex(index);
+            if (ret.index >= _capacity) { return detail::INVALID_INDEX; }
+
+            if (_availMask[ret.index] & (1ULL << ret.bit)) {
+                return ret;
+            }
+            return detail::INVALID_INDEX;
+        }
+
+        uint32_t popNextFree(detail::Index* outIdx = nullptr, bool allowReserve = true) {
+            auto ret = findNextFree();
+
+            if (outIdx) { *outIdx = ret; }
+            if (ret == detail::INVALID_INDEX) {
+                if (!allowReserve) { return detail::INVALID_INDEX.index; }
+                uint32_t oldCap = _capacity;
+                if (reserve(detail::getExpandedSize(_capacity))) {
+                    ret = detail::extractIndex(oldCap);
+                    if (ret == detail::INVALID_INDEX) { return detail::INVALID_INDEX.index; }
+                }
+            }
+            _availMask[ret.index] |= (1ULL << ret.bit);
+            return detail::to1DIndex(ret);
+        }
+
+        detail::IDXMarkType markAsFree_Internal(uint64_t index) {
+            if (index == detail::INVALID_INDEX.index) { return { detail::IDXMarkType::MARK_INDEX_INVALID, detail::INVALID_INDEX }; }
+
+            auto ind = detail::extractIndex(index);
+            if (ind.index >= _capacity) {
+                return { detail::IDXMarkType::MARK_OUT_OF_RANGE, ind };
+            }
+            uint64_t mask = (1ULL << ind.bit);
+            if (_availMask[ind.index] & mask) {
+                _availMask[ind.index] &= ~mask;
+                return { detail::IDXMarkType::MARK_SUCCESS, ind };
+            }
+            return { detail::IDXMarkType::MARK_ALREADY_MARKED, ind };
+        }
+
+        bool markAsFree(uint64_t index) {
+            return markAsFree_Internal(index).result == detail::IDXMarkType::MARK_SUCCESS;
+        }
+
+        void clear(bool fullClear = false) {
+            if (fullClear) {
+                release();
+                return;
+            }
+            memset(_availMask, 0, BUF_CAPACITY * sizeof(uint64_t));
+        }
+
+        uint64_t getChunkMask(uint64_t ch) const { return _availMask[ch]; }
+
+    private:
+        static constexpr uint64_t BUF_CAPACITY = Math::nextDivByPowOf2<uint64_t, 64>(size) >> 6;
+        uint64_t _availMask[BUF_CAPACITY]{};
+
+        detail::Index findNextFree() const {
+            for (uint64_t i = 0; i < BUF_CAPACITY; i++) {
                 uint64_t mask = ~_availMask[i];
                 if (mask != 0x00) {
                     return detail::Index(i, Math::findFirstLSB(mask));
@@ -287,24 +370,24 @@ namespace JEngine {
     public:
         IndexedLUT() : _capacity(0), _count(0), _items{nullptr} {}
 
-        T& operator[](uint32_t i) {
+        T& operator[](uint64_t i) {
             return _items[i];
         }
-        const T& operator[](uint32_t i) const {
+        const T& operator[](uint64_t i) const {
             return _items[i];
         }
 
-        uint32_t size() const { return _count; }
+        uint64_t size() const { return _count; }
 
-        T* getAt(uint32_t i) const {
+        T* getAt(uint64_t i) const {
             if (i >= _count) { return nullptr; }
             auto idx = _indexStack.getIfValid(i);
             if (idx == detail::INVALID_INDEX) { return nullptr; }
             return &_items[i];
         }
 
-        uint32_t getNext(T** outValue = nullptr) {
-            uint32_t ind = _indexStack.popNextFree(nullptr, false);
+        uint64_t getNext(T** outValue = nullptr) {
+            uint64_t ind = _indexStack.popNextFree(nullptr, false);
             if (ind == detail::INVALID_INDEX.index) { return detail::INVALID_INDEX.index; }
 
             if (ind >= _capacity) {
@@ -319,7 +402,7 @@ namespace JEngine {
             return ind;
         }
 
-        bool markFree(uint32_t index) {
+        bool markFree(uint64_t index) {
             if (_indexStack.markAsFree(index)) {
                 if (!_items || _count >= index) { return true; }
                 _items[index].~T();
@@ -335,7 +418,7 @@ namespace JEngine {
             }
 
             if (_items) {
-                for (uint32_t i = 0; i < _count; i++) {
+                for (uint64_t i = 0; i < _count; i++) {
                     if (_indexStack.getChunkMask(i >> 6) & (1ULL << (i & 63))) {
                         _items[i].~T();
                     }
@@ -346,12 +429,12 @@ namespace JEngine {
         }
 
     private:
-        uint32_t _count;
-        uint32_t _capacity;
+        uint64_t _count;
+        uint64_t _capacity;
         T* _items;
         IndexStack _indexStack;
 
-        bool reserve(uint32_t count) {
+        bool reserve(uint64_t count) {
             if (!_items) {
                 _items = reinterpret_cast<T*>(malloc(sizeof(T) * count));
                 if (_items) {
@@ -373,7 +456,7 @@ namespace JEngine {
 
         void release() {
             if (_items) {
-                for (uint32_t i = 0; i < _count; i++) {
+                for (uint64_t i = 0; i < _count; i++) {
                     if (_indexStack.getChunkMask(i >> 6) & (1ULL << (i & 63))) {
                         _items[i].~T();
                     }
@@ -388,8 +471,7 @@ namespace JEngine {
         }
     };
 
-
-    template<typename T, uint32_t size>
+    template<typename T, uint64_t size>
     class FixedLUT {
     public:
         FixedLUT() : _indexStack(size) {}
@@ -397,29 +479,29 @@ namespace JEngine {
             clear(true);
         }
 
-        T& operator[](uint32_t i) {
+        T& operator[](uint64_t i) {
             return _items[i];
         }
-        const T& operator[](uint32_t i) const {
+        const T& operator[](uint64_t i) const {
             return _items[i];
         }
 
-        T* getAt(uint32_t i) {
+        T* getAt(uint64_t i) {
             if (i >= size) { return nullptr; }
             auto idx = _indexStack.getIfValid(i);
             if (idx == detail::INVALID_INDEX) { return nullptr; }
             return &_items[i];
         }
 
-        const T* getAt(uint32_t i) const {
+        const T* getAt(uint64_t i) const {
             if (i >= size) { return nullptr; }
             auto idx = _indexStack.getIfValid(i);
             if (idx == detail::INVALID_INDEX) { return nullptr; }
             return &_items[i];
         }
 
-        uint32_t getNext(T** outValue = nullptr) {
-            uint32_t ind = _indexStack.popNextFree(nullptr, false);
+        uint64_t getNext(T** outValue = nullptr) {
+            uint64_t ind = _indexStack.popNextFree(nullptr, false);
             if (ind == detail::INVALID_INDEX.index) { return detail::INVALID_INDEX.index; }
 
             T* val = &_items[ind];
@@ -430,14 +512,14 @@ namespace JEngine {
             return ind;
         }
 
-        uint32_t setNext(const T& value) {
-            uint32_t ind = _indexStack.popNextFree(nullptr, false);
+        uint64_t setNext(const T& value) {
+            uint64_t ind = _indexStack.popNextFree(nullptr, false);
             if (ind == detail::INVALID_INDEX.index) { return detail::INVALID_INDEX.index; }
-            _items[ind] = value;
+            new(_items + ind) T(value);
             return ind;
         }
 
-        bool markFree(uint32_t index) {
+        bool markFree(uint64_t index) {
             if (_indexStack.markAsFree(index)) {
                 _items[index].~T();
                 return true;
@@ -445,13 +527,12 @@ namespace JEngine {
             return false;
         }
 
-
         void clear(bool fullClear) {
-            uint32_t chI = 0;
-            for (uint32_t i = 0; i < size; i += 64) {
+            uint64_t chI = 0;
+            for (uint64_t i = 0; i < size; i += 64) {
                 uint64_t chMask = _indexStack.getChunkMask(chI++);
-                uint32_t len = std::min(size - i, 64U);
-                for (uint32_t j = 0, k = 1; j < len; j++, k <<= 1) {
+                uint64_t len = Math::min(size - i, 64U);
+                for (uint64_t j = 0, k = 1; j < len; j++, k <<= 1) {
                     if (chMask & k) {
                         _items[i + j].~T();
                     }

@@ -12,7 +12,7 @@ namespace JEngine {
 
         char* libStr = reinterpret_cast<char*>(_malloca(length));
         if (!libStr) {
-            JENGINE_CORE_ERROR("Failed to allocate shader buffer!");
+            JE_CORE_ERROR("Failed to allocate shader buffer!");
             return;
         }
 

@@ -1,158 +1,120 @@
 #pragma once
 #include <JEngine/Helpers/TypeHelpers.h>
+#include <JEngine/Utility/HexStr.h>
 #include <cstdint>
 #include <vector>
 
+#define FROM_BASE(TYPE, VAL) static_cast<TYPE>(VAL) 
+#define BASE_TYPE(TYPE) std::underlying_type_t<TYPE>
+#define TO_BASE(TYPE, VAL) static_cast<typename BASE_TYPE(TYPE)>(VAL)
+#define TO_BASE_REF(TYPE, INPUT) reinterpret_cast<BASE_TYPE(TYPE)&>(INPUT)
+#define TO_REF(TYPE, INPUT) reinterpret_cast<TYPE&>(INPUT)
+
 namespace JEngine {
-    template<typename T>
+
+    template<typename T, size_t ID = 0>
     struct EnumNames {
-        static constexpr int32_t Count{0};
+        static inline constexpr bool IsBitField{ false };
+        static inline constexpr BASE_TYPE(T) MinValue{};
+        static inline constexpr size_t Count{};
+        static inline constexpr std::string_view Names[];
 
-        static bool isNoName(const char* name) {
-            return strlen(name) == 0;
+        static constexpr std::string_view getEnumName(T value) {
+            auto bVal = TO_BASE(T, value);
+
+            BASE_TYPE(T) index = 0;
+            if (IsBitField) {
+                if (!Math::isPowerOf2(bVal)) {
+                    return std::string_view{};
+                }
+                index = BASE_TYPE(T)(Math::findFirstLSB(bVal)) - BASE_TYPE(T)(MinValue);
+            }
+            else {
+                index = bVal - MinValue;
+            }
+
+            if (index < 0 || index >= Count) { return std::string_view{}; }
+            return Names[index];
         }
 
-        static const char** getEnumNames() {
-            return nullptr;
+        static std::string_view getEnumName(const void* value) {
+            return value ? getEnumName(*reinterpret_cast<const T*>(value)) : NullRawLE;
         }
-
-        static const char* getEnumName(T value) {
-            int32_t index = int32_t(value);
-            auto names = getEnumNames();
-            if (index < 0 || index >= Count || !names) { return ""; }
-            return names[index];
+     
+        static constexpr bool isNoName(std::string_view name) {
+            return name.length() == 0;
         }
+        static constexpr bool noDraw(size_t index) {
+            return index >= Count || isNoName(Names[index]);
+        }
+        static constexpr bool getNextValidIndex(size_t& index) {
+            if (Count < 1) { return true; }
 
-        static bool noDraw(int32_t index);
-        static bool getNextValidIndex(int32_t& index);
-    };
-
-    template<typename T>
-    bool EnumNames<T>::noDraw(int32_t index) {
-        auto names = getEnumNames();
-        if (index < 0 || index >= Count || !names) { return true; }
-        return isNoName(names[index]);
-    }
-
-    template<typename T>
-    inline bool EnumNames<T>::getNextValidIndex(int32_t& index) {
-        auto names = getEnumNames();
-        if (!names) { return true; }
-
-        int32_t original = index;
-        if (index < 0 || index >= Count || noDraw(index)) {
-            while (true) {
+            size_t original = index;
+            while (noDraw(index)) {
                 index++;
                 if (index >= Count) {
                     index = 0;
                 }
                 if (index == original) { break; }
-
-                if (!noDraw(index)) { break; }
             }
+            return index != original;
         }
-        return index != original;
+    };
+
+    namespace Enum {
+        typedef std::string_view(*GetEnumName)(const void* value);
+
+        template<typename T, size_t ID = 0>
+        FORCE_INLINE std::string_view nameOf_Void(const void* value) {
+            return EnumNames<T, ID>::getEnumName(value);
+        }
+
+        template<typename T, size_t ID = 0>
+        FORCE_INLINE constexpr std::string_view nameOf(const T& value) {
+            return EnumNames<T, ID>::getEnumName(value);
+        }
+
+        template<typename T, size_t ID = 0>
+        FORCE_INLINE const char* nameOf_CStr(const T& value) {
+            return EnumNames<T, ID>::getEnumName(value).data();
+        }
     }
-
-    struct EnumType {
-        Type* type = nullptr;
-        const char**(*getNames)() = nullptr;
-        bool(*isNoDraw)(int32_t index) = nullptr;
-        int32_t count{0};
-    };
-
-    class Enums {
-    public:
-        template<typename T> static EnumType* getEnum() {
-            static EnumType defaultEnum;
-            return &defaultEnum;
-        }
-        static std::vector<EnumType*>& getEnums();
-
-        template<typename T>
-        static void addEnum(JEngine::EnumType* enm, Type* type) {
-            if (enm->type != nullptr) { return; }
-            enm->type = type;
-            enm->getNames = EnumNames<T>::getEnumNames;
-            enm->isNoDraw = EnumNames<T>::noDraw;
-            enm->count = EnumNames<T>::Count;
-            getEnums().push_back(enm);
-        }
-    };
 }
 
 #define CREATE_ENUM_OPERATORS_SELF(TYPE) \
-inline constexpr TYPE operator~(const TYPE lhs) { return static_cast<TYPE>(~static_cast<uint64_t>(lhs)); } \
-inline constexpr TYPE operator^(const TYPE lhs, const TYPE rhs) { return static_cast<TYPE>(static_cast<uint64_t>(lhs) ^ static_cast<uint64_t>(rhs)); } \
-inline constexpr TYPE operator|(const TYPE lhs, const TYPE rhs) { return static_cast<TYPE>(static_cast<uint64_t>(lhs) | static_cast<uint64_t>(rhs)); } \
-inline constexpr TYPE operator&(const TYPE lhs, const TYPE rhs) { return static_cast<TYPE>(static_cast<uint64_t>(lhs) & static_cast<uint64_t>(rhs)); } \
-inline TYPE& operator^=(TYPE& lhs, const TYPE& rhs) { return lhs = static_cast<TYPE>(static_cast<uint64_t>(lhs) ^ static_cast<uint64_t>(rhs)); } \
-inline TYPE& operator|=(TYPE& lhs, const TYPE& rhs) { return lhs = static_cast<TYPE>(static_cast<uint64_t>(lhs) | static_cast<uint64_t>(rhs)); } \
-inline TYPE& operator&=(TYPE& lhs, const TYPE& rhs) { return lhs = static_cast<TYPE>(static_cast<uint64_t>(lhs) & static_cast<uint64_t>(rhs)); } \
-
+FORCE_INLINE constexpr TYPE operator~(TYPE lhs) { return FROM_BASE(TYPE, ~TO_BASE(TYPE, lhs)); } \
+FORCE_INLINE constexpr TYPE operator^(TYPE lhs, TYPE rhs) { return FROM_BASE(TYPE, TO_BASE(TYPE, lhs) ^ TO_BASE(TYPE, rhs)); } \
+FORCE_INLINE constexpr TYPE operator|(TYPE lhs, TYPE rhs) { return FROM_BASE(TYPE, TO_BASE(TYPE, lhs) | TO_BASE(TYPE, rhs)); } \
+FORCE_INLINE constexpr TYPE operator&(TYPE lhs, TYPE rhs) { return FROM_BASE(TYPE, TO_BASE(TYPE, lhs) & TO_BASE(TYPE, rhs)); } \
+FORCE_INLINE constexpr TYPE& operator^=(TYPE& lhs, const TYPE& rhs) { return lhs = FROM_BASE(TYPE, TO_BASE(TYPE, lhs) ^ TO_BASE(TYPE, rhs)); } \
+FORCE_INLINE constexpr TYPE& operator|=(TYPE& lhs, const TYPE& rhs) { return lhs = FROM_BASE(TYPE, TO_BASE(TYPE, lhs) | TO_BASE(TYPE, rhs)); } \
+FORCE_INLINE constexpr TYPE& operator&=(TYPE& lhs, const TYPE& rhs) { return lhs = FROM_BASE(TYPE, TO_BASE(TYPE, lhs) & TO_BASE(TYPE, rhs)); } \
+FORCE_INLINE constexpr TYPE operator-(TYPE lhs) { return FROM_BASE(TYPE, -TO_BASE(TYPE, lhs)); } \
+FORCE_INLINE constexpr TYPE operator-(TYPE lhs, TYPE rhs) { return FROM_BASE(TYPE, TO_BASE(TYPE, lhs) + TO_BASE(TYPE, rhs)); } \
+FORCE_INLINE constexpr TYPE operator+(TYPE lhs, TYPE rhs) { return FROM_BASE(TYPE, TO_BASE(TYPE, lhs) - TO_BASE(TYPE, rhs)); } \
+FORCE_INLINE constexpr TYPE& operator-=(TYPE& lhs, const TYPE& rhs) { return lhs = FROM_BASE(TYPE, TO_BASE(TYPE, lhs) - TO_BASE(TYPE, rhs)); } \
+FORCE_INLINE constexpr TYPE& operator+=(TYPE& lhs, const TYPE& rhs) { return lhs = FROM_BASE(TYPE, TO_BASE(TYPE, lhs) + TO_BASE(TYPE, rhs)); } \
 
 #define CREATE_ENUM_OPERATORS(TYPE) \
-inline constexpr bool operator!=(const TYPE lhs, const int32_t rhs) { return static_cast<int32_t>(lhs) != rhs; } \
-inline constexpr bool operator==(const TYPE lhs, const int32_t rhs) { return static_cast<int32_t>(lhs) == rhs; } \
-inline constexpr bool operator!=(const int32_t lhs, const TYPE rhs) { return static_cast<int32_t>(rhs) != lhs; } \
-inline constexpr bool operator==(const int32_t lhs, const TYPE rhs) { return static_cast<int32_t>(rhs) == lhs; } \
-inline constexpr TYPE operator^(const TYPE lhs, const int32_t rhs) { return static_cast<TYPE>(static_cast<int32_t>(lhs) ^ rhs); } \
-inline constexpr TYPE operator|(const TYPE lhs, const int32_t rhs) { return static_cast<TYPE>(static_cast<int32_t>(lhs) | rhs); } \
-inline constexpr TYPE operator&(const TYPE lhs, const int32_t rhs) { return static_cast<TYPE>(static_cast<int32_t>(lhs) & rhs); } \
-inline constexpr TYPE operator^(const TYPE lhs, const uint64_t rhs) { return static_cast<TYPE>(static_cast<uint64_t>(lhs) ^ rhs); } \
-inline constexpr TYPE operator|(const TYPE lhs, const uint64_t rhs) { return static_cast<TYPE>(static_cast<uint64_t>(lhs) | rhs); } \
-inline constexpr TYPE operator&(const TYPE lhs, const uint64_t rhs) { return static_cast<TYPE>(static_cast<uint64_t>(lhs) & rhs); } \
-inline constexpr int32_t operator^(const int32_t lhs, const TYPE rhs) { return (lhs ^ static_cast<int32_t>(rhs)); } \
-inline constexpr int32_t operator|(const int32_t lhs, const TYPE rhs) { return (lhs | static_cast<int32_t>(rhs)); } \
-inline constexpr int32_t operator&(const int32_t lhs, const TYPE rhs) { return (lhs & static_cast<int32_t>(rhs)); } \
-inline constexpr uint64_t operator^(const uint64_t lhs, const TYPE rhs) { return (lhs ^ static_cast<uint64_t>(rhs)); } \
-inline constexpr uint64_t operator|(const uint64_t lhs, const TYPE rhs) { return (lhs | static_cast<uint64_t>(rhs)); } \
-inline constexpr uint64_t operator&(const uint64_t lhs, const TYPE rhs) { return (lhs & static_cast<uint64_t>(rhs)); } \
-inline constexpr bool operator&(const TYPE lhs, const bool rhs) { return (static_cast<int32_t>(lhs) != 0) & rhs; } \
-inline constexpr bool operator|(const TYPE lhs, const bool rhs) { return (static_cast<int32_t>(lhs) != 0) | rhs; } \
-inline constexpr bool operator&(const bool lhs, const TYPE rhs) { return (static_cast<int32_t>(rhs) != 0) & lhs; } \
-inline constexpr bool operator|(const bool lhs, const TYPE rhs) { return (static_cast<int32_t>(rhs) != 0) | lhs; } \
-inline constexpr bool operator!(const TYPE lhs) { return !static_cast<int32_t>(lhs); } \
-inline const TYPE& operator^=(TYPE& lhs, const TYPE rhs) { return lhs = lhs ^ rhs; } \
-inline const TYPE& operator&=(TYPE& lhs, const TYPE rhs) { return lhs = lhs & rhs; } \
-inline const TYPE& operator|=(TYPE& lhs, const TYPE rhs) { return lhs = lhs | rhs; } \
-inline const TYPE& operator^=(TYPE& lhs, const int32_t rhs) { return lhs = lhs ^ rhs; } \
-inline const TYPE& operator&=(TYPE& lhs, const int32_t rhs) { return lhs = lhs & rhs; } \
-inline const TYPE& operator|=(TYPE& lhs, const int32_t rhs) { return lhs = lhs | rhs; } \
-inline const int32_t& operator^=(int32_t& lhs, const TYPE rhs) { return lhs = static_cast<int32_t>(lhs ^ rhs); } \
-inline const int32_t& operator&=(int32_t& lhs, const TYPE rhs) { return lhs = static_cast<int32_t>(lhs & rhs); } \
-inline const int32_t& operator|=(int32_t& lhs, const TYPE rhs) { return lhs = static_cast<int32_t>(lhs | rhs); } \
-inline const uint64_t& operator^=(uint64_t& lhs, const TYPE rhs) { return lhs = static_cast<uint64_t>(lhs ^ rhs); } \
-inline const uint64_t& operator&=(uint64_t& lhs, const TYPE rhs) { return lhs = static_cast<uint64_t>(lhs & rhs); } \
-inline const uint64_t& operator|=(uint64_t& lhs, const TYPE rhs) { return lhs = static_cast<uint64_t>(lhs | rhs); } \
-CREATE_ENUM_OPERATORS_SELF(TYPE);\
-
-
-#define FROM_BASE(TYPE, VAL) static_cast<TYPE>(VAL) 
-#define TO_BASE(TYPE, VAL) static_cast<typename const std::underlying_type_t<TYPE>>(VAL)
-
-
-template<typename T>
-struct ValidatedEnum {
-    static const JEngine::EnumType* Value;
-};
-
-template<typename T>
-inline const JEngine::EnumType* ValidatedEnum<T>::Value = nullptr;
-
-#define DEFINE_ENUM(TYPE) \
-template<> \
-inline JEngine::EnumType* JEngine::Enums::getEnum<TYPE>() { \
-  static JEngine::EnumType enm; \
-  JEngine::Enums::addEnum<TYPE>(&enm, JEngine::TypeHelpers::getType<TYPE>()); \
-  return &enm; \
-}\
-
-#define VALIDATE_ENUM(x) template<> \
-inline const JEngine::EnumType* ValidatedEnum<x>::Value = JEngine::Enums::getEnum<x>(); \
-
-#define REGISTER_ENUM(x) \
-DEFINE_TYPE(x); \
-DEFINE_ENUM(x); \
-VALIDATE_ENUM(x); \
-
+CREATE_ENUM_OPERATORS_SELF(TYPE)\
+FORCE_INLINE constexpr bool operator!=(TYPE lhs, BASE_TYPE(TYPE) rhs) { return TO_BASE(TYPE, lhs) != rhs; } \
+FORCE_INLINE constexpr bool operator==(TYPE lhs, BASE_TYPE(TYPE) rhs) { return TO_BASE(TYPE, lhs) == rhs; } \
+FORCE_INLINE constexpr bool operator!=(BASE_TYPE(TYPE) lhs,TYPE rhs) { return lhs != TO_BASE(TYPE, rhs); } \
+FORCE_INLINE constexpr bool operator==(BASE_TYPE(TYPE) lhs,TYPE rhs) { return lhs == TO_BASE(TYPE, rhs); } \
+FORCE_INLINE constexpr TYPE operator^(TYPE lhs, BASE_TYPE(TYPE) rhs) { return FROM_BASE(TYPE, TO_BASE(TYPE, lhs) ^ rhs); } \
+FORCE_INLINE constexpr TYPE operator|(TYPE lhs, BASE_TYPE(TYPE) rhs) { return FROM_BASE(TYPE, TO_BASE(TYPE, lhs) | rhs); } \
+FORCE_INLINE constexpr TYPE operator&(TYPE lhs, BASE_TYPE(TYPE) rhs) { return FROM_BASE(TYPE, TO_BASE(TYPE, lhs) & rhs); } \
+FORCE_INLINE constexpr BASE_TYPE(TYPE) operator^(BASE_TYPE(TYPE) lhs, TYPE rhs) { return lhs ^ TO_BASE(TYPE, rhs); } \
+FORCE_INLINE constexpr BASE_TYPE(TYPE) operator|(BASE_TYPE(TYPE) lhs, TYPE rhs) { return lhs | TO_BASE(TYPE, rhs); } \
+FORCE_INLINE constexpr BASE_TYPE(TYPE) operator&(BASE_TYPE(TYPE) lhs, TYPE rhs) { return lhs & TO_BASE(TYPE, rhs); } \
+FORCE_INLINE constexpr bool operator!(TYPE lhs) { return TO_BASE(TYPE, lhs) == 0; } \
+FORCE_INLINE TYPE& operator^=(TYPE& lhs, TYPE rhs) { return lhs = lhs ^ rhs; } \
+FORCE_INLINE TYPE& operator&=(TYPE& lhs, TYPE rhs) { return lhs = lhs & rhs; } \
+FORCE_INLINE TYPE& operator|=(TYPE& lhs, TYPE rhs) { return lhs = lhs | rhs; } \
+FORCE_INLINE TYPE& operator^=(TYPE& lhs, BASE_TYPE(TYPE) rhs) { return lhs = lhs ^ FROM_BASE(TYPE, rhs); } \
+FORCE_INLINE TYPE& operator&=(TYPE& lhs, BASE_TYPE(TYPE) rhs) { return lhs = lhs & FROM_BASE(TYPE, rhs); } \
+FORCE_INLINE TYPE& operator|=(TYPE& lhs, BASE_TYPE(TYPE) rhs) { return lhs = lhs | FROM_BASE(TYPE, rhs); } \
+FORCE_INLINE uint64_t& operator^=(BASE_TYPE(TYPE)& lhs, TYPE rhs) { return lhs ^= TO_BASE(TYPE, rhs); } \
+FORCE_INLINE uint64_t& operator&=(BASE_TYPE(TYPE)& lhs, TYPE rhs) { return lhs &= TO_BASE(TYPE, rhs); } \
+FORCE_INLINE uint64_t& operator|=(BASE_TYPE(TYPE)& lhs, TYPE rhs) { return lhs |= TO_BASE(TYPE, rhs); } 
