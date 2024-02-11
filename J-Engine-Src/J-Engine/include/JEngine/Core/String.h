@@ -21,6 +21,9 @@ namespace JEngine {
         char* data() { return _buffer; }
         const char* data() const { return _buffer; }
 
+        char* end() { return _buffer + _length; }
+        const char* end() const { return _buffer + _length; }
+
         size_t length() const { return _length; }
         size_t capacity() const { return _capacity; }
 

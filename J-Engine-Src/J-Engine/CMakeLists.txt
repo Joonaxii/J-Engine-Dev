@@ -168,9 +168,7 @@ list(APPEND JE_SOURCES ${JE_MATH_GFX_SRC})
 
 # JEngine Collection files
 set(JE_COLLECTIONS_SRC
-	 "include/JEngine/Collections/IReferenceProvider.h"
 	 "include/JEngine/Collections/IRef.h"
-	 "include/JEngine/Collections/ObjectRef.h"
 	 "include/JEngine/Collections/StackVector.h"
 	 "include/JEngine/Collections/Vector.h"	
 	 
@@ -188,6 +186,7 @@ list(APPEND JE_SOURCES ${JE_COLLECTIONS_SRC})
 
 # JEngine GUI files
 set(JE_GUI_SRC
+	 "include/JEngine/GUI/ImGui.h"
 	 "include/JEngine/GUI/Gui.h"
 	 "src/JEngine/GUI/Gui.cpp"
 )

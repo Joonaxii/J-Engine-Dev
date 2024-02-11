@@ -3,7 +3,7 @@
 
 namespace JEngine {
     namespace Gui {
-        bool drawScalar(const char* label, bool isSlider, bool isAngle, int32_t dataType, void* value, float speed, const void* min, const void* max, const char* format, int32_t flags) {
+        bool drawScalar(std::string_view label, bool isSlider, bool isAngle, int32_t dataType, void* value, float speed, const void* min, const void* max, const char* format, int32_t flags) {
             if (isAngle && dataType == ImGuiDataType_Float) {
                 return ImGui::SliderAngle(label, reinterpret_cast<float*>(value),
                     min ? *reinterpret_cast<const float*>(min) : -360.0f
@@ -29,7 +29,7 @@ namespace JEngine {
 
 
         template<int32_t size, int32_t elementSize>
-        static bool drawVector(const char* label, int32_t dataType, void* value, const GUIStyle& style, int32_t offset = 0) {
+        static bool drawVector(std::string_view label, int32_t dataType, void* value, const GUIStyle& style, int32_t offset = 0) {
             static_assert(size > 1 && size < 5, "Vector size must be between 2 and 4!");
             static_assert(elementSize > 0, "Vector Element size cannot be less than 1!");
             if (!value) { return false; }
@@ -134,7 +134,7 @@ namespace JEngine {
         }
 
         template<int32_t size, int32_t elementSize>
-        static bool drawRect(const char* label, ImGuiDataType dataType, void* value, const GUIStyle& style) {
+        static bool drawRect(std::string_view label, ImGuiDataType dataType, void* value, const GUIStyle& style) {
             static_assert(size > 1 && size < 5, "Vector size must be between 2 and 4!");
             static_assert(elementSize > 0, "Vector Element size cannot be less than 1!");
 
@@ -151,7 +151,7 @@ namespace JEngine {
             return changed;
         }
 
-        bool drawColor(const char* label, float color[4], bool hasAlpha, const GUIStyle& style) {
+        bool drawColor(std::string_view label, float color[4], bool hasAlpha, const GUIStyle& style) {
             const ImGuiColorEditFlags flags = style.is(GUIStyle::FLAG_HDR) ? ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float : ImGuiColorEditFlags_None;
 
             if (style.is(GUIStyle::FLAG_PICKER)) {
@@ -165,7 +165,7 @@ namespace JEngine {
                 ImGui::ColorEdit3(label, color, flags);
         }
 
-        bool drawColor(const char* label, VType colorType, void* value, const GUIStyle& style) {
+        bool drawColor(std::string_view label, VType colorType, void* value, const GUIStyle& style) {
             float tmp[4]{ 0.0f, 0.0f, 0.0f, 1.0f };
             uint8_t* data = reinterpret_cast<uint8_t*>(value);
             bool hasAlpha = false;
@@ -195,19 +195,19 @@ namespace JEngine {
             return false;
         }
 
-        bool drawLayerMask(const char* label, void* value, const GUIStyle& style) {
+        bool drawLayerMask(std::string_view label, void* value, const GUIStyle& style) {
             static const char* const* LayerNames{ reinterpret_cast<const char* const*>(LayerMask::getLayerNames()) };
             return Gui::drawBitMask(label, *reinterpret_cast<uint32_t*>(value), 0, 32, LayerNames, !style.is(GUIStyle::FLAG_SELECT_SINGLE));
         }
 
-        bool drawSortingLayer(const char* label, void* value, const GUIStyle& style) {
+        bool drawSortingLayer(std::string_view label, void* value, const GUIStyle& style) {
             bool changed = false;
             SortingLayer& sortLayer = *reinterpret_cast<SortingLayer*>(value);
             uint16_t layer = sortLayer.getLayerIndex();
             int16_t order = int16_t(sortLayer.getOrder());
 
             ImGui::PushID(label);
-            if (ImGui::CollapsingHeader(label)) {
+            if (ImGui::CollapsingHeader(label, 0)) {
                 ImGui::Indent();
                 if (Gui::drawDropdown("Layer##SortingLayer", layer, SortingLayer::getLayers().data(), SortingLayer::getLayerCount())) {
                     sortLayer.setLayerByIndex(layer);
@@ -224,7 +224,7 @@ namespace JEngine {
             return changed;
         }
 
-        bool drawBuiltIn(const char* label, VType type, void* data, const GUIStyle& style) {
+        bool drawBuiltIn(std::string_view label, VType type, void* data, const GUIStyle& style) {
             switch (type) {
             case VType::VTYPE_INT8:
             case VType::VTYPE_UINT8:

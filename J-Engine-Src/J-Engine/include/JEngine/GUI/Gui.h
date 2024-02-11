@@ -126,18 +126,18 @@ namespace JEngine {
             static constexpr GUIStyle TransformRot = GUIStyle(GUIStyle::FLAG_TRANSFORM | GUIStyle::FLAG_ANGLE, -360.0f, 360.0f, 0.0f, "%.0f deg");
         };
 
-        bool drawScalar(const char* label, bool isSlider, bool isAngle, int32_t dataType, void* value, float speed, const void* min, const void* max, const char* format, int32_t flags);
-        bool drawScalar(const char* label, int32_t dataType, void* value, const GUIStyle& style);
+        bool drawScalar(std::string_view label, bool isSlider, bool isAngle, int32_t dataType, void* value, float speed, const void* min, const void* max, const char* format, int32_t flags);
+        bool drawScalar(std::string_view label, int32_t dataType, void* value, const GUIStyle& style);
 
-        bool drawScalars(const char* label, bool isSlider, int32_t dataType, void* value, int32_t count, float speed, const void* min, const void* max, const char* format, int32_t flags);
-        bool drawScalars(const char* label, int32_t dataType, void* value, int32_t count, const GUIStyle& style);
+        bool drawScalars(std::string_view label, bool isSlider, int32_t dataType, void* value, int32_t count, float speed, const void* min, const void* max, const char* format, int32_t flags);
+        bool drawScalars(std::string_view label, int32_t dataType, void* value, int32_t count, const GUIStyle& style);
 
-        bool drawColor(const char* label, float color[4], bool hasAlpha, const GUIStyle& style);
-        bool drawColor(const char* label, VType colorType, void* value, const GUIStyle& style);
+        bool drawColor(std::string_view label,float color[4], bool hasAlpha, const GUIStyle& style);
+        bool drawColor(std::string_view label,VType colorType, void* value, const GUIStyle& style);
 
-        static bool drawLayerMask(const char* label, void* value, const GUIStyle& style);
-        static bool drawSortingLayer(const char* label, void* value, const GUIStyle& style);
+        static bool drawLayerMask(std::string_view label, void* value, const GUIStyle& style);
+        static bool drawSortingLayer(std::string_view label, void* value, const GUIStyle& style);
 
-        bool drawBuiltIn(const char* label, VType type, void* data, const GUIStyle& style);
+        bool drawBuiltIn(std::string_view label, VType type, void* data, const GUIStyle& style);
     }
 }

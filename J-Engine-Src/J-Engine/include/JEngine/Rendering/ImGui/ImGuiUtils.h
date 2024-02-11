@@ -1,8 +1,5 @@
 #pragma once
-#include <imgui_internal.h>
-#include <imgui.h>
-#include <imgui_impl_opengl3.h>
-#include <imgui_impl_glfw.h>
+#include <GUI/ImGui.h>
 #include <JEngine/Utility/Flags.h>
 #include <JEngine/Utility/EnumUtils.h>
 #include <JEngine/Rendering/Window.h>
