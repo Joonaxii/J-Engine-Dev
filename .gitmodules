@@ -13,3 +13,4 @@
 [submodule "J-Engine-Src/J-Engine/ext/imgui"]
 	path = J-Engine-Src/J-Engine/ext/imgui
 	url = https://github.com/Joonaxii/JE-imgui.git
+	branch = docking
