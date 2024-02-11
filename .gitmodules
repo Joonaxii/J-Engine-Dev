@@ -10,3 +10,6 @@
 [submodule "J-Engine-Src/J-Engine/ext/spdlog"]
 	path = J-Engine-Src/J-Engine/ext/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "J-Engine-Src/J-Engine/ext/imgui"]
+	path = J-Engine-Src/J-Engine/ext/imgui
+	url = https://github.com/Joonaxii/JE-imgui.git
