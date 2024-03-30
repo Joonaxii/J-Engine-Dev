@@ -1,16 +1,16 @@
 [submodule "J-Engine-Src/J-Engine/ext/nlohmann/json"]
-	path = J-Engine-Src/J-Engine/ext/nlohmann/json
+	path = J-Engine/ext/nlohmann/json/json
 	url = https://github.com/nlohmann/json
 [submodule "J-Engine-Src/J-Engine/ext/zlib"]
-	path = J-Engine-Src/J-Engine/ext/zlib
+	path = J-Engine/ext/zlib/zlib
 	url = https://github.com/madler/zlib
 [submodule "J-Engine-Src/J-Engine/ext/YAML"]
-	path = J-Engine-Src/J-Engine/ext/YAML
+	path = J-Engine/ext/YAML/YAML
 	url = https://github.com/jbeder/yaml-cpp
 [submodule "J-Engine-Src/J-Engine/ext/spdlog"]
-	path = J-Engine-Src/J-Engine/ext/spdlog
+	path = J-Engine/ext/spdlog/spdlog
 	url = https://github.com/gabime/spdlog
 [submodule "J-Engine-Src/J-Engine/ext/imgui"]
-	path = J-Engine-Src/J-Engine/ext/imgui
+	path = J-Engine/ext/imgui/imgui
 	url = https://github.com/Joonaxii/JE-imgui.git
 	branch = docking
